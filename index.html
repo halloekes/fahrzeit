@@ -351,7 +351,7 @@
     <header>
       <div class="logo">Fahrtzeit</div>
       <div class="subtitle">Reisezeit-Rechner mit Echtzeit-Verkehr</div>
-      <div style="font-size:10px;color:var(--muted);margin-top:4px;" id="version-tag">v13</div>
+      <div style="font-size:10px;color:var(--muted);margin-top:4px;" id="version-tag">v14</div>
     </header>
 
     <div class="form-card">
@@ -550,8 +550,9 @@
         </div>
       </div>
 
+      <div id="btn-error-container" style="display:none;background:#fff0f0;border:2px solid #c53030;color:#c53030;border-radius:10px;padding:12px 16px;margin-bottom:12px;font-size:14px;font-weight:600;text-align:center;"></div>
       <div class="form-group">
-        <button type="button" class="calculate-btn" id="calculate-btn">Berechnen</button>
+        <button type="button" class="calculate-btn" id="calculate-btn">⏳ Maps laden...</button>
       </div>
     </div>
 
@@ -831,11 +832,14 @@
         }
 
         mapsReady = true;
+        document.getElementById('calculate-btn').textContent = 'Berechnen';
+        document.getElementById('btn-error-container').style.display = 'none';
+        console.log('[Fahrtzeit] Google Maps loaded, mapsReady = true');
         setupAutocomplete('from', 'from-dropdown');
         setupAutocomplete('to', 'to-dropdown');
       } catch (e) {
         console.error('initApp error:', e);
-        showError('Google Maps konnte nicht geladen werden: ' + e.message);
+        showBtnError('Google Maps Fehler: ' + e.message);
       }
     }
 
@@ -878,19 +882,18 @@
       document.getElementById('calculate-btn').addEventListener('click', function() {
         try {
           var btn = document.getElementById('calculate-btn');
-          btn.textContent = 'Berechne...';
-          btn.disabled = true;
-          setTimeout(function() { btn.textContent = 'Berechnen'; btn.disabled = false; }, 10000);
-
           if (!mapsReady) {
-            showError('Google Maps wird noch geladen. Bitte kurz warten und nochmal versuchen.');
-            btn.textContent = 'Berechnen'; btn.disabled = false;
+            showBtnError('Google Maps konnte nicht geladen werden. Mögliche Ursachen: API-Key ungültig, keine Abrechnung aktiviert, oder Referrer-Einschränkung falsch. Bitte die Google Cloud Console prüfen.');
             return;
           }
+          btn.textContent = 'Berechne...';
+          btn.disabled = true;
+          document.getElementById('btn-error-container').style.display = 'none';
+          setTimeout(function() { btn.textContent = 'Berechnen'; btn.disabled = false; }, 15000);
           handleCalculate();
         } catch (e) {
           console.error('Calculate error:', e);
-          showError('Fehler: ' + e.message);
+          showBtnError('Fehler: ' + e.message);
           document.getElementById('calculate-btn').textContent = 'Berechnen';
           document.getElementById('calculate-btn').disabled = false;
         }
@@ -1170,27 +1173,38 @@
     }
 
     function displayMap(from, to) {
-      directionsService.route({
-        origin: from, destination: to,
-        travelMode: google.maps.TravelMode.DRIVING, language: 'de',
-      }, (result, status) => {
-        if (status === google.maps.DirectionsStatus.OK) {
-          directionsRenderer.setDirections(result);
-          const leg = result.routes[0].legs[0];
-          const distanceKm = leg.distance.value / 1000;
-          const durationMin = Math.round(leg.duration.value / 60);
-          const speedAvg = Math.round(distanceKm / (durationMin / 60));
+      try {
+        directionsService.route({
+          origin: from, destination: to,
+          travelMode: google.maps.TravelMode.DRIVING, language: 'de',
+        }, (result, status) => {
+          try {
+            if (status === 'OK' && result && result.routes && result.routes[0]) {
+              directionsRenderer.setDirections(result);
+              const leg = result.routes[0].legs[0];
+              if (!leg) return;
+              const distanceKm = leg.distance.value / 1000;
+              const durationMin = Math.round(leg.duration.value / 60);
+              const speedAvg = Math.round(distanceKm / (durationMin / 60));
 
-          document.getElementById('route-distance').textContent = distanceKm.toFixed(1) + ' km';
-          document.getElementById('route-duration').textContent = formatDuration(durationMin);
-          document.getElementById('route-speed').textContent = speedAvg + ' km/h';
-          document.getElementById('map-container').classList.add('visible');
+              document.getElementById('route-distance').textContent = distanceKm.toFixed(1) + ' km';
+              document.getElementById('route-duration').textContent = formatDuration(durationMin);
+              document.getElementById('route-speed').textContent = speedAvg + ' km/h';
+              document.getElementById('map-container').classList.add('visible');
 
-          if (document.getElementById('ev-toggle').checked && lastResults) {
-            addChargingMarkers(result.routes[0]);
+              if (document.getElementById('ev-toggle').checked && lastResults) {
+                addChargingMarkers(result.routes[0]);
+              }
+            } else {
+              console.warn('Directions API status:', status);
+            }
+          } catch (e) {
+            console.error('displayMap callback error:', e);
           }
-        }
-      });
+        });
+      } catch (e) {
+        console.error('displayMap error:', e);
+      }
     }
 
     function getPlacesService() {
@@ -1389,6 +1403,14 @@
       document.getElementById('results').classList.add('visible');
     }
 
+    function showBtnError(message) {
+      var el = document.getElementById('btn-error-container');
+      el.textContent = message;
+      el.style.display = 'block';
+      document.getElementById('calculate-btn').textContent = 'Berechnen';
+      document.getElementById('calculate-btn').disabled = false;
+    }
+
     // Global error handler — show ALL JS errors on page
     window.onerror = function(msg, url, line) {
       var el = document.getElementById('error-container');
@@ -1399,15 +1421,21 @@
     };
 
     // Boot: set up UI immediately (don't wait for Maps)
-    try {
-      initAllPickers();
-      setupEventListeners();
-      selectTodayWeekday();
-      console.log('[Fahrtzeit] UI initialized OK');
-    } catch (e) {
-      console.error('Boot error:', e);
-      showError('Initialisierungsfehler: ' + e.message);
-    }
+    try { initAllPickers(); } catch (e) { console.error('initAllPickers error:', e); }
+    try { setupEventListeners(); } catch (e) { console.error('setupEventListeners error:', e); }
+    try { selectTodayWeekday(); } catch (e) { console.error('selectTodayWeekday error:', e); }
+    console.log('[Fahrtzeit v14] UI initialized OK');
+
+    // Timeout: if Maps hasn't loaded after 8 seconds, show clear error
+    setTimeout(function() {
+      if (!mapsReady) {
+        console.error('[Fahrtzeit] Google Maps did not load within 8 seconds');
+        var btn = document.getElementById('calculate-btn');
+        btn.textContent = '❌ Maps nicht geladen';
+        btn.style.background = 'linear-gradient(135deg, #c53030 0%, #9b2c2c 100%)';
+        showBtnError('Google Maps konnte nicht geladen werden. Bitte prüfe in der Google Cloud Console: (1) Abrechnung aktiviert? (2) Maps JavaScript API, Distance Matrix API, Places API und Directions API aktiviert? (3) API-Key-Einschränkung korrekt auf halloekes.github.io/fahrzeit/* gesetzt?');
+      }
+    }, 8000);
 
     // SW management: register new SW, auto-reload when it takes over
     if ('serviceWorker' in navigator) {
