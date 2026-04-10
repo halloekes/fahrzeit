@@ -8,7 +8,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Fahrtzeit">
 <title>Fahrtzeit</title>
-<meta name="description" content="Historisch basierte Fahrzeitprognose für Deutschland – Abfahrt oder Ankunft planen mit Google Routes API.">
+<meta name="description" content="Historisch basierte Fahrzeitprognose für Deutschland – Abfahrt oder Ankunft planen mit Google Maps.">
 <link rel="manifest" href="manifest.json">
 <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
@@ -16,559 +16,203 @@
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
   :root {
-    --bg: #f5f0eb;
-    --surface: #ffffff;
-    --surface2: #faf7f4;
-    --border: #e2d9d0;
-    --accent: #e85d2f;
-    --accent2: #2f7ee8;
-    --accent3: #e85d2f;
-    --text: #1e1812;
-    --muted: #9a8878;
-    --success: #2a9d6f;
+    --bg: #f5f0eb; --surface: #ffffff; --surface2: #faf7f4;
+    --border: #e2d9d0; --accent: #e85d2f; --accent2: #2f7ee8;
+    --text: #1e1812; --muted: #9a8878; --success: #2a9d6f;
   }
-
   * { margin: 0; padding: 0; box-sizing: border-box; }
-
   body {
     font-family: 'DM Mono', monospace;
-    background: var(--bg);
-    color: var(--text);
-    min-height: 100vh;
-    overflow-x: hidden;
+    background: var(--bg); color: var(--text);
+    min-height: 100vh; overflow-x: hidden;
   }
-
   body::before {
-    content: '';
-    position: fixed;
-    inset: 0;
+    content: ''; position: fixed; inset: 0;
     background-image: radial-gradient(circle, rgba(232,93,47,0.08) 1px, transparent 1px);
-    background-size: 28px 28px;
-    pointer-events: none;
-    z-index: 0;
+    background-size: 28px 28px; pointer-events: none; z-index: 0;
   }
+  .app { position: relative; z-index: 1; max-width: 680px; margin: 0 auto; padding: 32px 20px 60px; }
 
-  .app {
-    position: relative;
-    z-index: 1;
-    max-width: 680px;
-    margin: 0 auto;
-    padding: 32px 20px 60px;
-  }
-
-  .header {
-    margin-bottom: 48px;
-    animation: fadeUp 0.6s ease both;
-  }
-
-  .header-label {
-    font-family: 'DM Mono', monospace;
-    font-size: 11px;
-    letter-spacing: 0.25em;
-    color: var(--accent);
-    text-transform: uppercase;
-    margin-bottom: 8px;
-  }
-
-  .header h1 {
-    font-family: 'Syne', sans-serif;
-    font-size: clamp(36px, 8vw, 56px);
-    font-weight: 800;
-    line-height: 0.95;
-    letter-spacing: -0.03em;
-  }
-
+  /* Header */
+  .header { margin-bottom: 48px; animation: fadeUp 0.6s ease both; }
+  .header-label { font-size: 11px; letter-spacing: 0.25em; color: var(--accent); text-transform: uppercase; margin-bottom: 8px; }
+  .header h1 { font-family: 'Syne', sans-serif; font-size: clamp(36px, 8vw, 56px); font-weight: 800; line-height: 0.95; letter-spacing: -0.03em; }
   .header h1 span { color: var(--accent); }
+  .header p { margin-top: 12px; font-size: 13px; color: var(--muted); line-height: 1.6; }
 
-  .header p {
-    margin-top: 12px;
-    font-size: 13px;
-    color: var(--muted);
-    line-height: 1.6;
-  }
+  /* Form */
+  .form-card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 28px; margin-bottom: 24px; animation: fadeUp 0.6s 0.2s ease both; }
+  .form-section-label { font-size: 10px; letter-spacing: 0.2em; color: var(--accent); text-transform: uppercase; margin-bottom: 16px; }
+  .route-inputs { display: flex; flex-direction: column; gap: 12px; margin-bottom: 24px; }
 
-  .form-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 16px;
-    padding: 28px;
-    margin-bottom: 24px;
-    animation: fadeUp 0.6s 0.2s ease both;
-  }
-
-  .form-section-label {
-    font-size: 10px;
-    letter-spacing: 0.2em;
-    color: var(--accent);
-    text-transform: uppercase;
-    margin-bottom: 16px;
-  }
-
-  .route-inputs {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    margin-bottom: 24px;
-  }
-
+  /* Input with autocomplete */
+  .ac-wrap { position: relative; }
   .input-group { position: relative; }
-
-  .input-prefix {
-    position: absolute;
-    left: 14px;
-    top: 50%;
-    transform: translateY(-50%);
-    font-size: 11px;
-    color: var(--muted);
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    pointer-events: none;
-    z-index: 2;
-  }
-
+  .input-prefix { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); font-size: 11px; color: var(--muted); letter-spacing: 0.1em; text-transform: uppercase; pointer-events: none; z-index: 2; }
   .route-input {
-    width: 100%;
-    background: var(--bg);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 14px 16px 14px 60px;
-    color: var(--text);
-    font-family: 'Syne', sans-serif;
-    font-size: 15px;
-    font-weight: 600;
-    outline: none;
-    transition: all 0.2s;
+    width: 100%; background: var(--bg); border: 1px solid var(--border); border-radius: 10px;
+    padding: 14px 16px 14px 60px; color: var(--text); font-family: 'Syne', sans-serif;
+    font-size: 15px; font-weight: 600; outline: none; transition: all 0.2s;
   }
-
-  .route-input:focus {
-    border-color: var(--accent);
-    background: var(--surface2);
-  }
-
+  .route-input:focus { border-color: var(--accent); background: var(--surface2); }
   .route-input::placeholder { color: var(--muted); font-weight: 400; }
 
-  .route-arrow {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: var(--accent);
-    font-size: 18px;
-    height: 20px;
+  /* Autocomplete dropdown */
+  .ac-dropdown {
+    position: absolute; top: calc(100% + 4px); left: 0; right: 0; z-index: 100;
+    background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.08); display: none; overflow: hidden;
   }
+  .ac-dropdown.visible { display: block; }
+  .ac-item {
+    padding: 12px 16px; cursor: pointer; transition: background 0.15s;
+    border-bottom: 1px solid var(--border);
+  }
+  .ac-item:last-child { border-bottom: none; }
+  .ac-item:hover, .ac-item.selected { background: var(--surface2); }
+  .ac-main { font-family: 'Syne', sans-serif; font-weight: 600; font-size: 14px; color: var(--text); }
+  .ac-sub { font-size: 11px; color: var(--muted); margin-top: 2px; }
 
-  /* Google Places Autocomplete styling */
-  .pac-container {
-    border-radius: 10px !important;
-    border: 1px solid var(--border) !important;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.1) !important;
-    font-family: 'Syne', sans-serif !important;
-    margin-top: 4px !important;
-  }
-  .pac-item {
-    padding: 10px 14px !important;
-    font-size: 14px !important;
-    border-top: 1px solid #f0ebe5 !important;
-    cursor: pointer !important;
-  }
-  .pac-item:first-child { border-top: none !important; }
-  .pac-item:hover { background: var(--surface2) !important; }
-  .pac-item-query { font-weight: 600 !important; color: var(--text) !important; }
-  .pac-matched { font-weight: 700 !important; }
-  .pac-icon { display: none !important; }
+  .route-arrow { display: flex; align-items: center; justify-content: center; color: var(--accent); font-size: 18px; height: 20px; }
 
   /* Mode toggle */
-  .mode-toggle {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 10px;
-    margin-bottom: 8px;
-  }
-
+  .mode-toggle { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 8px; }
   .mode-btn {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    background: var(--bg);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 12px 16px;
-    color: var(--muted);
-    font-family: 'DM Mono', monospace;
-    font-size: 12px;
-    cursor: pointer;
-    transition: all 0.2s;
-    letter-spacing: 0.03em;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    background: var(--bg); border: 1px solid var(--border); border-radius: 10px;
+    padding: 12px 16px; color: var(--muted); font-family: 'DM Mono', monospace;
+    font-size: 12px; cursor: pointer; transition: all 0.2s;
   }
-
   .mode-btn:hover { border-color: var(--accent); color: var(--text); }
-
-  .mode-btn.active {
-    background: rgba(232,93,47,0.08);
-    border-color: var(--accent);
-    color: var(--accent);
-  }
-
-  .mode-icon { font-size: 14px; }
+  .mode-btn.active { background: rgba(232,93,47,0.08); border-color: var(--accent); color: var(--accent); }
 
   /* Time */
-  .time-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 12px;
-  }
-
-  .time-group label {
-    display: block;
-    font-size: 10px;
-    letter-spacing: 0.15em;
-    color: var(--muted);
-    text-transform: uppercase;
-    margin-bottom: 8px;
-  }
-
+  .time-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .time-group label { display: block; font-size: 10px; letter-spacing: 0.15em; color: var(--muted); text-transform: uppercase; margin-bottom: 8px; }
   .time-select {
-    width: 100%;
-    background: var(--bg);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 12px 16px;
-    color: var(--text);
-    font-family: 'DM Mono', monospace;
-    font-size: 14px;
-    outline: none;
-    cursor: pointer;
-    transition: border-color 0.2s;
-    appearance: none;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%239a8878' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
-    background-repeat: no-repeat;
-    background-position: right 14px center;
-    padding-right: 36px;
+    width: 100%; background: var(--bg); border: 1px solid var(--border); border-radius: 10px;
+    padding: 12px 16px; color: var(--text); font-family: 'DM Mono', monospace; font-size: 14px;
+    outline: none; cursor: pointer; appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%239a8878' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat; background-position: right 14px center; padding-right: 36px;
   }
-
   .time-select:focus { border-color: var(--accent); }
 
   /* Button */
   .btn-analyze {
-    width: 100%;
-    margin-top: 24px;
-    background: var(--accent);
-    color: #ffffff;
-    border: none;
-    border-radius: 12px;
-    padding: 18px;
-    font-family: 'Syne', sans-serif;
-    font-weight: 800;
-    font-size: 16px;
-    letter-spacing: 0.02em;
-    cursor: pointer;
-    transition: all 0.15s;
-    position: relative;
-    overflow: hidden;
+    width: 100%; margin-top: 24px; background: var(--accent); color: #fff; border: none;
+    border-radius: 12px; padding: 18px; font-family: 'Syne', sans-serif;
+    font-weight: 800; font-size: 16px; cursor: pointer; transition: all 0.15s;
   }
-
-  .btn-analyze:hover:not(:disabled) {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 30px rgba(232,93,47,0.35);
-  }
-
+  .btn-analyze:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(232,93,47,0.35); }
   .btn-analyze:disabled { opacity: 0.5; cursor: not-allowed; }
-
-  .btn-analyze .btn-inner {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-  }
-
-  .spinner {
-    width: 16px;
-    height: 16px;
-    border: 2px solid rgba(255,255,255,0.3);
-    border-top-color: #ffffff;
-    border-radius: 50%;
-    animation: spin 0.7s linear infinite;
-    display: none;
-  }
-
+  .btn-analyze .btn-inner { display: flex; align-items: center; justify-content: center; gap: 8px; }
+  .spinner { width: 16px; height: 16px; border: 2px solid rgba(255,255,255,0.3); border-top-color: #fff; border-radius: 50%; animation: spin 0.7s linear infinite; display: none; }
   .btn-analyze.loading .spinner { display: block; }
 
-  /* Results: Departure */
+  /* Results */
   .results { animation: fadeUp 0.5s ease both; display: none; }
   .results.visible { display: block; }
-
   .results-header { margin-bottom: 20px; }
-
-  .results-route {
-    font-family: 'Syne', sans-serif;
-    font-size: 20px;
-    font-weight: 800;
-    line-height: 1.2;
-    margin-bottom: 4px;
-  }
-
+  .results-route { font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 800; line-height: 1.2; margin-bottom: 4px; }
   .results-route .arrow { color: var(--accent); margin: 0 8px; }
-
-  .results-meta {
-    font-size: 11px;
-    color: var(--muted);
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-  }
-
-  .results-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 12px;
-    margin-bottom: 20px;
-  }
-
+  .results-meta { font-size: 11px; color: var(--muted); letter-spacing: 0.1em; text-transform: uppercase; }
+  .results-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 20px; }
   @media (max-width: 480px) { .results-grid { grid-template-columns: 1fr; } }
 
-  .result-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 14px;
-    padding: 20px 16px;
-    text-align: center;
-    position: relative;
-    overflow: hidden;
-    transition: transform 0.2s;
-  }
-
+  .result-card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 20px 16px; text-align: center; position: relative; overflow: hidden; transition: transform 0.2s; }
   .result-card:hover { transform: translateY(-2px); }
   .result-card.best { border-color: rgba(42,157,111,0.35); }
   .result-card.typical { border-color: rgba(232,93,47,0.35); }
   .result-card.worst { border-color: rgba(180,60,30,0.25); }
-
-  .result-card::before {
-    content: '';
-    position: absolute;
-    top: 0; left: 0; right: 0;
-    height: 2px;
-  }
-
+  .result-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; }
   .result-card.best::before { background: var(--success); }
   .result-card.typical::before { background: var(--accent); }
-  .result-card.worst::before { background: var(--accent3); }
-
-  .result-label {
-    font-size: 10px;
-    letter-spacing: 0.2em;
-    text-transform: uppercase;
-    margin-bottom: 12px;
-  }
-
+  .result-card.worst::before { background: var(--accent); }
+  .result-label { font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase; margin-bottom: 12px; }
   .result-card.best .result-label { color: var(--success); }
   .result-card.typical .result-label { color: var(--accent); }
-  .result-card.worst .result-label { color: var(--accent3); }
-
-  .result-time {
-    font-family: 'Syne', sans-serif;
-    font-size: 32px;
-    font-weight: 800;
-    line-height: 1;
-    margin-bottom: 4px;
-  }
-
+  .result-card.worst .result-label { color: var(--accent); }
+  .result-time { font-family: 'Syne', sans-serif; font-size: 32px; font-weight: 800; line-height: 1; margin-bottom: 4px; }
   .result-unit { font-size: 11px; color: var(--muted); margin-bottom: 10px; }
-
-  .result-dist {
-    font-size: 11px;
-    color: var(--muted);
-    padding-top: 10px;
-    border-top: 1px solid var(--border);
-  }
-
+  .result-dist { font-size: 11px; color: var(--muted); padding-top: 10px; border-top: 1px solid var(--border); }
   .result-arrival { font-size: 12px; color: var(--muted); margin-top: 6px; }
   .result-arrival strong { color: var(--text); font-family: 'Syne', sans-serif; }
 
-  /* Summary bar */
-  .summary-bar {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 16px 20px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 16px;
-  }
-
+  .summary-bar { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 16px 20px; display: flex; align-items: center; justify-content: space-between; gap: 16px; }
   .summary-text { font-size: 12px; color: var(--muted); line-height: 1.5; }
   .summary-text strong { color: var(--text); }
   .summary-tip { font-size: 11px; color: var(--accent2); text-align: right; flex-shrink: 0; }
 
-  /* Arrival hero */
-  .arrival-hero {
-    background: var(--surface);
-    border: 1px solid rgba(232,93,47,0.35);
-    border-radius: 14px;
-    padding: 28px 24px;
-    text-align: center;
-    margin-bottom: 16px;
-    position: relative;
-    overflow: hidden;
-  }
-
-  .arrival-hero::before {
-    content: '';
-    position: absolute;
-    top: 0; left: 0; right: 0;
-    height: 2px;
-    background: var(--accent);
-  }
-
-  .arrival-hero-label {
-    font-size: 10px;
-    letter-spacing: 0.2em;
-    color: var(--accent);
-    text-transform: uppercase;
-    margin-bottom: 12px;
-  }
-
-  .arrival-hero-time {
-    font-family: 'Syne', sans-serif;
-    font-size: 52px;
-    font-weight: 800;
-    line-height: 1;
-    letter-spacing: -0.03em;
-    margin-bottom: 6px;
-  }
-
+  /* Arrival */
+  .arrival-hero { background: var(--surface); border: 1px solid rgba(232,93,47,0.35); border-radius: 14px; padding: 28px 24px; text-align: center; margin-bottom: 16px; position: relative; overflow: hidden; }
+  .arrival-hero::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: var(--accent); }
+  .arrival-hero-label { font-size: 10px; letter-spacing: 0.2em; color: var(--accent); text-transform: uppercase; margin-bottom: 12px; }
+  .arrival-hero-time { font-family: 'Syne', sans-serif; font-size: 52px; font-weight: 800; line-height: 1; letter-spacing: -0.03em; margin-bottom: 6px; }
   .arrival-hero-sub { font-size: 13px; color: var(--muted); }
   .arrival-hero-sub strong { color: var(--text); }
-
-  .arrival-scenarios {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 10px;
-    margin-bottom: 16px;
-  }
-
+  .arrival-scenarios { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 16px; }
   @media (max-width: 480px) { .arrival-scenarios { grid-template-columns: 1fr; } }
-
-  .arrival-scenario-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 14px 12px;
-    text-align: center;
-  }
-
-  .arrival-scenario-label {
-    font-size: 10px;
-    letter-spacing: 0.15em;
-    text-transform: uppercase;
-    color: var(--muted);
-    margin-bottom: 8px;
-  }
-
-  .arrival-scenario-dep {
-    font-family: 'Syne', sans-serif;
-    font-size: 20px;
-    font-weight: 800;
-    margin-bottom: 2px;
-  }
-
+  .arrival-scenario-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 14px 12px; text-align: center; }
+  .arrival-scenario-label { font-size: 10px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--muted); margin-bottom: 8px; }
+  .arrival-scenario-dep { font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 800; margin-bottom: 2px; }
   .arrival-scenario-dur { font-size: 11px; color: var(--muted); margin-bottom: 6px; }
-
-  .arrival-scenario-arr {
-    font-size: 11px;
-    padding-top: 8px;
-    border-top: 1px solid var(--border);
-    color: var(--muted);
-  }
-
+  .arrival-scenario-arr { font-size: 11px; padding-top: 8px; border-top: 1px solid var(--border); color: var(--muted); }
   .arrival-scenario-arr strong { color: var(--text); }
   .tag-safe { color: var(--success); }
-  .tag-tight { color: var(--accent3); }
+  .tag-tight { color: var(--accent); }
 
-  .error-box {
-    background: rgba(232,93,47,0.08);
-    border: 1px solid rgba(232,93,47,0.3);
-    border-radius: 12px;
-    padding: 16px 20px;
-    font-size: 13px;
-    color: var(--accent3);
-    display: none;
-    margin-bottom: 20px;
-  }
-
+  .error-box { background: rgba(232,93,47,0.08); border: 1px solid rgba(232,93,47,0.3); border-radius: 12px; padding: 16px 20px; font-size: 13px; color: var(--accent); display: none; margin-bottom: 20px; }
   .error-box.visible { display: block; }
 
-  @keyframes fadeUp {
-    from { opacity: 0; transform: translateY(20px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
-
+  @keyframes fadeUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
   @keyframes spin { to { transform: rotate(360deg); } }
 
-  .footer {
-    margin-top: 48px;
-    text-align: center;
-    font-size: 11px;
-    color: var(--muted);
-    letter-spacing: 0.1em;
-    opacity: 0.5;
-  }
-
+  .footer { margin-top: 48px; text-align: center; font-size: 11px; color: var(--muted); letter-spacing: 0.1em; opacity: 0.5; }
   .footer a { color: var(--muted); text-decoration: none; border-bottom: 1px solid var(--border); }
 </style>
 </head>
 <body>
-
 <div class="app">
-
   <div class="header">
     <div class="header-label">// Reisezeit-Prognose</div>
     <h1>Fahr<span>zeit</span></h1>
-    <p>Historisch basierte Fahrzeitprognose für Deutschland — powered by Google Maps Platform.</p>
+    <p>Historisch basierte Fahrzeitprognose für Deutschland.</p>
   </div>
 
-  <!-- Form -->
   <div class="form-card">
     <div class="form-section-label">// Route</div>
-
     <div class="route-inputs">
-      <div class="input-group">
-        <span class="input-prefix">Von</span>
-        <input type="text" class="route-input" id="originInput" placeholder="Adresse, Straße oder Stadt..." autocomplete="off">
+      <div class="ac-wrap">
+        <div class="input-group">
+          <span class="input-prefix">Von</span>
+          <input type="text" class="route-input" id="originInput" placeholder="Adresse, Straße oder Stadt..." autocomplete="off">
+        </div>
+        <div class="ac-dropdown" id="originDropdown"></div>
       </div>
-
       <div class="route-arrow">↓</div>
-
-      <div class="input-group">
-        <span class="input-prefix">Nach</span>
-        <input type="text" class="route-input" id="destInput" placeholder="Adresse, Straße oder Stadt..." autocomplete="off">
+      <div class="ac-wrap">
+        <div class="input-group">
+          <span class="input-prefix">Nach</span>
+          <input type="text" class="route-input" id="destInput" placeholder="Adresse, Straße oder Stadt..." autocomplete="off">
+        </div>
+        <div class="ac-dropdown" id="destDropdown"></div>
       </div>
     </div>
 
     <div class="form-section-label">// Modus</div>
-
     <div class="mode-toggle">
-      <button class="mode-btn active" id="modeDeparture" onclick="setMode('departure')">
-        <span class="mode-icon">&#x1F697;</span>
-        <span>Abfahrt planen</span>
-      </button>
-      <button class="mode-btn" id="modeArrival" onclick="setMode('arrival')">
-        <span class="mode-icon">&#x1F3AF;</span>
-        <span>Ankunft planen</span>
-      </button>
+      <button class="mode-btn active" id="modeDeparture" onclick="setMode('departure')">&#x1F697; Abfahrt planen</button>
+      <button class="mode-btn" id="modeArrival" onclick="setMode('arrival')">&#x1F3AF; Ankunft planen</button>
     </div>
 
     <div class="form-section-label" id="timeLabel" style="margin-top:24px;">// Abfahrtszeit</div>
-
     <div class="time-grid">
       <div class="time-group">
         <label>Wochentag</label>
         <select class="time-select" id="weekday">
-          <option value="1">Montag</option>
-          <option value="2">Dienstag</option>
-          <option value="3">Mittwoch</option>
-          <option value="4">Donnerstag</option>
-          <option value="5">Freitag</option>
-          <option value="6">Samstag</option>
+          <option value="1">Montag</option><option value="2">Dienstag</option><option value="3">Mittwoch</option>
+          <option value="4">Donnerstag</option><option value="5">Freitag</option><option value="6">Samstag</option>
           <option value="0">Sonntag</option>
         </select>
       </div>
@@ -586,45 +230,23 @@
     </button>
   </div>
 
-  <!-- Error -->
   <div class="error-box" id="errorBox"></div>
 
-  <!-- Results: Departure mode -->
+  <!-- Departure results -->
   <div class="results" id="resultsDeparture">
     <div class="results-header">
       <div class="results-route" id="resultsRoute"></div>
       <div class="results-meta" id="resultsMeta"></div>
     </div>
     <div class="results-grid">
-      <div class="result-card best">
-        <div class="result-label">Günstig</div>
-        <div class="result-time" id="timeOptimistic">—</div>
-        <div class="result-unit">Fahrtzeit</div>
-        <div class="result-dist" id="distOptimistic">—</div>
-        <div class="result-arrival" id="arrivalOptimistic"></div>
-      </div>
-      <div class="result-card typical">
-        <div class="result-label">Typisch</div>
-        <div class="result-time" id="timeBest">—</div>
-        <div class="result-unit">Fahrtzeit</div>
-        <div class="result-dist" id="distBest">—</div>
-        <div class="result-arrival" id="arrivalBest"></div>
-      </div>
-      <div class="result-card worst">
-        <div class="result-label">Ungünstig</div>
-        <div class="result-time" id="timePessimistic">—</div>
-        <div class="result-unit">Fahrtzeit</div>
-        <div class="result-dist" id="distPessimistic">—</div>
-        <div class="result-arrival" id="arrivalPessimistic"></div>
-      </div>
+      <div class="result-card best"><div class="result-label">Günstig</div><div class="result-time" id="timeOptimistic">—</div><div class="result-unit">Fahrtzeit</div><div class="result-dist" id="distOptimistic">—</div><div class="result-arrival" id="arrivalOptimistic"></div></div>
+      <div class="result-card typical"><div class="result-label">Typisch</div><div class="result-time" id="timeBest">—</div><div class="result-unit">Fahrtzeit</div><div class="result-dist" id="distBest">—</div><div class="result-arrival" id="arrivalBest"></div></div>
+      <div class="result-card worst"><div class="result-label">Ungünstig</div><div class="result-time" id="timePessimistic">—</div><div class="result-unit">Fahrtzeit</div><div class="result-dist" id="distPessimistic">—</div><div class="result-arrival" id="arrivalPessimistic"></div></div>
     </div>
-    <div class="summary-bar">
-      <div class="summary-text" id="summaryText"></div>
-      <div class="summary-tip" id="summaryTip"></div>
-    </div>
+    <div class="summary-bar"><div class="summary-text" id="summaryText"></div><div class="summary-tip" id="summaryTip"></div></div>
   </div>
 
-  <!-- Results: Arrival mode -->
+  <!-- Arrival results -->
   <div class="results" id="resultsArrival">
     <div class="results-header">
       <div class="results-route" id="arrRouteLabel"></div>
@@ -636,53 +258,23 @@
       <div class="arrival-hero-sub" id="arrHeroSub"></div>
     </div>
     <div class="arrival-scenarios">
-      <div class="arrival-scenario-card">
-        <div class="arrival-scenario-label">Entspannt</div>
-        <div class="arrival-scenario-dep tag-safe" id="arrDepOpt">—</div>
-        <div class="arrival-scenario-dur" id="arrDurOpt">—</div>
-        <div class="arrival-scenario-arr" id="arrArrOpt"></div>
-      </div>
-      <div class="arrival-scenario-card">
-        <div class="arrival-scenario-label">Typisch</div>
-        <div class="arrival-scenario-dep" id="arrDepBest">—</div>
-        <div class="arrival-scenario-dur" id="arrDurBest">—</div>
-        <div class="arrival-scenario-arr" id="arrArrBest"></div>
-      </div>
-      <div class="arrival-scenario-card">
-        <div class="arrival-scenario-label">Knapp</div>
-        <div class="arrival-scenario-dep tag-tight" id="arrDepPess">—</div>
-        <div class="arrival-scenario-dur" id="arrDurPess">—</div>
-        <div class="arrival-scenario-arr" id="arrArrPess"></div>
-      </div>
+      <div class="arrival-scenario-card"><div class="arrival-scenario-label">Entspannt</div><div class="arrival-scenario-dep tag-safe" id="arrDepOpt">—</div><div class="arrival-scenario-dur" id="arrDurOpt">—</div><div class="arrival-scenario-arr" id="arrArrOpt"></div></div>
+      <div class="arrival-scenario-card"><div class="arrival-scenario-label">Typisch</div><div class="arrival-scenario-dep" id="arrDepBest">—</div><div class="arrival-scenario-dur" id="arrDurBest">—</div><div class="arrival-scenario-arr" id="arrArrBest"></div></div>
+      <div class="arrival-scenario-card"><div class="arrival-scenario-label">Knapp</div><div class="arrival-scenario-dep tag-tight" id="arrDepPess">—</div><div class="arrival-scenario-dur" id="arrDurPess">—</div><div class="arrival-scenario-arr" id="arrArrPess"></div></div>
     </div>
-    <div class="summary-bar">
-      <div class="summary-text" id="arrSummaryText"></div>
-      <div class="summary-tip" id="arrSummaryTip"></div>
-    </div>
+    <div class="summary-bar"><div class="summary-text" id="arrSummaryText"></div><div class="summary-tip" id="arrSummaryTip"></div></div>
   </div>
 
-  <div class="footer">
-    FAHRTZEIT PWA · HISTORISCHE VERKEHRSPROGNOSE · DE<br>
-    <a href="impressum.html">Impressum & Datenschutz</a>
-  </div>
+  <div class="footer">FAHRTZEIT PWA · HISTORISCHE VERKEHRSPROGNOSE · DE<br><a href="impressum.html">Impressum & Datenschutz</a></div>
 </div>
 
-<!-- Google Maps JavaScript SDK -->
-<script>
-(g=>{var h,a,k,p="The Google Maps JavaScript API",c="google",l="importLibrary",q="__ib__",m=document,b=window;b=b[c]||(b[c]={});var d=b.maps||(b.maps={}),r=new Set,e=new URLSearchParams,u=()=>h||(h=new Promise(async(f,n)=>{await (a=m.createElement("script"));e.set("libraries",[...r]+"");for(k in g)e.set(k.replace(/[A-Z]/g,t=>"_"+t[0].toLowerCase()),g[k]);e.set("callback",c+".maps."+q);a.src=`https://maps.googleapis.com/maps/api/js?`+e;d[q]=f;a.onerror=()=>h=n(Error(p+" could not load."));a.nonce=m.querySelector("script[nonce]")?.nonce||"";m.head.append(a)}));d[l]?console.warn(p+" only loads once. Ignoring:",g):d[l]=(f,...n)=>r.add(f)&&u().then(()=>d[l](f,...n))})({
-  key: "AIzaSyCVxgaDTwgPR8SwgLaB6zHiHNmeQcPPzow",
-  v: "weekly",
-  language: "de",
-  region: "DE"
-});
-</script>
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCVxgaDTwgPR8SwgLaB6zHiHNmeQcPPzow&libraries=places&language=de&region=DE&callback=initApp" async defer></script>
 
 <script>
 // ——— State ———
 let currentMode = 'departure';
-let distanceService = null;
-let originAutocomplete = null;
-let destAutocomplete = null;
+let distanceService, autocompleteService, sessionToken;
+let debounceTimers = {};
 
 function setMode(mode) {
   currentMode = mode;
@@ -696,39 +288,89 @@ function setMode(mode) {
   hideError();
 }
 
-// ——— Init ———
-async function initApp() {
-  const { Autocomplete } = await google.maps.importLibrary("places");
-  const { DistanceMatrixService } = await google.maps.importLibrary("routes");
+// ——— Init (called by Google Maps callback) ———
+function initApp() {
+  distanceService = new google.maps.DistanceMatrixService();
+  autocompleteService = new google.maps.places.AutocompleteService();
+  sessionToken = new google.maps.places.AutocompleteSessionToken();
 
-  distanceService = new DistanceMatrixService();
-
-  // Autocomplete for origin
-  originAutocomplete = new Autocomplete(document.getElementById('originInput'), {
-    componentRestrictions: { country: 'de' },
-    fields: ['formatted_address', 'geometry', 'name'],
-  });
-
-  // Autocomplete for destination
-  destAutocomplete = new Autocomplete(document.getElementById('destInput'), {
-    componentRestrictions: { country: 'de' },
-    fields: ['formatted_address', 'geometry', 'name'],
-  });
-
+  setupAutocomplete('originInput', 'originDropdown');
+  setupAutocomplete('destInput', 'destDropdown');
   populateTimeSelect();
   setDefaultWeekday();
 }
 
-initApp();
+// ——— Custom Autocomplete ———
+function setupAutocomplete(inputId, dropdownId) {
+  const input = document.getElementById(inputId);
+  const dropdown = document.getElementById(dropdownId);
+  let selectedIdx = -1;
+  let items = [];
 
+  input.addEventListener('input', () => {
+    clearTimeout(debounceTimers[inputId]);
+    const q = input.value.trim();
+    if (q.length < 2) { hideDropdown(dropdown); return; }
+    debounceTimers[inputId] = setTimeout(() => {
+      autocompleteService.getPlacePredictions({
+        input: q,
+        componentRestrictions: { country: 'de' },
+        sessionToken: sessionToken,
+      }, (predictions, status) => {
+        if (status !== google.maps.places.PlacesServiceStatus.OK || !predictions) {
+          hideDropdown(dropdown);
+          return;
+        }
+        items = predictions;
+        selectedIdx = -1;
+        renderDropdown(predictions, dropdown, input);
+      });
+    }, 250);
+  });
+
+  input.addEventListener('keydown', (e) => {
+    if (!dropdown.classList.contains('visible')) return;
+    const els = dropdown.querySelectorAll('.ac-item');
+    if (e.key === 'ArrowDown') { e.preventDefault(); selectedIdx = Math.min(selectedIdx + 1, els.length - 1); updateSelection(els, selectedIdx); }
+    else if (e.key === 'ArrowUp') { e.preventDefault(); selectedIdx = Math.max(selectedIdx - 1, 0); updateSelection(els, selectedIdx); }
+    else if (e.key === 'Enter' && selectedIdx >= 0) { e.preventDefault(); els[selectedIdx].click(); }
+    else if (e.key === 'Escape') { hideDropdown(dropdown); }
+  });
+
+  document.addEventListener('click', (e) => {
+    if (!input.contains(e.target) && !dropdown.contains(e.target)) hideDropdown(dropdown);
+  });
+}
+
+function renderDropdown(predictions, dropdown, input) {
+  dropdown.innerHTML = '';
+  predictions.forEach((pred) => {
+    const el = document.createElement('div');
+    el.className = 'ac-item';
+    const main = pred.structured_formatting?.main_text || pred.description;
+    const sub = pred.structured_formatting?.secondary_text || '';
+    el.innerHTML = `<div class="ac-main">${main}</div>${sub ? `<div class="ac-sub">${sub}</div>` : ''}`;
+    el.addEventListener('click', () => {
+      input.value = pred.description;
+      hideDropdown(dropdown);
+      sessionToken = new google.maps.places.AutocompleteSessionToken();
+    });
+    dropdown.appendChild(el);
+  });
+  dropdown.classList.add('visible');
+}
+
+function updateSelection(els, idx) { els.forEach((el, i) => el.classList.toggle('selected', i === idx)); }
+function hideDropdown(d) { d.classList.remove('visible'); }
+
+// ——— Time helpers ———
 function populateTimeSelect() {
   const sel = document.getElementById('timeOfDay');
   for (let h = 4; h <= 23; h++) {
     for (let m of [0, 30]) {
-      const label = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
       const opt = document.createElement('option');
       opt.value = `${h}:${m}`;
-      opt.textContent = label;
+      opt.textContent = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
       if (h === 7 && m === 0) opt.selected = true;
       sel.appendChild(opt);
     }
@@ -736,19 +378,16 @@ function populateTimeSelect() {
 }
 
 function setDefaultWeekday() {
-  const today = new Date().getDay();
-  document.getElementById('weekday').value = today === 0 ? '0' : String(today);
+  const d = new Date().getDay();
+  document.getElementById('weekday').value = d === 0 ? '0' : String(d);
 }
 
-// ——— Timestamp helper ———
-function getNextWeekdayTimestamp(targetDay, hour, minute) {
+function getNextWeekdayDate(targetDay, hour, minute) {
   const now = new Date();
-  const nowDay = now.getDay();
-  let daysAhead = (targetDay - nowDay + 7) % 7;
+  let daysAhead = (targetDay - now.getDay() + 7) % 7;
   if (daysAhead === 0) {
-    const todayTarget = new Date(now);
-    todayTarget.setHours(hour, minute, 0, 0);
-    if (todayTarget <= now) daysAhead = 7;
+    const t = new Date(now); t.setHours(hour, minute, 0, 0);
+    if (t <= now) daysAhead = 7;
   }
   const target = new Date(now);
   target.setDate(now.getDate() + daysAhead);
@@ -756,253 +395,184 @@ function getNextWeekdayTimestamp(targetDay, hour, minute) {
   return target;
 }
 
-// ——— Distance Matrix via JS SDK ———
-function queryDistanceMatrix(origin, destination, departureTime, trafficModel) {
+// ——— Distance Matrix (JS SDK – no CORS issues) ———
+function queryDM(origin, dest, departureDate, trafficModel) {
   return new Promise((resolve, reject) => {
     distanceService.getDistanceMatrix({
       origins: [origin],
-      destinations: [destination],
+      destinations: [dest],
       travelMode: google.maps.TravelMode.DRIVING,
-      drivingOptions: {
-        departureTime: departureTime,
-        trafficModel: trafficModel // 'bestguess' | 'optimistic' | 'pessimistic'
-      },
+      drivingOptions: { departureTime: departureDate, trafficModel },
       unitSystem: google.maps.UnitSystem.METRIC,
-    }, (response, status) => {
-      if (status !== 'OK') {
-        reject(new Error(`Distance Matrix API Fehler: ${status}`));
-        return;
-      }
-      const element = response.rows[0]?.elements[0];
-      if (!element || element.status !== 'OK') {
-        reject(new Error(`Route nicht gefunden: ${element?.status || 'unbekannt'}`));
-        return;
-      }
+    }, (resp, status) => {
+      if (status !== 'OK') return reject(new Error(`API-Fehler: ${status}`));
+      const el = resp.rows[0]?.elements[0];
+      if (!el || el.status !== 'OK') return reject(new Error(`Route nicht gefunden: ${el?.status || 'unbekannt'}`));
       resolve({
-        duration: element.duration_in_traffic?.value || element.duration.value,
-        durationText: element.duration_in_traffic?.text || element.duration.text,
-        distance: element.distance.value,
-        distanceText: element.distance.text,
+        duration: el.duration_in_traffic?.value || el.duration.value,
+        durationText: el.duration_in_traffic?.text || el.duration.text,
+        distance: el.distance.value,
+        distanceText: el.distance.text,
       });
     });
   });
 }
 
-// ——— Core: Analyze ———
+// ——— Analyze: Departure ———
 async function analyze() {
-  if (currentMode === 'arrival') { await analyzeArrival(); return; }
-
-  const originVal = document.getElementById('originInput').value.trim();
-  const destVal = document.getElementById('destInput').value.trim();
+  if (currentMode === 'arrival') return analyzeArrival();
+  const origin = document.getElementById('originInput').value.trim();
+  const dest = document.getElementById('destInput').value.trim();
   const weekday = parseInt(document.getElementById('weekday').value);
-  const timeParts = document.getElementById('timeOfDay').value.split(':');
-  const hour = parseInt(timeParts[0]);
-  const minute = parseInt(timeParts[1]);
+  const [hour, minute] = document.getElementById('timeOfDay').value.split(':').map(Number);
 
   hideError();
   document.getElementById('resultsDeparture').classList.remove('visible');
   document.getElementById('resultsArrival').classList.remove('visible');
-
-  if (!originVal) { showError('Bitte Startort eingeben.'); return; }
-  if (!destVal) { showError('Bitte Zielort eingeben.'); return; }
-
-  setLoading(true);
-
-  const departureDate = getNextWeekdayTimestamp(weekday, hour, minute);
-
-  try {
-    const [optimistic, bestGuess, pessimistic] = await Promise.all([
-      queryDistanceMatrix(originVal, destVal, departureDate, 'optimistic'),
-      queryDistanceMatrix(originVal, destVal, departureDate, 'bestguess'),
-      queryDistanceMatrix(originVal, destVal, departureDate, 'pessimistic'),
-    ]);
-
-    const departureTs = Math.floor(departureDate.getTime() / 1000);
-    renderResults(originVal, destVal, weekday, hour, minute, departureTs, optimistic, bestGuess, pessimistic);
-  } catch(err) {
-    showError(err.message || 'Fehler bei der API-Anfrage. Bitte Route prüfen.');
-  } finally {
-    setLoading(false);
-  }
-}
-
-// ——— Arrival mode ———
-async function analyzeArrival() {
-  const originVal = document.getElementById('originInput').value.trim();
-  const destVal = document.getElementById('destInput').value.trim();
-  const weekday = parseInt(document.getElementById('weekday').value);
-  const timeParts = document.getElementById('timeOfDay').value.split(':');
-  const arrHour = parseInt(timeParts[0]);
-  const arrMinute = parseInt(timeParts[1]);
-
-  hideError();
-  document.getElementById('resultsDeparture').classList.remove('visible');
-  document.getElementById('resultsArrival').classList.remove('visible');
-
-  if (!originVal) { showError('Bitte Startort eingeben.'); return; }
-  if (!destVal) { showError('Bitte Zielort eingeben.'); return; }
+  if (!origin) return showError('Bitte Startort eingeben.');
+  if (!dest) return showError('Bitte Zielort eingeben.');
 
   setLoading(true);
-
-  const arrivalDate = getNextWeekdayTimestamp(weekday, arrHour, arrMinute);
-  const arrivalTs = Math.floor(arrivalDate.getTime() / 1000);
+  const depDate = getNextWeekdayDate(weekday, hour, minute);
 
   try {
-    // Step 1: rough estimate
-    const roughDepDate = new Date(arrivalDate.getTime() - 3 * 3600 * 1000);
-    const rough = await queryDistanceMatrix(originVal, destVal, roughDepDate, 'bestguess');
-    const roughDurMs = rough.duration * 1000;
-
-    // Step 2: probe 3 scenarios
     const [opt, best, pess] = await Promise.all([
-      queryDistanceMatrix(originVal, destVal, new Date(arrivalDate.getTime() - roughDurMs - 1800000), 'optimistic'),
-      queryDistanceMatrix(originVal, destVal, new Date(arrivalDate.getTime() - roughDurMs), 'bestguess'),
-      queryDistanceMatrix(originVal, destVal, new Date(arrivalDate.getTime() - roughDurMs - 3600000), 'pessimistic'),
+      queryDM(origin, dest, depDate, google.maps.TrafficModel.OPTIMISTIC),
+      queryDM(origin, dest, depDate, google.maps.TrafficModel.BEST_GUESS),
+      queryDM(origin, dest, depDate, google.maps.TrafficModel.PESSIMISTIC),
     ]);
-
-    const depSafe = arrivalTs - pess.duration;
-    const depTypical = arrivalTs - best.duration;
-    const depRelaxed = arrivalTs - opt.duration;
-
-    renderArrivalResults(originVal, destVal, weekday, arrHour, arrMinute, arrivalTs, {
-      safe: { depTs: depSafe, duration: pess.duration, distanceText: pess.distanceText },
-      typical: { depTs: depTypical, duration: best.duration, distanceText: best.distanceText },
-      relaxed: { depTs: depRelaxed, duration: opt.duration, distanceText: opt.distanceText },
-    });
-  } catch(err) {
-    showError(err.message || 'Fehler bei der API-Anfrage. Bitte Route prüfen.');
-  } finally {
-    setLoading(false);
-  }
+    const depTs = Math.floor(depDate.getTime() / 1000);
+    renderDeparture(origin, dest, weekday, hour, minute, depTs, opt, best, pess);
+  } catch (e) { showError(e.message); }
+  finally { setLoading(false); }
 }
 
-// ——— Render functions ———
-function renderResults(origin, dest, weekday, hour, minute, departureTs, opt, best, pess) {
-  const weekdays = ['Sonntag','Montag','Dienstag','Mittwoch','Donnerstag','Freitag','Samstag'];
-  const timeStr = `${String(hour).padStart(2,'0')}:${String(minute).padStart(2,'0')}`;
-  const originShort = origin.split(',')[0].trim();
-  const destShort = dest.split(',')[0].trim();
+// ——— Analyze: Arrival ———
+async function analyzeArrival() {
+  const origin = document.getElementById('originInput').value.trim();
+  const dest = document.getElementById('destInput').value.trim();
+  const weekday = parseInt(document.getElementById('weekday').value);
+  const [arrH, arrM] = document.getElementById('timeOfDay').value.split(':').map(Number);
 
-  document.getElementById('resultsRoute').innerHTML = `${originShort} <span class="arrow">→</span> ${destShort}`;
-  document.getElementById('resultsMeta').textContent = `${weekdays[weekday]}, ${timeStr} Uhr Abfahrt · Historische Prognose`;
+  hideError();
+  document.getElementById('resultsDeparture').classList.remove('visible');
+  document.getElementById('resultsArrival').classList.remove('visible');
+  if (!origin) return showError('Bitte Startort eingeben.');
+  if (!dest) return showError('Bitte Zielort eingeben.');
 
-  const toHourMin = (s) => {
-    const h = Math.floor(s / 3600);
-    const m = Math.round((s % 3600) / 60);
-    return h > 0 ? `${h}h ${m}m` : `${m}m`;
-  };
-  const arrival = (depTs, durSec) => {
-    const arr = new Date((depTs + durSec) * 1000);
-    return `${String(arr.getHours()).padStart(2,'0')}:${String(arr.getMinutes()).padStart(2,'0')} Uhr`;
-  };
+  setLoading(true);
+  const arrDate = getNextWeekdayDate(weekday, arrH, arrM);
+  const arrTs = Math.floor(arrDate.getTime() / 1000);
 
-  document.getElementById('timeOptimistic').textContent = toHourMin(opt.duration);
+  try {
+    // Rough estimate
+    const roughDep = new Date(arrDate.getTime() - 3 * 3600000);
+    const rough = await queryDM(origin, dest, roughDep, google.maps.TrafficModel.BEST_GUESS);
+    const durMs = rough.duration * 1000;
+
+    const [opt, best, pess] = await Promise.all([
+      queryDM(origin, dest, new Date(arrDate.getTime() - durMs - 1800000), google.maps.TrafficModel.OPTIMISTIC),
+      queryDM(origin, dest, new Date(arrDate.getTime() - durMs), google.maps.TrafficModel.BEST_GUESS),
+      queryDM(origin, dest, new Date(arrDate.getTime() - durMs - 3600000), google.maps.TrafficModel.PESSIMISTIC),
+    ]);
+
+    renderArrival(origin, dest, weekday, arrH, arrM, arrTs, {
+      safe:    { depTs: arrTs - pess.duration, duration: pess.duration, dist: pess.distanceText },
+      typical: { depTs: arrTs - best.duration, duration: best.duration, dist: best.distanceText },
+      relaxed: { depTs: arrTs - opt.duration,  duration: opt.duration,  dist: opt.distanceText },
+    });
+  } catch (e) { showError(e.message); }
+  finally { setLoading(false); }
+}
+
+// ——— Render helpers ———
+const WDAYS = ['Sonntag','Montag','Dienstag','Mittwoch','Donnerstag','Freitag','Samstag'];
+const hm = s => { const h = Math.floor(s/3600), m = Math.round((s%3600)/60); return h > 0 ? `${h}h ${m}m` : `${m}m`; };
+const tsTime = ts => { const d = new Date(ts*1000); return `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`; };
+const short = s => s.split(',')[0].trim();
+
+function renderDeparture(origin, dest, wd, h, m, depTs, opt, best, pess) {
+  const t = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
+  document.getElementById('resultsRoute').innerHTML = `${short(origin)} <span class="arrow">→</span> ${short(dest)}`;
+  document.getElementById('resultsMeta').textContent = `${WDAYS[wd]}, ${t} Uhr Abfahrt · Historische Prognose`;
+
+  const arr = (dur) => tsTime(depTs + dur) + ' Uhr';
+
+  document.getElementById('timeOptimistic').textContent = hm(opt.duration);
   document.getElementById('distOptimistic').textContent = opt.distanceText;
-  document.getElementById('arrivalOptimistic').innerHTML = `Ankunft ca. <strong>${arrival(departureTs, opt.duration)}</strong>`;
+  document.getElementById('arrivalOptimistic').innerHTML = `Ankunft ca. <strong>${arr(opt.duration)}</strong>`;
 
-  document.getElementById('timeBest').textContent = toHourMin(best.duration);
+  document.getElementById('timeBest').textContent = hm(best.duration);
   document.getElementById('distBest').textContent = best.distanceText;
-  document.getElementById('arrivalBest').innerHTML = `Ankunft ca. <strong>${arrival(departureTs, best.duration)}</strong>`;
+  document.getElementById('arrivalBest').innerHTML = `Ankunft ca. <strong>${arr(best.duration)}</strong>`;
 
-  document.getElementById('timePessimistic').textContent = toHourMin(pess.duration);
+  document.getElementById('timePessimistic').textContent = hm(pess.duration);
   document.getElementById('distPessimistic').textContent = pess.distanceText;
-  document.getElementById('arrivalPessimistic').innerHTML = `Ankunft ca. <strong>${arrival(departureTs, pess.duration)}</strong>`;
+  document.getElementById('arrivalPessimistic').innerHTML = `Ankunft ca. <strong>${arr(pess.duration)}</strong>`;
 
-  const toMin = (s) => Math.round(s / 60);
-  const diffMin = toMin(pess.duration) - toMin(opt.duration);
-  document.getElementById('summaryText').innerHTML = `Puffer einplanen: <strong>${diffMin} Min.</strong> zwischen günstigem und ungünstigem Szenario.`;
+  const diff = Math.round(pess.duration/60) - Math.round(opt.duration/60);
+  document.getElementById('summaryText').innerHTML = `Puffer einplanen: <strong>${diff} Min.</strong> zwischen günstigem und ungünstigem Szenario.`;
 
   let tip = '';
-  if (weekday >= 1 && weekday <= 5) {
-    if (hour >= 7 && hour <= 9) tip = '⚠ Morgenspitze';
-    else if (hour >= 16 && hour <= 18) tip = '⚠ Abendspitze';
-    else if (hour >= 10 && hour <= 15) tip = '✓ Ruhige Zeit';
-  } else {
-    tip = '✓ Wochenende';
-  }
+  if (wd >= 1 && wd <= 5) {
+    if (h >= 7 && h <= 9) tip = '⚠ Morgenspitze';
+    else if (h >= 16 && h <= 18) tip = '⚠ Abendspitze';
+    else tip = '✓ Ruhige Zeit';
+  } else tip = '✓ Wochenende';
   document.getElementById('summaryTip').textContent = tip;
 
   document.getElementById('resultsDeparture').classList.add('visible');
   document.getElementById('resultsDeparture').scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
-function renderArrivalResults(origin, dest, weekday, arrHour, arrMinute, arrivalTs, scenarios) {
-  const weekdays = ['Sonntag','Montag','Dienstag','Mittwoch','Donnerstag','Freitag','Samstag'];
-  const originShort = origin.split(',')[0].trim();
-  const destShort = dest.split(',')[0].trim();
-  const arrTimeStr = `${String(arrHour).padStart(2,'0')}:${String(arrMinute).padStart(2,'0')}`;
+function renderArrival(origin, dest, wd, arrH, arrM, arrTs, sc) {
+  const at = `${String(arrH).padStart(2,'0')}:${String(arrM).padStart(2,'0')}`;
+  document.getElementById('arrRouteLabel').innerHTML = `${short(origin)} <span class="arrow">→</span> ${short(dest)}`;
+  document.getElementById('arrMetaLabel').textContent = `Ankunft bis ${WDAYS[wd]}, ${at} Uhr · Historische Prognose`;
 
-  document.getElementById('arrRouteLabel').innerHTML = `${originShort} <span class="arrow">→</span> ${destShort}`;
-  document.getElementById('arrMetaLabel').textContent = `Ankunft bis ${weekdays[weekday]}, ${arrTimeStr} Uhr · Historische Prognose`;
+  document.getElementById('arrHeroTime').textContent = tsTime(sc.safe.depTs) + ' Uhr';
+  document.getElementById('arrHeroSub').innerHTML = `Späteste sichere Abfahrt — Ankunft ca. <strong>${at} Uhr</strong> auch bei schlechtem Verkehr`;
 
-  const tsToTimeStr = (ts) => {
-    const d = new Date(ts * 1000);
-    return `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
-  };
-  const toHourMin = (s) => {
-    const h = Math.floor(s / 3600);
-    const m = Math.round((s % 3600) / 60);
-    return h > 0 ? `${h}h ${m}m` : `${m}m`;
-  };
+  document.getElementById('arrDepOpt').textContent = tsTime(sc.relaxed.depTs) + ' Uhr';
+  document.getElementById('arrDurOpt').textContent = hm(sc.relaxed.duration) + ' · günstig';
+  document.getElementById('arrArrOpt').innerHTML = `Ankunft ca. <strong>${at} Uhr</strong>`;
 
-  document.getElementById('arrHeroTime').textContent = tsToTimeStr(scenarios.safe.depTs) + ' Uhr';
-  document.getElementById('arrHeroSub').innerHTML = `Späteste sichere Abfahrt — Ankunft ca. <strong>${arrTimeStr} Uhr</strong> auch bei schlechtem Verkehr`;
+  document.getElementById('arrDepBest').textContent = tsTime(sc.typical.depTs) + ' Uhr';
+  document.getElementById('arrDurBest').textContent = hm(sc.typical.duration) + ' · typisch';
+  document.getElementById('arrArrBest').innerHTML = `Ankunft ca. <strong>${at} Uhr</strong>`;
 
-  document.getElementById('arrDepOpt').textContent = tsToTimeStr(scenarios.relaxed.depTs) + ' Uhr';
-  document.getElementById('arrDurOpt').textContent = toHourMin(scenarios.relaxed.duration) + ' · günstig';
-  document.getElementById('arrArrOpt').innerHTML = `Ankunft ca. <strong>${arrTimeStr} Uhr</strong>`;
+  document.getElementById('arrDepPess').textContent = tsTime(sc.safe.depTs) + ' Uhr';
+  document.getElementById('arrDurPess').textContent = hm(sc.safe.duration) + ' · ungünstig';
+  document.getElementById('arrArrPess').innerHTML = `Ankunft ca. <strong>${at} Uhr</strong>`;
 
-  document.getElementById('arrDepBest').textContent = tsToTimeStr(scenarios.typical.depTs) + ' Uhr';
-  document.getElementById('arrDurBest').textContent = toHourMin(scenarios.typical.duration) + ' · typisch';
-  document.getElementById('arrArrBest').innerHTML = `Ankunft ca. <strong>${arrTimeStr} Uhr</strong>`;
-
-  document.getElementById('arrDepPess').textContent = tsToTimeStr(scenarios.safe.depTs) + ' Uhr';
-  document.getElementById('arrDurPess').textContent = toHourMin(scenarios.safe.duration) + ' · ungünstig';
-  document.getElementById('arrArrPess').innerHTML = `Ankunft ca. <strong>${arrTimeStr} Uhr</strong>`;
-
-  const bufferMin = Math.round((scenarios.relaxed.depTs - scenarios.safe.depTs) / 60);
-  document.getElementById('arrSummaryText').innerHTML = `Zwischen frühester und spätester Abfahrt liegen <strong>${Math.abs(bufferMin)} Min.</strong> Puffer.`;
+  const buf = Math.abs(Math.round((sc.relaxed.depTs - sc.safe.depTs) / 60));
+  document.getElementById('arrSummaryText').innerHTML = `Zwischen frühester und spätester Abfahrt liegen <strong>${buf} Min.</strong> Puffer.`;
 
   let tip = '';
-  if (weekday >= 1 && weekday <= 5) {
-    if (arrHour >= 8 && arrHour <= 10) tip = '⚠ Morgenspitze als Ziel';
-    else if (arrHour >= 17 && arrHour <= 19) tip = '⚠ Abendspitze als Ziel';
+  if (wd >= 1 && wd <= 5) {
+    if (arrH >= 8 && arrH <= 10) tip = '⚠ Morgenspitze als Ziel';
+    else if (arrH >= 17 && arrH <= 19) tip = '⚠ Abendspitze als Ziel';
     else tip = '✓ Entspannte Ankunftszeit';
-  } else {
-    tip = '✓ Wochenende';
-  }
+  } else tip = '✓ Wochenende';
   document.getElementById('arrSummaryTip').textContent = tip;
 
   document.getElementById('resultsArrival').classList.add('visible');
   document.getElementById('resultsArrival').scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
-// ——— UI helpers ———
+// ——— UI ———
 function setLoading(on) {
-  const btn = document.getElementById('analyzeBtn');
-  const spinner = document.getElementById('spinner');
-  const text = document.getElementById('btnText');
-  btn.disabled = on;
-  spinner.style.display = on ? 'block' : 'none';
-  const loadingText = currentMode === 'arrival' ? 'Berechne Abfahrtszeiten...' : 'Berechne...';
-  const idleText = currentMode === 'arrival' ? 'Abfahrtszeit berechnen' : 'Fahrtzeit berechnen';
-  text.textContent = on ? loadingText : idleText;
+  document.getElementById('analyzeBtn').disabled = on;
+  document.getElementById('spinner').style.display = on ? 'block' : 'none';
+  document.getElementById('btnText').textContent = on
+    ? (currentMode === 'arrival' ? 'Berechne Abfahrtszeiten...' : 'Berechne...')
+    : (currentMode === 'arrival' ? 'Abfahrtszeit berechnen' : 'Fahrtzeit berechnen');
 }
-
-function showError(msg) {
-  const box = document.getElementById('errorBox');
-  box.textContent = msg;
-  box.classList.add('visible');
-}
-
-function hideError() {
-  document.getElementById('errorBox').classList.remove('visible');
-}
+function showError(msg) { const b = document.getElementById('errorBox'); b.textContent = msg; b.classList.add('visible'); }
+function hideError() { document.getElementById('errorBox').classList.remove('visible'); }
 
 // ——— Service Worker ———
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('./sw.js').catch(() => {});
-}
+if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(() => {});
 </script>
 </body>
 </html>
