@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="UTF-8"><title>API Test</title></head>
+<body>
+<h2>Google Places Autocomplete Test</h2>
+<input type="text" id="testInput" placeholder="Adresse eingeben..." style="font-size:18px;padding:10px;width:400px;">
+<div id="log" style="margin-top:20px;font-family:monospace;white-space:pre-wrap;"></div>
+
+<script>
+function log(msg) {
+  document.getElementById('log').textContent += new Date().toLocaleTimeString() + ' ' + msg + '\n';
+}
+log('Page loaded, waiting for Google Maps...');
+
+function initTest() {
+  log('initTest called! google.maps loaded OK');
+  try {
+    const ac = new google.maps.places.AutocompleteService();
+    const token = new google.maps.places.AutocompleteSessionToken();
+    log('AutocompleteService created OK');
+
+    document.getElementById('testInput').addEventListener('input', async function() {
+      const q = this.value.trim();
+      if (q.length < 2) return;
+      log('Searching: "' + q + '"');
+      try {
+        const resp = await ac.getPlacePredictions({
+          input: q,
+          componentRestrictions: { country: 'de' },
+          sessionToken: token,
+        });
+        log('Got ' + resp.predictions.length + ' results:');
+        resp.predictions.forEach((p, i) => log('  ' + (i+1) + '. ' + p.description));
+      } catch(e) {
+        log('ERROR: ' + e.message);
+      }
+    });
+  } catch(e) {
+    log('INIT ERROR: ' + e.message);
+  }
+}
+window.initTest = initTest;
+</script>
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCVxgaDTwgPR8SwgLaB6zHiHNmeQcPPzow&libraries=places&language=de&region=DE&callback=initTest" async defer></script>
+</body>
+</html>
