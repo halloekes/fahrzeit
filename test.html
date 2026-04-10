@@ -1,54 +1,58 @@
 <!DOCTYPE html>
 <html>
-<head><meta charset="UTF-8"><meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"><title>API Test v3</title></head>
+<head><meta charset="UTF-8"><meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"><title>API Test v4</title></head>
 <body>
-<h2>Google Places Autocomplete Test <small style="color:red">(v3 - callback)</small></h2>
+<h2>Google Places Autocomplete Test <small style="color:red">(v4 - dual mode)</small></h2>
 <input type="text" id="testInput" placeholder="Adresse eingeben..." style="font-size:18px;padding:10px;width:400px;">
-<div id="log" style="margin-top:20px;font-family:monospace;white-space:pre-wrap;"></div>
+<div id="log" style="margin-top:20px;font-family:monospace;white-space:pre-wrap;font-size:13px;"></div>
 
 <script>
+var debounceTimer = null;
 function log(msg) {
   document.getElementById('log').textContent += new Date().toLocaleTimeString() + ' ' + msg + '\n';
 }
-log('v3 loaded, waiting for Google Maps...');
+log('v4 loaded, waiting for Google Maps...');
 
 function initTest() {
-  log('initTest called! google.maps loaded OK');
-  log('google.maps.places exists: ' + !!google.maps.places);
-  log('AutocompleteService exists: ' + !!google.maps.places.AutocompleteService);
+  log('initTest called! google.maps version: ' + (google.maps.version || 'unknown'));
 
-  try {
-    var ac = new google.maps.places.AutocompleteService();
-    var token = new google.maps.places.AutocompleteSessionToken();
-    log('AutocompleteService + token created OK');
+  var ac = new google.maps.places.AutocompleteService();
+  var token = new google.maps.places.AutocompleteSessionToken();
+  log('AutocompleteService ready');
 
-    document.getElementById('testInput').addEventListener('input', function() {
-      var q = this.value.trim();
-      if (q.length < 2) return;
-      log('---');
-      log('Searching: "' + q + '"');
+  document.getElementById('testInput').addEventListener('input', function() {
+    var q = this.value.trim();
+    if (q.length < 3) return;
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(function() {
+      log('--- Searching: "' + q + '"');
 
-      var retVal = ac.getPlacePredictions({
-        input: q,
-        componentRestrictions: { country: 'de' },
-        sessionToken: token,
-      }, function(predictions, status) {
-        log('Callback fired! Status: ' + status);
-        if (!predictions) {
-          log('predictions is null/undefined');
-          return;
-        }
-        log('Got ' + predictions.length + ' results:');
-        predictions.slice(0, 3).forEach(function(p, i) {
-          log('  ' + (i+1) + '. ' + p.description);
+      // Try 1: Promise-based (no callback)
+      try {
+        var promise = ac.getPlacePredictions({
+          input: q,
+          componentRestrictions: { country: 'de' },
+          sessionToken: token,
         });
-      });
-
-      log('getPlacePredictions returned: ' + typeof retVal);
-    });
-  } catch(e) {
-    log('INIT ERROR: ' + e.message + '\n' + e.stack);
-  }
+        log('Returned: ' + typeof promise);
+        if (promise && typeof promise.then === 'function') {
+          promise.then(function(result) {
+            log('PROMISE resolved! Keys: ' + Object.keys(result));
+            if (result.predictions) {
+              log('Got ' + result.predictions.length + ' results:');
+              result.predictions.slice(0, 5).forEach(function(p, i) {
+                log('  ' + (i+1) + '. ' + p.description);
+              });
+            }
+          }).catch(function(err) {
+            log('PROMISE rejected: ' + err.message);
+          });
+        }
+      } catch(e) {
+        log('ERROR: ' + e.message);
+      }
+    }, 500);
+  });
 }
 window.initTest = initTest;
 </script>
