@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fahrtzeit — Cache Reset</title>
+<style>
+body { font-family: -apple-system, sans-serif; display: flex; align-items: center; justify-content: center; min-height: 100vh; background: #f0f5f3; margin: 0; }
+.card { background: white; border-radius: 16px; padding: 32px; max-width: 400px; text-align: center; box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
+h2 { color: #1a7a5a; margin-bottom: 12px; }
+p { color: #6b8a7e; line-height: 1.6; margin-bottom: 16px; }
+#status { font-weight: 600; color: #1a7a5a; }
+</style>
+</head>
+<body>
+<div class="card">
+<h2>Cache wird geleert...</h2>
+<p id="status">Bitte warten...</p>
+</div>
+<script>
+(async function() {
+  const status = document.getElementById('status');
+  try {
+    // 1. Unregister ALL service workers
+    if ('serviceWorker' in navigator) {
+      const regs = await navigator.serviceWorker.getRegistrations();
+      for (const r of regs) {
+        await r.unregister();
+      }
+      status.textContent = regs.length + ' Service Worker entfernt. Cache wird gelöscht...';
+    }
+
+    // 2. Delete ALL caches
+    const keys = await caches.keys();
+    for (const k of keys) {
+      await caches.delete(k);
+    }
+
+    status.textContent = 'Fertig! Weiterleitung...';
+
+    // 3. Redirect to main page with cache buster
+    setTimeout(function() {
+      window.location.href = './index.html?_nocache=' + Date.now();
+    }, 1000);
+  } catch (e) {
+    status.textContent = 'Fehler: ' + e.message + '. Bitte manuell Strg+Shift+R drücken.';
+  }
+})();
+</script>
+</body>
+</html>
