@@ -4,32 +4,30 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="Fahrtzeit - Reisezeit-Rechner mit Google Maps API">
-  <meta name="theme-color" content="#e85d2f">
+  <meta name="theme-color" content="#1a7a5a">
   <title>Fahrtzeit</title>
   <link rel="manifest" href="manifest.json">
-  <link rel="icon" type="image/png" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'><rect fill='%23e85d2f' width='180' height='180'/><text x='90' y='120' font-size='90' font-weight='bold' fill='white' text-anchor='middle' font-family='Arial'>F</text></svg>">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'><rect fill='%231a7a5a' rx='30' width='180' height='180'/><text x='90' y='125' font-size='100' font-weight='bold' fill='white' text-anchor='middle' font-family='Arial'>F</text></svg>">
   <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;500;600;700&display=swap" rel="stylesheet">
 
   <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
 
     :root {
-      --bg: #f5f0eb;
+      --bg: #f0f5f3;
       --surface: #ffffff;
-      --surface2: #faf7f4;
-      --border: #e2d9d0;
-      --accent: #e85d2f;
-      --accent2: #2f7ee8;
-      --text: #1e1812;
-      --muted: #9a8878;
-      --success: #2a9d6f;
-      --warning: #f4a460;
-      --danger: #d73a49;
-      --ev-blue: #0066cc;
+      --surface2: #f5f9f7;
+      --border: #d0ddd6;
+      --accent: #1a7a5a;
+      --accent2: #2563b0;
+      --accent-light: rgba(26, 122, 90, 0.08);
+      --accent2-light: rgba(37, 99, 176, 0.08);
+      --text: #1a2e28;
+      --muted: #6b8a7e;
+      --success: #1a7a5a;
+      --warning: #d4960a;
+      --danger: #c53030;
+      --ev-blue: #2563b0;
     }
 
     html, body {
@@ -43,75 +41,66 @@
 
     body {
       background-image:
-        radial-gradient(1px 1px at 20px 30px, rgba(232, 93, 47, 0.15), transparent),
-        radial-gradient(1px 1px at 60px 70px, rgba(232, 93, 47, 0.1), transparent),
-        radial-gradient(1px 1px at 50px 50px, rgba(47, 126, 232, 0.1), transparent),
-        radial-gradient(1px 1px at 130px 80px, rgba(232, 93, 47, 0.12), transparent),
-        radial-gradient(1px 1px at 90px 10px, rgba(47, 126, 232, 0.08), transparent);
+        radial-gradient(1px 1px at 20px 30px, rgba(26, 122, 90, 0.12), transparent),
+        radial-gradient(1px 1px at 60px 70px, rgba(37, 99, 176, 0.08), transparent),
+        radial-gradient(1px 1px at 130px 80px, rgba(26, 122, 90, 0.06), transparent);
       background-size: 200px 200px;
       background-attachment: fixed;
     }
 
     .container {
-      max-width: 900px;
+      max-width: 520px;
       margin: 0 auto;
-      padding: 20px;
+      padding: 16px;
     }
 
     header {
       text-align: center;
-      margin-bottom: 40px;
-      padding-top: 20px;
+      margin-bottom: 28px;
+      padding-top: 16px;
     }
 
     .logo {
-      font-size: 48px;
+      font-size: 40px;
       font-weight: 700;
       background: linear-gradient(135deg, var(--accent) 0%, var(--accent2) 100%);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       background-clip: text;
-      margin-bottom: 10px;
+      margin-bottom: 6px;
       letter-spacing: -2px;
     }
 
     .subtitle {
-      font-size: 14px;
+      font-size: 13px;
       color: var(--muted);
       font-weight: 400;
-      letter-spacing: 0.5px;
+      letter-spacing: 0.3px;
     }
 
     .form-card {
       background: var(--surface);
       border: 1px solid var(--border);
       border-radius: 16px;
-      padding: 28px;
-      margin-bottom: 24px;
+      padding: 20px;
+      margin-bottom: 20px;
       box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
     }
 
-    .form-group {
-      margin-bottom: 24px;
-    }
-
-    .form-group:last-child {
-      margin-bottom: 0;
-    }
+    .form-group { margin-bottom: 16px; }
+    .form-group:last-child { margin-bottom: 0; }
 
     label {
       display: block;
-      font-size: 13px;
+      font-size: 12px;
       font-weight: 600;
       text-transform: uppercase;
       letter-spacing: 0.5px;
       color: var(--muted);
-      margin-bottom: 8px;
+      margin-bottom: 6px;
     }
 
-    .input-wrapper {
-      position: relative;
-    }
+    .input-wrapper { position: relative; }
 
     input[type="text"],
     input[type="number"],
@@ -119,12 +108,13 @@
       width: 100%;
       padding: 12px 14px;
       border: 1.5px solid var(--border);
-      border-radius: 8px;
+      border-radius: 10px;
       background: var(--surface2);
       color: var(--text);
       font-family: 'Syne', sans-serif;
-      font-size: 14px;
+      font-size: 15px;
       transition: all 0.2s ease;
+      -webkit-appearance: none;
     }
 
     input[type="text"]:focus,
@@ -133,7 +123,7 @@
       outline: none;
       border-color: var(--accent);
       background: var(--surface);
-      box-shadow: 0 0 0 3px rgba(232, 93, 47, 0.1);
+      box-shadow: 0 0 0 3px rgba(26, 122, 90, 0.12);
     }
 
     .dropdown {
@@ -144,17 +134,15 @@
       background: var(--surface);
       border: 1px solid var(--border);
       border-top: none;
-      border-radius: 0 0 8px 8px;
-      max-height: 300px;
+      border-radius: 0 0 10px 10px;
+      max-height: 260px;
       overflow-y: auto;
       z-index: 1000;
       display: none;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
     }
 
-    .dropdown.active {
-      display: block;
-    }
+    .dropdown.active { display: block; }
 
     .dropdown-item {
       padding: 12px 14px;
@@ -163,73 +151,52 @@
       border-bottom: 1px solid var(--surface2);
       font-size: 14px;
     }
+    .dropdown-item:last-child { border-bottom: none; }
+    .dropdown-item:hover { background: var(--accent-light); }
 
-    .dropdown-item:last-child {
-      border-bottom: none;
-    }
-
-    .dropdown-item:hover {
-      background: var(--surface2);
-    }
-
-    .dropdown-item-primary {
-      font-weight: 500;
-      color: var(--text);
-    }
-
-    .dropdown-item-secondary {
-      font-size: 12px;
-      color: var(--muted);
-      margin-top: 2px;
-    }
+    .dropdown-item-primary { font-weight: 500; color: var(--text); }
+    .dropdown-item-secondary { font-size: 12px; color: var(--muted); margin-top: 2px; }
 
     .mode-toggle {
       display: flex;
       background: var(--surface2);
-      border-radius: 8px;
+      border-radius: 10px;
       padding: 4px;
       gap: 4px;
-      margin-bottom: 24px;
+      margin-bottom: 20px;
     }
 
     .toggle-btn {
       flex: 1;
-      padding: 10px 16px;
+      padding: 11px 10px;
       border: none;
       background: transparent;
       color: var(--muted);
       font-family: 'Syne', sans-serif;
       font-size: 13px;
       font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
       cursor: pointer;
-      border-radius: 6px;
+      border-radius: 8px;
       transition: all 0.2s ease;
+      white-space: nowrap;
     }
 
     .toggle-btn.active {
       background: var(--surface);
       color: var(--accent);
-      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
     }
 
     .form-row {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 16px;
-    }
-
-    @media (max-width: 600px) {
-      .form-row {
-        grid-template-columns: 1fr;
-      }
+      display: flex;
+      flex-direction: column;
+      gap: 0;
     }
 
     .checkbox-wrapper {
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 10px;
       cursor: pointer;
     }
 
@@ -246,20 +213,19 @@
       margin: 0;
       cursor: pointer;
       color: var(--text);
+      text-transform: none;
+      letter-spacing: 0;
     }
 
     .ev-section {
-      background: linear-gradient(135deg, rgba(0, 102, 204, 0.05) 0%, rgba(0, 102, 204, 0.02) 100%);
-      border: 1.5px solid rgba(0, 102, 204, 0.2);
+      background: linear-gradient(135deg, rgba(37, 99, 176, 0.06) 0%, rgba(37, 99, 176, 0.02) 100%);
+      border: 1.5px solid rgba(37, 99, 176, 0.2);
       border-radius: 12px;
       padding: 16px;
       margin-top: 16px;
       display: none;
     }
-
-    .ev-section.visible {
-      display: block;
-    }
+    .ev-section.visible { display: block; }
 
     .ev-section-title {
       font-size: 12px;
@@ -271,118 +237,105 @@
     }
 
     .ev-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
     }
 
-    @media (max-width: 600px) {
-      .ev-grid {
-        grid-template-columns: 1fr;
-      }
-    }
-
+    /* Range slider with high contrast */
     input[type="range"] {
       width: 100%;
-      height: 6px;
-      border-radius: 3px;
-      background: var(--surface2);
+      height: 8px;
+      border-radius: 4px;
+      background: linear-gradient(to right, var(--accent), var(--accent2));
       outline: none;
       -webkit-appearance: none;
       appearance: none;
+      opacity: 0.7;
     }
 
     input[type="range"]::-webkit-slider-thumb {
       -webkit-appearance: none;
       appearance: none;
-      width: 20px;
-      height: 20px;
+      width: 24px;
+      height: 24px;
       border-radius: 50%;
       background: var(--accent);
       cursor: pointer;
-      box-shadow: 0 2px 6px rgba(232, 93, 47, 0.3);
+      border: 3px solid white;
+      box-shadow: 0 2px 8px rgba(26, 122, 90, 0.4);
       transition: all 0.2s ease;
     }
-
     input[type="range"]::-webkit-slider-thumb:hover {
       transform: scale(1.15);
-      box-shadow: 0 3px 10px rgba(232, 93, 47, 0.4);
+      box-shadow: 0 3px 12px rgba(26, 122, 90, 0.5);
     }
 
     input[type="range"]::-moz-range-thumb {
-      width: 20px;
-      height: 20px;
+      width: 24px;
+      height: 24px;
       border-radius: 50%;
       background: var(--accent);
       cursor: pointer;
-      border: none;
-      box-shadow: 0 2px 6px rgba(232, 93, 47, 0.3);
+      border: 3px solid white;
+      box-shadow: 0 2px 8px rgba(26, 122, 90, 0.4);
       transition: all 0.2s ease;
     }
-
     input[type="range"]::-moz-range-thumb:hover {
       transform: scale(1.15);
-      box-shadow: 0 3px 10px rgba(232, 93, 47, 0.4);
     }
 
     .slider-value {
-      font-size: 12px;
-      color: var(--muted);
+      font-size: 14px;
+      color: var(--text);
       margin-top: 6px;
       text-align: center;
       font-family: 'DM Mono', monospace;
       font-weight: 500;
     }
 
-    button[type="button"] {
-      background: linear-gradient(135deg, var(--accent) 0%, #d84a1f 100%);
+    .calculate-btn {
+      background: linear-gradient(135deg, var(--accent) 0%, #147050 100%);
       color: white;
       border: none;
       padding: 14px 28px;
-      border-radius: 8px;
+      border-radius: 10px;
       font-family: 'Syne', sans-serif;
-      font-size: 14px;
+      font-size: 15px;
       font-weight: 600;
       text-transform: uppercase;
       letter-spacing: 0.5px;
       cursor: pointer;
       transition: all 0.3s ease;
       width: 100%;
-      box-shadow: 0 4px 12px rgba(232, 93, 47, 0.3);
+      box-shadow: 0 4px 14px rgba(26, 122, 90, 0.3);
     }
-
-    button[type="button"]:hover {
+    .calculate-btn:hover {
       transform: translateY(-2px);
-      box-shadow: 0 6px 20px rgba(232, 93, 47, 0.4);
+      box-shadow: 0 6px 20px rgba(26, 122, 90, 0.4);
     }
-
-    button[type="button"]:active {
+    .calculate-btn:active {
       transform: translateY(0);
-      box-shadow: 0 2px 8px rgba(232, 93, 47, 0.3);
+      box-shadow: 0 2px 8px rgba(26, 122, 90, 0.3);
     }
 
-    .results-section {
-      display: none;
-    }
-
-    .results-section.visible {
-      display: block;
-    }
+    .results-section { display: none; }
+    .results-section.visible { display: block; }
 
     .hero-card {
-      background: linear-gradient(135deg, var(--accent) 0%, #d84a1f 100%);
+      background: linear-gradient(135deg, var(--accent) 0%, var(--accent2) 100%);
       color: white;
       border-radius: 16px;
-      padding: 32px;
-      margin-bottom: 24px;
-      box-shadow: 0 8px 24px rgba(232, 93, 47, 0.3);
+      padding: 28px 20px;
+      margin-bottom: 20px;
+      box-shadow: 0 8px 24px rgba(26, 122, 90, 0.25);
       text-align: center;
     }
 
     .hero-time {
-      font-size: 64px;
+      font-size: 52px;
       font-weight: 700;
-      margin-bottom: 12px;
+      margin-bottom: 8px;
       letter-spacing: -2px;
     }
 
@@ -392,7 +345,7 @@
       text-transform: uppercase;
       letter-spacing: 0.5px;
       opacity: 0.95;
-      margin-bottom: 16px;
+      margin-bottom: 12px;
     }
 
     .hero-meta {
@@ -405,200 +358,147 @@
       background: var(--surface);
       border: 1.5px solid var(--border);
       border-radius: 12px;
-      padding: 16px;
+      padding: 14px;
       margin-bottom: 16px;
       font-size: 14px;
       line-height: 1.6;
     }
 
     .info-box.ev {
-      background: rgba(0, 102, 204, 0.08);
-      border-color: rgba(0, 102, 204, 0.3);
+      background: rgba(37, 99, 176, 0.08);
+      border-color: rgba(37, 99, 176, 0.25);
       color: var(--ev-blue);
     }
 
     .time-cards {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 16px;
-      margin-bottom: 24px;
-    }
-
-    @media (max-width: 600px) {
-      .time-cards {
-        grid-template-columns: 1fr;
-      }
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-bottom: 20px;
     }
 
     .time-card {
       background: var(--surface);
       border: 1.5px solid var(--border);
       border-radius: 12px;
-      padding: 20px;
-      text-align: center;
+      padding: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
       transition: all 0.2s ease;
     }
-
     .time-card:hover {
       border-color: var(--accent);
-      box-shadow: 0 4px 12px rgba(232, 93, 47, 0.1);
+      box-shadow: 0 4px 12px rgba(26, 122, 90, 0.08);
     }
 
     .time-card-time {
-      font-size: 36px;
+      font-size: 28px;
       font-weight: 700;
       color: var(--accent);
-      margin-bottom: 8px;
       letter-spacing: -1px;
+      font-family: 'DM Mono', monospace;
     }
+
+    .time-card-info { text-align: right; }
 
     .time-card-label {
       font-size: 13px;
       font-weight: 600;
-      text-transform: uppercase;
-      color: var(--muted);
-      letter-spacing: 0.5px;
-      margin-bottom: 8px;
+      color: var(--text);
+      margin-bottom: 2px;
     }
 
     .time-card-desc {
       font-size: 12px;
       color: var(--muted);
-      line-height: 1.5;
     }
 
     .arrival-cards {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 16px;
-      margin-bottom: 24px;
-    }
-
-    @media (max-width: 600px) {
-      .arrival-cards {
-        grid-template-columns: 1fr;
-      }
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-bottom: 20px;
     }
 
     .arrival-card {
       background: var(--surface);
       border: 1.5px solid var(--border);
       border-radius: 12px;
-      padding: 20px;
-      text-align: center;
+      padding: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
       position: relative;
     }
 
     .arrival-card.safe {
-      background: linear-gradient(135deg, rgba(42, 157, 111, 0.08), rgba(42, 157, 111, 0.03));
-      border-color: rgba(42, 157, 111, 0.2);
+      background: linear-gradient(135deg, rgba(26, 122, 90, 0.06), rgba(26, 122, 90, 0.02));
+      border-color: rgba(26, 122, 90, 0.25);
     }
-
     .arrival-card.bestguess {
-      background: linear-gradient(135deg, rgba(232, 93, 47, 0.08), rgba(232, 93, 47, 0.03));
-      border-color: rgba(232, 93, 47, 0.2);
+      background: linear-gradient(135deg, rgba(37, 99, 176, 0.06), rgba(37, 99, 176, 0.02));
+      border-color: rgba(37, 99, 176, 0.25);
     }
-
     .arrival-card.relaxed {
-      background: linear-gradient(135deg, rgba(244, 164, 96, 0.08), rgba(244, 164, 96, 0.03));
-      border-color: rgba(244, 164, 96, 0.2);
+      background: linear-gradient(135deg, rgba(212, 150, 10, 0.06), rgba(212, 150, 10, 0.02));
+      border-color: rgba(212, 150, 10, 0.25);
     }
 
     .arrival-time {
-      font-size: 36px;
+      font-size: 28px;
       font-weight: 700;
-      margin-bottom: 8px;
       letter-spacing: -1px;
+      font-family: 'DM Mono', monospace;
     }
 
-    .arrival-card.safe .arrival-time {
-      color: var(--success);
-    }
+    .arrival-card.safe .arrival-time { color: var(--success); }
+    .arrival-card.bestguess .arrival-time { color: var(--accent2); }
+    .arrival-card.relaxed .arrival-time { color: var(--warning); }
 
-    .arrival-card.bestguess .arrival-time {
-      color: var(--accent);
-    }
-
-    .arrival-card.relaxed .arrival-time {
-      color: var(--warning);
-    }
+    .arrival-info { text-align: right; }
 
     .arrival-label {
       font-size: 13px;
       font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      margin-bottom: 8px;
+      margin-bottom: 2px;
     }
-
-    .arrival-card.safe .arrival-label {
-      color: var(--success);
-    }
-
-    .arrival-card.bestguess .arrival-label {
-      color: var(--accent);
-    }
-
-    .arrival-card.relaxed .arrival-label {
-      color: var(--warning);
-    }
+    .arrival-card.safe .arrival-label { color: var(--success); }
+    .arrival-card.bestguess .arrival-label { color: var(--accent2); }
+    .arrival-card.relaxed .arrival-label { color: var(--warning); }
 
     .arrival-desc {
       font-size: 12px;
       color: var(--muted);
-      line-height: 1.5;
     }
 
-    .risk-indicator {
-      position: absolute;
-      top: 12px;
-      right: 12px;
-      width: 12px;
-      height: 12px;
+    .risk-dot {
+      width: 10px;
+      height: 10px;
       border-radius: 50%;
-      background: var(--success);
+      flex-shrink: 0;
+      margin-right: 12px;
     }
-
-    .arrival-card.safe .risk-indicator {
-      background: var(--success);
-    }
-
-    .arrival-card.bestguess .risk-indicator {
-      background: var(--warning);
-    }
-
-    .arrival-card.relaxed .risk-indicator {
-      background: var(--danger);
-    }
+    .arrival-card.safe .risk-dot { background: var(--success); }
+    .arrival-card.bestguess .risk-dot { background: var(--accent2); }
+    .arrival-card.relaxed .risk-dot { background: var(--warning); }
 
     .delay-info {
       background: var(--surface);
       border: 1.5px solid var(--border);
       border-radius: 12px;
       padding: 16px;
-      margin-bottom: 24px;
-      display: grid;
-      grid-template-columns: 2fr 1fr;
-      gap: 20px;
-      align-items: center;
+      margin-bottom: 20px;
     }
 
-    @media (max-width: 600px) {
-      .delay-info {
-        grid-template-columns: 1fr;
-      }
-    }
-
-    .delay-content {
+    .delay-top {
       display: flex;
       align-items: center;
-      gap: 16px;
+      gap: 12px;
+      margin-bottom: 12px;
     }
 
-    .delay-icon {
-      font-size: 32px;
-      flex-shrink: 0;
-    }
+    .delay-icon { font-size: 24px; flex-shrink: 0; }
 
     .delay-text-label {
       font-size: 11px;
@@ -606,20 +506,20 @@
       text-transform: uppercase;
       color: var(--muted);
       letter-spacing: 0.5px;
-      margin-bottom: 4px;
+      margin-bottom: 2px;
     }
 
     .delay-text-main {
-      font-size: 16px;
+      font-size: 14px;
       font-weight: 600;
       line-height: 1.3;
     }
 
     .delay-bar {
       width: 100%;
-      height: 8px;
+      height: 6px;
       background: var(--surface2);
-      border-radius: 4px;
+      border-radius: 3px;
       overflow: hidden;
     }
 
@@ -627,6 +527,7 @@
       height: 100%;
       background: var(--success);
       transition: width 0.3s ease, background-color 0.3s ease;
+      border-radius: 3px;
     }
 
     .map-container {
@@ -634,47 +535,30 @@
       border: 1.5px solid var(--border);
       border-radius: 16px;
       overflow: hidden;
-      margin-bottom: 24px;
+      margin-bottom: 20px;
       box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
       display: none;
     }
-
-    .map-container.visible {
-      display: block;
-    }
+    .map-container.visible { display: block; }
 
     #map {
       width: 100%;
-      height: 350px;
-    }
-
-    @media (max-width: 600px) {
-      #map {
-        height: 250px;
-      }
+      height: 280px;
     }
 
     .route-info {
-      padding: 16px;
+      padding: 14px;
       border-top: 1px solid var(--border);
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 16px;
+      display: flex;
+      justify-content: space-around;
+      gap: 8px;
       font-size: 13px;
     }
 
-    @media (max-width: 600px) {
-      .route-info {
-        grid-template-columns: 1fr;
-      }
-    }
-
-    .route-info-item {
-      text-align: center;
-    }
+    .route-info-item { text-align: center; }
 
     .route-info-label {
-      font-size: 11px;
+      font-size: 10px;
       font-weight: 700;
       text-transform: uppercase;
       color: var(--muted);
@@ -683,50 +567,26 @@
     }
 
     .route-info-value {
-      font-size: 16px;
+      font-size: 15px;
       font-weight: 600;
       color: var(--text);
       font-family: 'DM Mono', monospace;
     }
 
     .error-message {
-      background: rgba(215, 58, 73, 0.1);
-      border: 1.5px solid rgba(215, 58, 73, 0.3);
-      color: #d73a49;
-      padding: 16px;
-      border-radius: 8px;
+      background: rgba(197, 48, 48, 0.08);
+      border: 1.5px solid rgba(197, 48, 48, 0.25);
+      color: #c53030;
+      padding: 14px;
+      border-radius: 10px;
       margin-bottom: 16px;
       font-size: 14px;
       line-height: 1.6;
     }
 
-    @media (max-width: 600px) {
-      .container {
-        padding: 16px;
-      }
-
-      header {
-        margin-bottom: 32px;
-        padding-top: 16px;
-      }
-
-      .logo {
-        font-size: 36px;
-      }
-
-      .form-card {
-        padding: 20px;
-        margin-bottom: 20px;
-      }
-
-      .hero-card {
-        padding: 24px;
-        margin-bottom: 20px;
-      }
-
-      .hero-time {
-        font-size: 48px;
-      }
+    @media (min-width: 600px) {
+      .container { max-width: 560px; }
+      .hero-time { font-size: 60px; }
     }
   </style>
 </head>
@@ -739,24 +599,22 @@
 
     <div class="form-card">
       <div class="mode-toggle">
-        <button type="button" class="toggle-btn active" data-mode="departure">Abfahrtsmodus</button>
-        <button type="button" class="toggle-btn" data-mode="arrival">Ankunftsmodus</button>
+        <button type="button" class="toggle-btn active" data-mode="departure">Ankunftszeit berechnen</button>
+        <button type="button" class="toggle-btn" data-mode="arrival">Abfahrtszeit berechnen</button>
       </div>
 
-      <div class="form-row">
-        <div class="form-group">
-          <label for="from">Startort</label>
-          <div class="input-wrapper">
-            <input type="text" id="from" placeholder="Adresse eingeben...">
-            <div class="dropdown" id="from-dropdown"></div>
-          </div>
+      <div class="form-group">
+        <label for="from">Startort</label>
+        <div class="input-wrapper">
+          <input type="text" id="from" placeholder="Adresse eingeben...">
+          <div class="dropdown" id="from-dropdown"></div>
         </div>
-        <div class="form-group">
-          <label for="to">Zielort</label>
-          <div class="input-wrapper">
-            <input type="text" id="to" placeholder="Adresse eingeben...">
-            <div class="dropdown" id="to-dropdown"></div>
-          </div>
+      </div>
+      <div class="form-group">
+        <label for="to">Zielort</label>
+        <div class="input-wrapper">
+          <input type="text" id="to" placeholder="Adresse eingeben...">
+          <div class="dropdown" id="to-dropdown"></div>
         </div>
       </div>
 
@@ -783,7 +641,6 @@
 
       <div id="ev-section" class="ev-section">
         <div class="ev-section-title">E-Auto Einstellungen</div>
-
         <div class="ev-grid">
           <div class="form-group">
             <label for="ev-model">Fahrzeugmodell</label>
@@ -885,9 +742,7 @@
             <input type="range" id="ev-start-battery" min="10" max="100" value="80">
             <div class="slider-value"><span id="ev-start-battery-value">80</span>%</div>
           </div>
-        </div>
 
-        <div class="ev-grid">
           <div class="form-group">
             <label for="ev-end-battery">Zielladung (mindestens)</label>
             <input type="range" id="ev-end-battery" min="10" max="50" value="10">
@@ -897,7 +752,7 @@
       </div>
 
       <div class="form-group">
-        <button type="button" id="calculate-btn">Berechnen</button>
+        <button type="button" class="calculate-btn" id="calculate-btn">Berechnen</button>
       </div>
     </div>
 
@@ -907,67 +762,75 @@
       <div id="hero-card" class="hero-card" style="display: none;">
         <div class="hero-time" id="hero-time">14:30</div>
         <div class="hero-label" id="hero-label">Sichere Abfahrtszeit</div>
-        <div class="hero-meta" id="hero-meta">
-          <div>Ankunft: 18:45 (pessimistisches Szenario)</div>
-        </div>
+        <div class="hero-meta" id="hero-meta"></div>
       </div>
 
       <div class="delay-info" id="delay-info" style="display: none;">
-        <div class="delay-content">
+        <div class="delay-top">
           <div class="delay-icon" id="delay-icon">⚠️</div>
           <div>
             <div class="delay-text-label">Verzögerungsrisiko</div>
             <div class="delay-text-main" id="delay-text">Verkehr unvorhersehbar</div>
           </div>
         </div>
-        <div>
-          <div class="delay-bar">
-            <div class="delay-bar-fill" id="delay-bar-fill" style="width: 50%;"></div>
-          </div>
+        <div class="delay-bar">
+          <div class="delay-bar-fill" id="delay-bar-fill" style="width: 50%;"></div>
         </div>
       </div>
 
       <div class="time-cards" id="time-cards" style="display: none;">
         <div class="time-card">
-          <div class="time-card-time" id="time-optimistic">14:35</div>
-          <div class="time-card-label">Günstig</div>
-          <div class="time-card-desc">Optimaler Verkehr</div>
+          <div class="time-card-time" id="time-optimistic">--:--</div>
+          <div class="time-card-info">
+            <div class="time-card-label">Günstig</div>
+            <div class="time-card-desc">Optimaler Verkehr</div>
+          </div>
         </div>
         <div class="time-card">
-          <div class="time-card-time" id="time-best-guess">14:50</div>
-          <div class="time-card-label">Typisch</div>
-          <div class="time-card-desc">Erwarteter Verkehr</div>
+          <div class="time-card-time" id="time-best-guess">--:--</div>
+          <div class="time-card-info">
+            <div class="time-card-label">Typisch</div>
+            <div class="time-card-desc">Erwarteter Verkehr</div>
+          </div>
         </div>
         <div class="time-card">
-          <div class="time-card-time" id="time-pessimistic">15:10</div>
-          <div class="time-card-label">Ungünstig</div>
-          <div class="time-card-desc">Verspäteter Verkehr</div>
+          <div class="time-card-time" id="time-pessimistic">--:--</div>
+          <div class="time-card-info">
+            <div class="time-card-label">Ungünstig</div>
+            <div class="time-card-desc">Verzögerter Verkehr</div>
+          </div>
         </div>
       </div>
 
       <div class="arrival-cards" id="arrival-cards" style="display: none;">
         <div class="arrival-card safe">
-          <div class="risk-indicator"></div>
-          <div class="arrival-time" id="arrival-safe">13:00</div>
-          <div class="arrival-label">Entspannt</div>
-          <div class="arrival-desc">Früh genug ankommen</div>
+          <div class="risk-dot"></div>
+          <div class="arrival-time" id="arrival-safe">--:--</div>
+          <div class="arrival-info">
+            <div class="arrival-label">Entspannt</div>
+            <div class="arrival-desc">Früh genug losfahren</div>
+          </div>
         </div>
         <div class="arrival-card bestguess">
-          <div class="risk-indicator"></div>
-          <div class="arrival-time" id="arrival-bestguess">13:45</div>
-          <div class="arrival-label">Typisch</div>
-          <div class="arrival-desc">Rechtzeitig ankommen</div>
+          <div class="risk-dot"></div>
+          <div class="arrival-time" id="arrival-bestguess">--:--</div>
+          <div class="arrival-info">
+            <div class="arrival-label">Typisch</div>
+            <div class="arrival-desc">Rechtzeitig ankommen</div>
+          </div>
         </div>
         <div class="arrival-card relaxed">
-          <div class="risk-indicator"></div>
-          <div class="arrival-time" id="arrival-relaxed">14:15</div>
-          <div class="arrival-label">Knapp</div>
-          <div class="arrival-desc">Riskante Zeitplanung</div>
+          <div class="risk-dot"></div>
+          <div class="arrival-time" id="arrival-relaxed">--:--</div>
+          <div class="arrival-info">
+            <div class="arrival-label">Knapp</div>
+            <div class="arrival-desc">Riskante Zeitplanung</div>
+          </div>
         </div>
       </div>
 
       <div id="ev-info-box" class="info-box ev" style="display: none;">
-        <div id="ev-info-text">⚡ 2 Ladestopp(s) empfohlen, ca. 50 Min. Ladezeit</div>
+        <div id="ev-info-text"></div>
       </div>
 
       <div class="map-container" id="map-container">
@@ -978,11 +841,11 @@
             <div class="route-info-value" id="route-distance">--</div>
           </div>
           <div class="route-info-item">
-            <div class="route-info-label">Fahrzeit (beste Schätzung)</div>
+            <div class="route-info-label">Fahrzeit</div>
             <div class="route-info-value" id="route-duration">--</div>
           </div>
           <div class="route-info-item">
-            <div class="route-info-label">Geschwindigkeit (ø)</div>
+            <div class="route-info-label">ø km/h</div>
             <div class="route-info-value" id="route-speed">--</div>
           </div>
         </div>
@@ -1063,24 +926,19 @@
           center: { lat: 51.1657, lng: 10.4515 },
           zoom: 6,
           styles: [
-            { elementType: 'geometry', stylers: [{ color: '#f5f0eb' }] },
-            { elementType: 'labels.text.stroke', stylers: [{ color: '#f5f0eb' }] },
-            { elementType: 'labels.text.fill', stylers: [{ color: '#1e1812' }] },
-            { featureType: 'administrative.locality', elementType: 'labels.text.fill', stylers: [{ color: '#9a8878' }] },
+            { elementType: 'geometry', stylers: [{ color: '#f0f5f3' }] },
+            { elementType: 'labels.text.stroke', stylers: [{ color: '#f0f5f3' }] },
+            { elementType: 'labels.text.fill', stylers: [{ color: '#1a2e28' }] },
+            { featureType: 'administrative.locality', elementType: 'labels.text.fill', stylers: [{ color: '#6b8a7e' }] },
             { featureType: 'road', elementType: 'geometry', stylers: [{ color: '#ffffff' }] },
-            { featureType: 'road.arterial', elementType: 'geometry', stylers: [{ color: '#faf7f4' }] },
-            { featureType: 'water', elementType: 'geometry.fill', stylers: [{ color: '#c5ddf5' }] },
+            { featureType: 'road.arterial', elementType: 'geometry', stylers: [{ color: '#f5f9f7' }] },
+            { featureType: 'water', elementType: 'geometry.fill', stylers: [{ color: '#b8d4e8' }] },
           ],
         });
         directionsRenderer = new google.maps.DirectionsRenderer({
           map: currentMap,
-          polylineOptions: {
-            strokeColor: '#e85d2f',
-            strokeWeight: 3,
-          },
-          markerOptions: {
-            icon: 'http://maps.google.com/mapfiles/ms/icons/orange-dot.png',
-          },
+          polylineOptions: { strokeColor: '#1a7a5a', strokeWeight: 4 },
+          markerOptions: { icon: 'https://maps.google.com/mapfiles/ms/icons/green-dot.png' },
         });
       }
 
@@ -1101,8 +959,7 @@
       setupAutocomplete('to', 'to-dropdown');
 
       document.getElementById('ev-toggle').addEventListener('change', (e) => {
-        const evSection = document.getElementById('ev-section');
-        evSection.classList.toggle('visible', e.target.checked);
+        document.getElementById('ev-section').classList.toggle('visible', e.target.checked);
       });
 
       document.getElementById('ev-start-battery').addEventListener('input', (e) => {
@@ -1157,13 +1014,14 @@
       predictions.forEach(pred => {
         const item = document.createElement('div');
         item.className = 'dropdown-item';
-        item.innerHTML = `
-          <div class="dropdown-item-primary">${pred.main_text}</div>
-          <div class="dropdown-item-secondary">${pred.secondary_text || ''}</div>
-        `;
+        const mainText = pred.structured_formatting ? pred.structured_formatting.main_text : pred.description;
+        const secondaryText = pred.structured_formatting ? pred.structured_formatting.secondary_text : '';
+        item.innerHTML = '<div class="dropdown-item-primary">' + mainText + '</div>'
+          + '<div class="dropdown-item-secondary">' + (secondaryText || '') + '</div>';
         item.addEventListener('click', () => {
           input.value = pred.description;
           hideDropdown(dropdown);
+          sessionToken = new google.maps.places.AutocompleteSessionToken();
         });
         dropdown.appendChild(item);
       });
@@ -1175,43 +1033,29 @@
     }
 
     function toggleModeUI() {
-      const departureMode = document.getElementById('departure-mode');
-      const arrivalMode = document.getElementById('arrival-mode');
-
-      if (currentMode === 'departure') {
-        departureMode.style.display = 'block';
-        arrivalMode.style.display = 'none';
-      } else {
-        departureMode.style.display = 'none';
-        arrivalMode.style.display = 'block';
-      }
+      document.getElementById('departure-mode').style.display = currentMode === 'departure' ? 'block' : 'none';
+      document.getElementById('arrival-mode').style.display = currentMode === 'arrival' ? 'block' : 'none';
     }
 
     function handleCalculate() {
       const from = document.getElementById('from').value.trim();
       const to = document.getElementById('to').value.trim();
-      const errorContainer = document.getElementById('error-container');
-      errorContainer.innerHTML = '';
+      document.getElementById('error-container').innerHTML = '';
 
-      if (!from || !to) {
-        showError('Bitte beide Orte eingeben.');
-        return;
-      }
+      if (!from || !to) { showError('Bitte beide Orte eingeben.'); return; }
 
       const timeInput = currentMode === 'departure'
         ? document.getElementById('departure-time').value.trim()
         : document.getElementById('arrival-time').value.trim();
 
-      if (!timeInput) {
-        showError('Bitte Zeit eingeben.');
-        return;
-      }
+      if (!timeInput) { showError('Bitte Zeit eingeben.'); return; }
 
       document.getElementById('results').classList.add('visible');
       document.getElementById('time-cards').style.display = 'none';
       document.getElementById('arrival-cards').style.display = 'none';
       document.getElementById('hero-card').style.display = 'none';
       document.getElementById('delay-info').style.display = 'none';
+      document.getElementById('ev-info-box').style.display = 'none';
       document.getElementById('map-container').classList.remove('visible');
 
       calculateRoute(from, to, timeInput);
@@ -1224,7 +1068,7 @@
       if (currentMode === 'departure') {
         departureTime = parseTimeToDate(timeInput, now);
         if (!departureTime || departureTime < now) {
-          showError('Ungültige Abfahrtszeit. Bitte eine zukünftige Zeit eingeben.');
+          showError('Bitte eine zukünftige Abfahrtszeit eingeben.');
           return;
         }
       } else {
@@ -1245,23 +1089,15 @@
 
       distanceService.getDistanceMatrix(request, (response, status) => {
         if (status !== google.maps.DistanceMatrixStatus.OK || !response.rows[0].elements[0].duration_in_traffic) {
-          showError('Fehler bei der Routenberechnung. Bitte versuchen Sie es später erneut.');
+          showError('Fehler bei der Routenberechnung. Bitte versuche es später erneut.');
           return;
         }
 
         const element = response.rows[0].elements[0];
-        const distanceMeters = element.distance.value;
-        const distanceKm = distanceMeters / 1000;
+        const distanceKm = element.distance.value / 1000;
+        const scenarios = getTrafficScenarios(element);
 
-        const scenarios = getTrafficScenarios(element, departureTime, distanceKm);
-
-        lastResults = {
-          from,
-          to,
-          distanceKm,
-          scenarios,
-          departureTime,
-        };
+        lastResults = { from, to, distanceKm, scenarios, departureTime };
 
         if (currentMode === 'departure') {
           displayDepartureResults(scenarios, departureTime);
@@ -1278,60 +1114,38 @@
       });
     }
 
-    function getTrafficScenarios(element, departureTime, distanceKm) {
+    function getTrafficScenarios(element) {
       const bestGuessDuration = element.duration_in_traffic.value;
-      const pessimisticDuration = Math.ceil(bestGuessDuration * 1.25);
-      const optimisticDuration = Math.ceil(bestGuessDuration * 0.85);
-
       return {
-        optimistic: {
-          durationSeconds: optimisticDuration,
-          label: 'Günstig',
-        },
-        bestGuess: {
-          durationSeconds: bestGuessDuration,
-          label: 'Typisch',
-        },
-        pessimistic: {
-          durationSeconds: pessimisticDuration,
-          label: 'Ungünstig',
-        },
+        optimistic: { durationSeconds: Math.ceil(bestGuessDuration * 0.85), label: 'Günstig' },
+        bestGuess: { durationSeconds: bestGuessDuration, label: 'Typisch' },
+        pessimistic: { durationSeconds: Math.ceil(bestGuessDuration * 1.25), label: 'Ungünstig' },
       };
     }
 
     function displayDepartureResults(scenarios, departureTime) {
-      const safeTime = new Date(departureTime);
       const safeArrival = new Date(departureTime.getTime() + scenarios.pessimistic.durationSeconds * 1000);
 
-      document.getElementById('hero-time').textContent = formatTime(safeTime);
-      document.getElementById('hero-label').textContent = 'Sichere Abfahrtszeit';
-      document.getElementById('hero-meta').innerHTML = `
-        <div>Ankunft: ${formatTime(safeArrival)} (pessimistisches Szenario)</div>
-      `;
+      document.getElementById('hero-time').textContent = formatTime(safeArrival);
+      document.getElementById('hero-label').textContent = 'Ankunft (pessimistisch)';
+      document.getElementById('hero-meta').innerHTML =
+        '<div>Abfahrt: ' + formatTime(departureTime) + ' · Dauer: ' + formatDuration(Math.round(scenarios.pessimistic.durationSeconds / 60)) + '</div>';
       document.getElementById('hero-card').style.display = 'block';
 
-      const timeOptimal = new Date(departureTime.getTime() + scenarios.optimistic.durationSeconds * 1000);
-      const timeBest = new Date(departureTime.getTime() + scenarios.bestGuess.durationSeconds * 1000);
-      const timePessimistic = new Date(departureTime.getTime() + scenarios.pessimistic.durationSeconds * 1000);
+      document.getElementById('time-optimistic').textContent = formatTime(new Date(departureTime.getTime() + scenarios.optimistic.durationSeconds * 1000));
+      document.getElementById('time-best-guess').textContent = formatTime(new Date(departureTime.getTime() + scenarios.bestGuess.durationSeconds * 1000));
+      document.getElementById('time-pessimistic').textContent = formatTime(new Date(departureTime.getTime() + scenarios.pessimistic.durationSeconds * 1000));
+      document.getElementById('time-cards').style.display = 'flex';
 
-      document.getElementById('time-optimistic').textContent = formatTime(timeOptimal);
-      document.getElementById('time-best-guess').textContent = formatTime(timeBest);
-      document.getElementById('time-pessimistic').textContent = formatTime(timePessimistic);
-
-      document.getElementById('time-cards').style.display = 'grid';
-
-      const diff = scenarios.pessimistic.durationSeconds - scenarios.optimistic.durationSeconds;
-      const diffMinutes = Math.round(diff / 60);
-      const riskLevel = diffMinutes < 10 ? 'low' : diffMinutes < 30 ? 'medium' : 'high';
-
-      displayDelayInfo(diffMinutes, riskLevel);
+      const diffMinutes = Math.round((scenarios.pessimistic.durationSeconds - scenarios.optimistic.durationSeconds) / 60);
+      displayDelayInfo(diffMinutes, diffMinutes < 10 ? 'low' : diffMinutes < 30 ? 'medium' : 'high');
     }
 
     function displayArrivalResults(scenarios, targetTime) {
-      const now = new Date();
-
+      // Entspannt = pessimistic duration (leave earliest, most buffer)
       const safeDeparture = new Date(targetTime.getTime() - scenarios.pessimistic.durationSeconds * 1000);
       const bestDeparture = new Date(targetTime.getTime() - scenarios.bestGuess.durationSeconds * 1000);
+      // Knapp = optimistic duration (leave latest, least buffer)
       const relaxedDeparture = new Date(targetTime.getTime() - scenarios.optimistic.durationSeconds * 1000);
 
       document.getElementById('arrival-safe').textContent = formatTime(safeDeparture);
@@ -1340,18 +1154,14 @@
 
       document.getElementById('hero-time').textContent = formatTime(safeDeparture);
       document.getElementById('hero-label').textContent = 'Empfohlene Abfahrtszeit';
-      document.getElementById('hero-meta').innerHTML = `
-        <div>Ankunft: ${formatTime(targetTime)} (pessimistisches Szenario)</div>
-      `;
+      document.getElementById('hero-meta').innerHTML =
+        '<div>Ankunft: ' + formatTime(targetTime) + ' (mit Puffer für Verzögerungen)</div>';
       document.getElementById('hero-card').style.display = 'block';
 
-      document.getElementById('arrival-cards').style.display = 'grid';
+      document.getElementById('arrival-cards').style.display = 'flex';
 
-      const diff = scenarios.pessimistic.durationSeconds - scenarios.optimistic.durationSeconds;
-      const diffMinutes = Math.round(diff / 60);
-      const riskLevel = diffMinutes < 10 ? 'low' : diffMinutes < 30 ? 'medium' : 'high';
-
-      displayDelayInfo(diffMinutes, riskLevel);
+      const diffMinutes = Math.round((scenarios.pessimistic.durationSeconds - scenarios.optimistic.durationSeconds) / 60);
+      displayDelayInfo(diffMinutes, diffMinutes < 10 ? 'low' : diffMinutes < 30 ? 'medium' : 'high');
     }
 
     function displayDelayInfo(diffMinutes, riskLevel) {
@@ -1363,44 +1173,33 @@
       let icon, text, fillPercent, fillColor;
 
       if (riskLevel === 'low') {
-        icon = 'V';
-        text = `Zeitpuffer: ${diffMinutes} Min. - Verkehr sehr zuverlaessig`;
-        fillPercent = 20;
-        fillColor = '#2a9d6f';
+        icon = '✅'; text = 'Zeitpuffer: ' + diffMinutes + ' Min. – Verkehr sehr zuverlässig';
+        fillPercent = 20; fillColor = '#1a7a5a';
       } else if (riskLevel === 'medium') {
-        icon = 'W';
-        text = `Zeitpuffer: ${diffMinutes} Min. - Verkehr moderat variabel`;
-        fillPercent = 60;
-        fillColor = '#f4a460';
+        icon = '⚠️'; text = 'Zeitpuffer: ' + diffMinutes + ' Min. – Verkehr moderat variabel';
+        fillPercent = 60; fillColor = '#d4960a';
       } else {
-        icon = 'W';
-        text = `Zeitpuffer: ${diffMinutes} Min. - Verkehr sehr variabel`;
-        fillPercent = 100;
-        fillColor = '#d73a49';
+        icon = '🚨'; text = 'Zeitpuffer: ' + diffMinutes + ' Min. – Verkehr sehr variabel';
+        fillPercent = 100; fillColor = '#c53030';
       }
 
       delayIcon.textContent = icon;
       delayText.textContent = text;
       delayBarFill.style.width = fillPercent + '%';
       delayBarFill.style.backgroundColor = fillColor;
-      delayInfo.style.display = 'grid';
+      delayInfo.style.display = 'block';
     }
 
     function displayMap(from, to) {
-      const directionsRequest = {
+      directionsService.route({
         origin: from,
         destination: to,
         travelMode: google.maps.TravelMode.DRIVING,
         language: 'de',
-      };
-
-      directionsService.route(directionsRequest, (result, status) => {
+      }, (result, status) => {
         if (status === google.maps.DirectionsStatus.OK) {
           directionsRenderer.setDirections(result);
-
-          const route = result.routes[0];
-          const leg = route.legs[0];
-
+          const leg = result.routes[0].legs[0];
           const distanceKm = leg.distance.value / 1000;
           const durationMin = Math.round(leg.duration.value / 60);
           const speedAvg = Math.round(distanceKm / (durationMin / 60));
@@ -1408,30 +1207,22 @@
           document.getElementById('route-distance').textContent = distanceKm.toFixed(1) + ' km';
           document.getElementById('route-duration').textContent = formatDuration(durationMin);
           document.getElementById('route-speed').textContent = speedAvg + ' km/h';
-
           document.getElementById('map-container').classList.add('visible');
 
           if (document.getElementById('ev-toggle').checked && lastResults) {
-            addChargingMarkers(route, lastResults.distanceKm);
+            addChargingMarkers(result.routes[0], lastResults.distanceKm);
           }
         }
       });
     }
 
     function calculateEVNeeds(distanceKm, scenarios) {
-      const evToggle = document.getElementById('ev-toggle');
-      if (!evToggle.checked) return;
-
       const modelId = document.getElementById('ev-model').value;
-      if (!modelId) {
-        showError('Bitte ein E-Auto-Modell auswaehlen.');
-        return;
-      }
+      if (!modelId) { showError('Bitte ein E-Auto-Modell auswählen.'); return; }
 
       const startBattery = parseInt(document.getElementById('ev-start-battery').value);
       const endBattery = parseInt(document.getElementById('ev-end-battery').value);
       const evData = EV_DATABASE[modelId];
-
       const usableRange = evData.wltp * REAL_WORLD_RANGE_FACTOR * (startBattery - endBattery) / 100;
 
       if (distanceKm <= usableRange) {
@@ -1441,47 +1232,42 @@
 
       const chargableRange = evData.wltp * REAL_WORLD_RANGE_FACTOR * (80 - endBattery) / 100;
       const stopsNeeded = Math.ceil((distanceKm - usableRange) / chargableRange);
-      const chargingTimePerStop = 25;
-      const totalChargingTime = stopsNeeded * chargingTimePerStop;
+      const totalChargingTime = stopsNeeded * 25;
 
       const evInfoBox = document.getElementById('ev-info-box');
-      evInfoBox.innerHTML = `<div id="ev-info-text">⚡ ${stopsNeeded} Ladestopp(s) empfohlen, ca. ${totalChargingTime} Min. Ladezeit</div>`;
+      evInfoBox.innerHTML = '<div id="ev-info-text">⚡ ' + stopsNeeded + ' Ladestopp(s) empfohlen, ca. ' + totalChargingTime + ' Min. Ladezeit</div>';
       evInfoBox.style.display = 'block';
 
       if (currentMode === 'departure' && lastResults) {
         const heroMeta = document.getElementById('hero-meta');
-        const currentMeta = heroMeta.innerHTML;
-        heroMeta.innerHTML = currentMeta + `<div>+ ${totalChargingTime} Min. Ladezeit (${stopsNeeded} Stopp)</div>`;
+        heroMeta.innerHTML += '<div>+ ' + totalChargingTime + ' Min. Ladezeit (' + stopsNeeded + ' Stopp)</div>';
       }
     }
 
     function addChargingMarkers(route, totalDistance) {
       const leg = route.legs[0];
       const modelId = document.getElementById('ev-model').value;
-      const endBattery = parseInt(document.getElementById('ev-end-battery').value);
       const startBattery = parseInt(document.getElementById('ev-start-battery').value);
       const evData = EV_DATABASE[modelId];
       const fullRange = evData.wltp * REAL_WORLD_RANGE_FACTOR;
       const kmPerPercent = fullRange / 100;
 
       let currentSoC = startBattery;
-      let cumulativeDistance = 0;
       const steps = leg.steps || [];
 
       for (let i = 0; i < steps.length; i++) {
         const step = steps[i];
         const stepKm = step.distance.value / 1000;
-        cumulativeDistance += stepKm;
         currentSoC -= stepKm / kmPerPercent;
 
         if (currentSoC <= 15) {
           new google.maps.Marker({
             position: step.end_location,
             map: currentMap,
-            title: `Ladestopp (Akku ~${Math.max(0,Math.round(currentSoC))}% → 80%)`,
+            title: 'Ladestopp (Akku ~' + Math.max(0, Math.round(currentSoC)) + '% → 80%)',
             icon: 'https://maps.google.com/mapfiles/ms/icons/blue-dot.png',
           });
-          currentSoC = 80; // charged to 80%
+          currentSoC = 80;
         }
       }
     }
@@ -1489,33 +1275,26 @@
     function parseTimeToDate(timeStr, baseDate) {
       const match = timeStr.match(/^(\d{1,2}):(\d{2})$/);
       if (!match) return null;
-
       const hours = parseInt(match[1], 10);
       const minutes = parseInt(match[2], 10);
-
       if (hours < 0 || hours > 23 || minutes < 0 || minutes > 59) return null;
-
       const result = new Date(baseDate);
       result.setHours(hours, minutes, 0, 0);
-
       return result;
     }
 
     function formatTime(date) {
-      const hours = String(date.getHours()).padStart(2, '0');
-      const minutes = String(date.getMinutes()).padStart(2, '0');
-      return `${hours}:${minutes}`;
+      return String(date.getHours()).padStart(2, '0') + ':' + String(date.getMinutes()).padStart(2, '0');
     }
 
     function formatDuration(minutes) {
-      const hours = Math.floor(minutes / 60);
-      const mins = minutes % 60;
-      return hours > 0 ? `${hours}h ${mins}m` : `${mins}m`;
+      const h = Math.floor(minutes / 60);
+      const m = minutes % 60;
+      return h > 0 ? h + 'h ' + m + 'm' : m + 'm';
     }
 
     function showError(message) {
-      const container = document.getElementById('error-container');
-      container.innerHTML = `<div class="error-message">${message}</div>`;
+      document.getElementById('error-container').innerHTML = '<div class="error-message">' + message + '</div>';
       document.getElementById('results').classList.add('visible');
     }
 

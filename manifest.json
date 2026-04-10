@@ -4,8 +4,8 @@
   "description": "Historisch basierte Fahrzeitprognose für Deutschland mit Google Routes API.",
   "start_url": "./index.html",
   "display": "standalone",
-  "background_color": "#f5f0eb",
-  "theme_color": "#e85d2f",
+  "background_color": "#f0f5f3",
+  "theme_color": "#1a7a5a",
   "orientation": "portrait-primary",
   "lang": "de",
   "icons": [
