@@ -324,6 +324,20 @@
     .route-info-label { font-size: 10px; font-weight: 700; text-transform: uppercase; color: var(--muted); letter-spacing: 0.5px; margin-bottom: 4px; }
     .route-info-value { font-size: 15px; font-weight: 600; color: var(--text); font-family: 'DM Mono', monospace; }
 
+    .charging-stops-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px; }
+    .charging-stop-card {
+      background: var(--surface); border: 1.5px solid rgba(37,99,176,0.2);
+      border-radius: 12px; padding: 14px; display: flex; align-items: flex-start; gap: 12px;
+    }
+    .charging-stop-icon { font-size: 20px; flex-shrink: 0; margin-top: 2px; }
+    .charging-stop-info { flex: 1; min-width: 0; }
+    .charging-stop-name { font-size: 14px; font-weight: 600; color: var(--text); margin-bottom: 2px; }
+    .charging-stop-detail { font-size: 12px; color: var(--muted); line-height: 1.5; }
+    .charging-stop-network { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 4px; margin-top: 4px; }
+    .charging-stop-network.supercharger { background: rgba(197,48,48,0.1); color: #c53030; }
+    .charging-stop-network.other { background: rgba(37,99,176,0.1); color: var(--ev-blue); }
+    .charging-stop-searching { text-align: center; padding: 16px; color: var(--muted); font-size: 13px; }
+
     .error-message { background: rgba(197,48,48,0.08); border: 1.5px solid rgba(197,48,48,0.25); color: #c53030; padding: 14px; border-radius: 10px; margin-bottom: 16px; font-size: 14px; line-height: 1.6; }
 
     @media (min-width: 600px) {
@@ -529,7 +543,7 @@
           </div>
           <div class="form-group">
             <label for="ev-end-battery">Zielladung (mindestens)</label>
-            <input type="range" id="ev-end-battery" min="10" max="50" value="10">
+            <input type="range" id="ev-end-battery" min="10" max="90" value="10">
             <div class="slider-value"><span id="ev-end-battery-value">10</span>%</div>
           </div>
         </div>
@@ -616,6 +630,8 @@
       <div id="ev-info-box" class="info-box ev" style="display: none;">
         <div id="ev-info-text"></div>
       </div>
+
+      <div id="charging-stops-list" style="display: none;"></div>
 
       <div class="map-container" id="map-container">
         <div id="map"></div>
@@ -940,7 +956,11 @@
       document.getElementById('hero-card').style.display = 'none';
       document.getElementById('delay-info').style.display = 'none';
       document.getElementById('ev-info-box').style.display = 'none';
+      document.getElementById('charging-stops-list').style.display = 'none';
       document.getElementById('map-container').classList.remove('visible');
+      // Clear old charging markers
+      if (chargingMarkers) chargingMarkers.forEach(m => m.setMap(null));
+      chargingMarkers = [];
 
       if (currentMode === 'departure') {
         const departureTime = buildTargetDate('dep-hour-scroll', 'dep-min-scroll');
@@ -1129,7 +1149,25 @@
       });
     }
 
+    let chargingMarkers = [];
+    let placesService = null;
+
+    function getPlacesService() {
+      if (!placesService && currentMap) {
+        placesService = new google.maps.places.PlacesService(currentMap);
+      }
+      return placesService;
+    }
+
+    function isTesla(modelId) {
+      return modelId && modelId.startsWith('tesla-');
+    }
+
     function addChargingMarkers(route) {
+      // Clear old markers
+      chargingMarkers.forEach(m => m.setMap(null));
+      chargingMarkers = [];
+
       const leg = route.legs[0];
       const modelId = document.getElementById('ev-model').value;
       if (!modelId) return;
@@ -1138,21 +1176,161 @@
       const fullRange = evData.wltp * REAL_WORLD_RANGE_FACTOR;
       const kmPerPercent = fullRange / 100;
 
+      // Find positions along route where charging is needed
       let currentSoC = startBattery;
       const steps = leg.steps || [];
+      const chargingNeededAt = []; // {position, cumulativeKm, socAtArrival}
 
+      let cumulativeKm = 0;
       for (let i = 0; i < steps.length; i++) {
         const step = steps[i];
-        currentSoC -= (step.distance.value / 1000) / kmPerPercent;
+        const stepKm = step.distance.value / 1000;
+        cumulativeKm += stepKm;
+        currentSoC -= stepKm / kmPerPercent;
+
         if (currentSoC <= 15) {
-          new google.maps.Marker({
-            position: step.end_location, map: currentMap,
-            title: 'Ladestopp (Akku ~' + Math.max(0, Math.round(currentSoC)) + '% → 80%)',
-            icon: 'https://maps.google.com/mapfiles/ms/icons/blue-dot.png',
+          chargingNeededAt.push({
+            position: step.end_location,
+            cumulativeKm: cumulativeKm,
+            socAtArrival: Math.max(0, Math.round(currentSoC)),
           });
-          currentSoC = 80;
+          currentSoC = 80; // assume charge to 80%
         }
       }
+
+      if (chargingNeededAt.length === 0) {
+        document.getElementById('charging-stops-list').style.display = 'none';
+        return;
+      }
+
+      // Show searching state
+      const listEl = document.getElementById('charging-stops-list');
+      listEl.style.display = 'block';
+      listEl.innerHTML = '<div class="charging-stop-searching">Lade Ladestationen entlang der Route...</div>';
+
+      const tesla = isTesla(modelId);
+
+      // Search for charging stations at each needed point
+      let completed = 0;
+      const stopsData = new Array(chargingNeededAt.length);
+
+      chargingNeededAt.forEach((stop, idx) => {
+        findChargingStation(stop.position, tesla, stop.cumulativeKm, stop.socAtArrival, idx, (result) => {
+          stopsData[idx] = result;
+          completed++;
+          if (completed === chargingNeededAt.length) {
+            renderChargingStops(stopsData);
+          }
+        });
+      });
+    }
+
+    function findChargingStation(position, tesla, cumulativeKm, socAtArrival, idx, callback) {
+      const ps = getPlacesService();
+      if (!ps) { callback(null); return; }
+
+      // Search for EV charging stations nearby
+      // Tesla: prefer Superchargers; Others: search for any EV charger (incl. Supercharger)
+      const keyword = tesla ? 'Tesla Supercharger' : 'Schnellladestation Elektroauto';
+
+      ps.nearbySearch({
+        location: position,
+        radius: 10000, // 10km radius
+        keyword: keyword,
+        type: 'point_of_interest',
+      }, (results, status) => {
+        if (status === google.maps.places.PlacesServiceStatus.OK && results && results.length > 0) {
+          // Pick the closest result
+          // Sort by distance, pick closest
+          let best = results[0];
+          let bestDist = Infinity;
+          results.forEach(r => {
+            const d = google.maps.geometry.spherical.computeDistanceBetween(
+              new google.maps.LatLng(position.lat(), position.lng()),
+              r.geometry.location
+            );
+            if (d < bestDist) { bestDist = d; best = r; }
+          });
+
+          // Add marker
+          const marker = new google.maps.Marker({
+            position: best.geometry.location,
+            map: currentMap,
+            title: best.name,
+            icon: {
+              url: tesla
+                ? 'https://maps.google.com/mapfiles/ms/icons/red-dot.png'
+                : 'https://maps.google.com/mapfiles/ms/icons/blue-dot.png',
+              scaledSize: new google.maps.Size(36, 36),
+            },
+          });
+          chargingMarkers.push(marker);
+
+          // Info window
+          const infoWindow = new google.maps.InfoWindow({
+            content: '<div style="font-family:sans-serif;font-size:13px;max-width:200px">'
+              + '<strong>' + best.name + '</strong><br>'
+              + (best.vicinity || '') + '<br>'
+              + '<span style="color:#666">Stopp ' + (idx + 1) + ' · ~' + Math.round(cumulativeKm) + ' km</span>'
+              + '</div>',
+          });
+          marker.addListener('click', () => infoWindow.open(currentMap, marker));
+
+          callback({
+            name: best.name,
+            address: best.vicinity || '',
+            rating: best.rating || null,
+            isSupercharger: tesla || (best.name && best.name.toLowerCase().includes('supercharger')),
+            cumulativeKm: cumulativeKm,
+            socAtArrival: socAtArrival,
+            position: best.geometry.location,
+          });
+        } else {
+          // Fallback: no station found, just mark approximate position
+          const marker = new google.maps.Marker({
+            position: position, map: currentMap,
+            title: 'Ladestopp ' + (idx + 1) + ' (ungefähr)',
+            icon: 'https://maps.google.com/mapfiles/ms/icons/blue-dot.png',
+          });
+          chargingMarkers.push(marker);
+
+          callback({
+            name: 'Ladestation gesucht',
+            address: 'Keine Station in 10 km gefunden',
+            isSupercharger: false,
+            cumulativeKm: cumulativeKm,
+            socAtArrival: socAtArrival,
+            position: position,
+          });
+        }
+      });
+    }
+
+    function renderChargingStops(stopsData) {
+      const listEl = document.getElementById('charging-stops-list');
+      let html = '<div class="charging-stops-list">';
+
+      stopsData.forEach((stop, idx) => {
+        if (!stop) return;
+        const networkClass = stop.isSupercharger ? 'supercharger' : 'other';
+        const networkLabel = stop.isSupercharger ? 'Supercharger' : 'Ladestation';
+        html += '<div class="charging-stop-card">'
+          + '<div class="charging-stop-icon">⚡</div>'
+          + '<div class="charging-stop-info">'
+          + '<div class="charging-stop-name">Stopp ' + (idx + 1) + ': ' + stop.name + '</div>'
+          + '<div class="charging-stop-detail">'
+          + stop.address + '<br>'
+          + 'Nach ~' + Math.round(stop.cumulativeKm) + ' km · Akku bei ~' + stop.socAtArrival + '% → 80%'
+          + (stop.rating ? ' · ★ ' + stop.rating.toFixed(1) : '')
+          + '</div>'
+          + '<span class="charging-stop-network ' + networkClass + '">' + networkLabel + '</span>'
+          + '</div>'
+          + '</div>';
+      });
+
+      html += '</div>';
+      listEl.innerHTML = html;
+      listEl.style.display = 'block';
     }
 
     function formatTime(date) {
@@ -1177,6 +1355,6 @@
     window.initApp = initApp;
   </script>
 
-  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCVxgaDTwgPR8SwgLaB6zHiHNmeQcPPzow&libraries=places&language=de&region=DE&callback=initApp" async defer></script>
+  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCVxgaDTwgPR8SwgLaB6zHiHNmeQcPPzow&libraries=places,geometry&language=de&region=DE&callback=initApp" async defer></script>
 </body>
 </html>

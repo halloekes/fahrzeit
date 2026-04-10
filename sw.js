@@ -1,4 +1,4 @@
-const CACHE_NAME = 'fahrtzeit-v7';
+const CACHE_NAME = 'fahrtzeit-v8';
 const ASSETS = [
   './',
   './index.html',
