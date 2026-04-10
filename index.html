@@ -51,6 +51,38 @@
 
     .container { max-width: 520px; margin: 0 auto; padding: 16px; }
 
+    /* Tablet (iPad) */
+    @media (min-width: 600px) {
+      .container { max-width: 680px; padding: 32px; }
+      header { margin-bottom: 36px; padding-top: 32px; }
+      .logo { font-size: 52px; }
+      .subtitle { font-size: 15px; }
+      .form-card { padding: 28px; border-radius: 20px; }
+      label { font-size: 13px; }
+      input[type="text"], input[type="number"], select { font-size: 16px; padding: 14px 16px; }
+      .toggle-btn { font-size: 14px; padding: 13px 12px; }
+      .weekday-btn { width: 50px; height: 50px; font-size: 14px; }
+      .calculate-btn { padding: 16px 32px; font-size: 16px; }
+      .hero-card { padding: 28px; border-radius: 20px; }
+      .hero-time { font-size: 56px; }
+      .time-cards, .arrival-cards { gap: 12px; }
+      .time-card, .arrival-card { padding: 18px 14px; border-radius: 14px; }
+      .time-value, .arrival-time { font-size: 28px; }
+      .delay-info { padding: 20px; border-radius: 14px; }
+      .map-container { border-radius: 20px; }
+      #map { height: 350px; }
+      .route-info { padding: 14px 16px; }
+      .ev-settings { padding: 18px; border-radius: 14px; }
+    }
+
+    /* iPad Pro / larger tablets */
+    @media (min-width: 900px) {
+      .container { max-width: 780px; padding: 40px; }
+      .logo { font-size: 60px; }
+      .form-card { padding: 36px; }
+      #map { height: 420px; }
+    }
+
     header { text-align: center; margin-bottom: 28px; padding-top: 16px; }
 
     .logo {
