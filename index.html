@@ -288,14 +288,18 @@ function setMode(mode) {
 
 // ——— Init (called by Google Maps callback) ———
 function initApp() {
-  distanceService = new google.maps.DistanceMatrixService();
-  autocompleteService = new google.maps.places.AutocompleteService();
-  sessionToken = new google.maps.places.AutocompleteSessionToken();
-
-  setupAutocomplete('originInput', 'originDropdown');
-  setupAutocomplete('destInput', 'destDropdown');
-  populateTimeSelect();
-  setDefaultWeekday();
+  try {
+    distanceService = new google.maps.DistanceMatrixService();
+    autocompleteService = new google.maps.places.AutocompleteService();
+    sessionToken = new google.maps.places.AutocompleteSessionToken();
+    console.log('[Fahrtzeit] initApp OK – AutocompleteService ready');
+    setupAutocomplete('originInput', 'originDropdown');
+    setupAutocomplete('destInput', 'destDropdown');
+    populateTimeSelect();
+    setDefaultWeekday();
+  } catch (e) {
+    console.error('[Fahrtzeit] initApp error:', e);
+  }
 }
 
 // ——— Custom Autocomplete ———
@@ -303,26 +307,29 @@ function setupAutocomplete(inputId, dropdownId) {
   const input = document.getElementById(inputId);
   const dropdown = document.getElementById(dropdownId);
   let selectedIdx = -1;
-  let items = [];
 
   input.addEventListener('input', () => {
     clearTimeout(debounceTimers[inputId]);
     const q = input.value.trim();
     if (q.length < 2) { hideDropdown(dropdown); return; }
-    debounceTimers[inputId] = setTimeout(() => {
-      autocompleteService.getPlacePredictions({
-        input: q,
-        componentRestrictions: { country: 'de' },
-        sessionToken: sessionToken,
-      }, (predictions, status) => {
-        if (status !== google.maps.places.PlacesServiceStatus.OK || !predictions) {
+    debounceTimers[inputId] = setTimeout(async () => {
+      try {
+        const response = await autocompleteService.getPlacePredictions({
+          input: q,
+          componentRestrictions: { country: 'de' },
+          sessionToken: sessionToken,
+        });
+        const predictions = response.predictions;
+        if (!predictions || predictions.length === 0) {
           hideDropdown(dropdown);
           return;
         }
-        items = predictions;
         selectedIdx = -1;
         renderDropdown(predictions, dropdown, input);
-      });
+      } catch (e) {
+        console.warn('[Fahrtzeit] Autocomplete error:', e);
+        hideDropdown(dropdown);
+      }
     }, 250);
   });
 
@@ -568,6 +575,9 @@ function setLoading(on) {
 }
 function showError(msg) { const b = document.getElementById('errorBox'); b.textContent = msg; b.classList.add('visible'); }
 function hideError() { document.getElementById('errorBox').classList.remove('visible'); }
+
+// ——— Expose initApp globally for Google Maps callback ———
+window.initApp = initApp;
 
 // ——— Service Worker ———
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(() => {});
