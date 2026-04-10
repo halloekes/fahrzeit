@@ -1,15 +1,12 @@
-const CACHE_NAME = 'fahrtzeit-v9';
+const CACHE_NAME = 'fahrtzeit-v10';
 const ASSETS = [
-  './',
-  './index.html',
-  './impressum.html',
   './manifest.json',
   './icons/icon-192.png',
   './icons/icon-512.png',
   'https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&display=swap'
 ];
 
-// Install: cache shell assets
+// Install: cache shell assets (NOT html — always fetch fresh)
 self.addEventListener('install', (e) => {
   e.waitUntil(
     caches.open(CACHE_NAME).then((cache) => cache.addAll(ASSETS))
@@ -27,17 +24,33 @@ self.addEventListener('activate', (e) => {
   self.clients.claim();
 });
 
-// Fetch: network-first for API calls, cache-first for assets
+// Fetch: network-first for HTML and API, cache-first for static assets
 self.addEventListener('fetch', (e) => {
   const url = new URL(e.request.url);
 
-  // Always go to network for Google API calls
-  if (url.hostname.includes('googleapis.com')) {
+  // Always network for Google API calls
+  if (url.hostname.includes('googleapis.com') || url.hostname.includes('gstatic.com')) {
     e.respondWith(fetch(e.request));
     return;
   }
 
-  // Cache-first for everything else
+  // Network-first for HTML pages (always get latest)
+  if (e.request.mode === 'navigate' || url.pathname.endsWith('.html') || url.pathname.endsWith('/')) {
+    e.respondWith(
+      fetch(e.request).then((resp) => {
+        if (resp.ok) {
+          const clone = resp.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(e.request, clone));
+        }
+        return resp;
+      }).catch(() => {
+        return caches.match(e.request);
+      })
+    );
+    return;
+  }
+
+  // Cache-first for static assets
   e.respondWith(
     caches.match(e.request).then((cached) => {
       if (cached) return cached;

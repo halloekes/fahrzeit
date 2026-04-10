@@ -170,17 +170,17 @@
     .wheel-picker-scroll::-webkit-scrollbar { display: none; }
     .wheel-picker-item {
       height: 42px; display: flex; align-items: center;
-      justify-content: center; font-family: 'DM Mono', monospace;
+      justify-content: center; font-family: 'Syne', sans-serif;
       font-size: 20px; font-weight: 500; color: var(--muted);
       scroll-snap-align: center; transition: color 0.15s, opacity 0.15s;
       opacity: 0.4;
     }
     .wheel-picker-item.selected {
-      color: var(--text); font-weight: 600; opacity: 1;
+      color: var(--text); font-weight: 700; opacity: 1;
     }
     .wheel-picker-separator {
       font-size: 24px; font-weight: 700; color: var(--text);
-      font-family: 'DM Mono', monospace; padding: 0 2px;
+      font-family: 'Syne', sans-serif; padding: 0 2px;
     }
     .wheel-picker-label {
       font-size: 11px; font-weight: 600; text-transform: uppercase;
@@ -795,36 +795,43 @@
       initWheelPicker('arr-min-scroll', mins, 0);
     }
 
-    /* ── App Init ── */
+    let mapsReady = false;
+
+    /* ── App Init (called by Google Maps callback) ── */
     function initApp() {
-      distanceService = new google.maps.DistanceMatrixService();
-      autocompleteService = new google.maps.places.AutocompleteService();
-      directionsService = new google.maps.DirectionsService();
-      sessionToken = new google.maps.places.AutocompleteSessionToken();
+      try {
+        distanceService = new google.maps.DistanceMatrixService();
+        autocompleteService = new google.maps.places.AutocompleteService();
+        directionsService = new google.maps.DirectionsService();
+        sessionToken = new google.maps.places.AutocompleteSessionToken();
 
-      const mapElement = document.getElementById('map');
-      if (mapElement) {
-        currentMap = new google.maps.Map(mapElement, {
-          center: { lat: 51.1657, lng: 10.4515 }, zoom: 6,
-          styles: [
-            { elementType: 'geometry', stylers: [{ color: '#f0f5f3' }] },
-            { elementType: 'labels.text.stroke', stylers: [{ color: '#f0f5f3' }] },
-            { elementType: 'labels.text.fill', stylers: [{ color: '#1a2e28' }] },
-            { featureType: 'administrative.locality', elementType: 'labels.text.fill', stylers: [{ color: '#6b8a7e' }] },
-            { featureType: 'road', elementType: 'geometry', stylers: [{ color: '#ffffff' }] },
-            { featureType: 'water', elementType: 'geometry.fill', stylers: [{ color: '#b8d4e8' }] },
-          ],
-        });
-        directionsRenderer = new google.maps.DirectionsRenderer({
-          map: currentMap,
-          polylineOptions: { strokeColor: '#1a7a5a', strokeWeight: 4 },
-          markerOptions: { icon: 'https://maps.google.com/mapfiles/ms/icons/green-dot.png' },
-        });
+        const mapElement = document.getElementById('map');
+        if (mapElement) {
+          currentMap = new google.maps.Map(mapElement, {
+            center: { lat: 51.1657, lng: 10.4515 }, zoom: 6,
+            styles: [
+              { elementType: 'geometry', stylers: [{ color: '#f0f5f3' }] },
+              { elementType: 'labels.text.stroke', stylers: [{ color: '#f0f5f3' }] },
+              { elementType: 'labels.text.fill', stylers: [{ color: '#1a2e28' }] },
+              { featureType: 'administrative.locality', elementType: 'labels.text.fill', stylers: [{ color: '#6b8a7e' }] },
+              { featureType: 'road', elementType: 'geometry', stylers: [{ color: '#ffffff' }] },
+              { featureType: 'water', elementType: 'geometry.fill', stylers: [{ color: '#b8d4e8' }] },
+            ],
+          });
+          directionsRenderer = new google.maps.DirectionsRenderer({
+            map: currentMap,
+            polylineOptions: { strokeColor: '#1a7a5a', strokeWeight: 4 },
+            markerOptions: { icon: 'https://maps.google.com/mapfiles/ms/icons/green-dot.png' },
+          });
+        }
+
+        mapsReady = true;
+        setupAutocomplete('from', 'from-dropdown');
+        setupAutocomplete('to', 'to-dropdown');
+      } catch (e) {
+        console.error('initApp error:', e);
+        showError('Google Maps konnte nicht geladen werden: ' + e.message);
       }
-
-      initAllPickers();
-      setupEventListeners();
-      selectTodayWeekday();
     }
 
     function selectTodayWeekday() {
@@ -853,9 +860,6 @@
         });
       });
 
-      setupAutocomplete('from', 'from-dropdown');
-      setupAutocomplete('to', 'to-dropdown');
-
       document.getElementById('ev-toggle').addEventListener('change', (e) => {
         document.getElementById('ev-section').classList.toggle('visible', e.target.checked);
       });
@@ -866,7 +870,18 @@
         document.getElementById('ev-end-battery-value').textContent = e.target.value;
       });
 
-      document.getElementById('calculate-btn').addEventListener('click', handleCalculate);
+      document.getElementById('calculate-btn').addEventListener('click', function() {
+        try {
+          if (!mapsReady) {
+            showError('Google Maps wird noch geladen. Bitte kurz warten...');
+            return;
+          }
+          handleCalculate();
+        } catch (e) {
+          console.error('Calculate error:', e);
+          showError('Fehler: ' + e.message);
+        }
+      });
 
       document.addEventListener('click', (e) => {
         if (!e.target.matches('input[type="text"]')) {
@@ -950,7 +965,7 @@
       const to = document.getElementById('to').value.trim();
       document.getElementById('error-container').innerHTML = '';
 
-      if (!from || !to) { showError('Bitte beide Orte eingeben.'); return; }
+      if (!from || !to) { showError('Bitte Start- und Zielort eingeben.'); return; }
 
       document.getElementById('results').classList.add('visible');
       document.getElementById('time-cards').style.display = 'none';
@@ -991,8 +1006,9 @@
       }
 
       distanceService.getDistanceMatrix(request, (response, status) => {
+        try {
         if (status !== google.maps.DistanceMatrixStatus.OK) {
-          showError('Fehler bei der Routenberechnung.'); return;
+          showError('Fehler bei der Routenberechnung (Status: ' + status + ').'); return;
         }
 
         const element = response.rows[0].elements[0];
@@ -1021,6 +1037,10 @@
 
         if (chargingTimeMin > 0) {
           displayEVInfo(distanceKm, chargingTimeMin);
+        }
+        } catch (e) {
+          console.error('DistanceMatrix callback error:', e);
+          showError('Berechnungsfehler: ' + e.message);
         }
       });
     }
@@ -1345,6 +1365,15 @@
     function showError(message) {
       document.getElementById('error-container').innerHTML = '<div class="error-message">' + message + '</div>';
       document.getElementById('results').classList.add('visible');
+    }
+
+    // Boot: set up UI immediately (don't wait for Maps)
+    try {
+      initAllPickers();
+      setupEventListeners();
+      selectTodayWeekday();
+    } catch (e) {
+      console.error('Boot error:', e);
     }
 
     if ('serviceWorker' in navigator) {
