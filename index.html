@@ -1,618 +1,1531 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="theme-color" content="#f5f0eb">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="apple-mobile-web-app-title" content="Fahrtzeit">
-<title>Fahrtzeit</title>
-<meta name="description" content="Historisch basierte Fahrzeitprognose für Deutschland – Abfahrt oder Ankunft planen mit Google Maps.">
-<link rel="manifest" href="manifest.json">
-<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
-<link rel="apple-touch-icon" href="icons/icon-192.png">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
-<style>
-  :root {
-    --bg: #f5f0eb; --surface: #ffffff; --surface2: #faf7f4;
-    --border: #e2d9d0; --accent: #e85d2f; --accent2: #2f7ee8;
-    --text: #1e1812; --muted: #9a8878; --success: #2a9d6f;
-  }
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  body {
-    font-family: 'DM Mono', monospace;
-    background: var(--bg); color: var(--text);
-    min-height: 100vh; overflow-x: hidden;
-  }
-  body::before {
-    content: ''; position: fixed; inset: 0;
-    background-image: radial-gradient(circle, rgba(232,93,47,0.08) 1px, transparent 1px);
-    background-size: 28px 28px; pointer-events: none; z-index: 0;
-  }
-  .app { position: relative; z-index: 1; max-width: 680px; margin: 0 auto; padding: 32px 20px 60px; }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Fahrtzeit - Reisezeit-Rechner mit Google Maps API">
+  <meta name="theme-color" content="#e85d2f">
+  <title>Fahrtzeit</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" type="image/png" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'><rect fill='%23e85d2f' width='180' height='180'/><text x='90' y='120' font-size='90' font-weight='bold' fill='white' text-anchor='middle' font-family='Arial'>F</text></svg>">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;500;600;700&display=swap" rel="stylesheet">
 
-  /* Header */
-  .header { margin-bottom: 48px; animation: fadeUp 0.6s ease both; }
-  .header-label { font-size: 11px; letter-spacing: 0.25em; color: var(--accent); text-transform: uppercase; margin-bottom: 8px; }
-  .header h1 { font-family: 'Syne', sans-serif; font-size: clamp(36px, 8vw, 56px); font-weight: 800; line-height: 0.95; letter-spacing: -0.03em; }
-  .header h1 span { color: var(--accent); }
-  .header p { margin-top: 12px; font-size: 13px; color: var(--muted); line-height: 1.6; }
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
 
-  /* Form */
-  .form-card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 28px; margin-bottom: 24px; animation: fadeUp 0.6s 0.2s ease both; }
-  .form-section-label { font-size: 10px; letter-spacing: 0.2em; color: var(--accent); text-transform: uppercase; margin-bottom: 16px; }
-  .route-inputs { display: flex; flex-direction: column; gap: 12px; margin-bottom: 24px; }
+    :root {
+      --bg: #f5f0eb;
+      --surface: #ffffff;
+      --surface2: #faf7f4;
+      --border: #e2d9d0;
+      --accent: #e85d2f;
+      --accent2: #2f7ee8;
+      --text: #1e1812;
+      --muted: #9a8878;
+      --success: #2a9d6f;
+      --warning: #f4a460;
+      --danger: #d73a49;
+      --ev-blue: #0066cc;
+    }
 
-  /* Input with autocomplete */
-  .ac-wrap { position: relative; }
-  .input-group { position: relative; }
-  .input-prefix { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); font-size: 11px; color: var(--muted); letter-spacing: 0.1em; text-transform: uppercase; pointer-events: none; z-index: 2; }
-  .route-input {
-    width: 100%; background: var(--bg); border: 1px solid var(--border); border-radius: 10px;
-    padding: 14px 16px 14px 60px; color: var(--text); font-family: 'Syne', sans-serif;
-    font-size: 15px; font-weight: 600; outline: none; transition: all 0.2s;
-  }
-  .route-input:focus { border-color: var(--accent); background: var(--surface2); }
-  .route-input::placeholder { color: var(--muted); font-weight: 400; }
+    html, body {
+      width: 100%;
+      height: 100%;
+      font-family: 'Syne', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      overflow-x: hidden;
+    }
 
-  /* Autocomplete dropdown */
-  .ac-dropdown {
-    position: absolute; top: calc(100% + 4px); left: 0; right: 0; z-index: 100;
-    background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.08); display: none; overflow: hidden;
-  }
-  .ac-dropdown.visible { display: block; }
-  .ac-item {
-    padding: 12px 16px; cursor: pointer; transition: background 0.15s;
-    border-bottom: 1px solid var(--border);
-  }
-  .ac-item:last-child { border-bottom: none; }
-  .ac-item:hover, .ac-item.selected { background: var(--surface2); }
-  .ac-main { font-family: 'Syne', sans-serif; font-weight: 600; font-size: 14px; color: var(--text); }
-  .ac-sub { font-size: 11px; color: var(--muted); margin-top: 2px; }
+    body {
+      background-image:
+        radial-gradient(1px 1px at 20px 30px, rgba(232, 93, 47, 0.15), transparent),
+        radial-gradient(1px 1px at 60px 70px, rgba(232, 93, 47, 0.1), transparent),
+        radial-gradient(1px 1px at 50px 50px, rgba(47, 126, 232, 0.1), transparent),
+        radial-gradient(1px 1px at 130px 80px, rgba(232, 93, 47, 0.12), transparent),
+        radial-gradient(1px 1px at 90px 10px, rgba(47, 126, 232, 0.08), transparent);
+      background-size: 200px 200px;
+      background-attachment: fixed;
+    }
 
-  .route-arrow { display: flex; align-items: center; justify-content: center; color: var(--accent); font-size: 18px; height: 20px; }
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 20px;
+    }
 
-  /* Mode toggle */
-  .mode-toggle { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 8px; }
-  .mode-btn {
-    display: flex; align-items: center; justify-content: center; gap: 8px;
-    background: var(--bg); border: 1px solid var(--border); border-radius: 10px;
-    padding: 12px 16px; color: var(--muted); font-family: 'DM Mono', monospace;
-    font-size: 12px; cursor: pointer; transition: all 0.2s;
-  }
-  .mode-btn:hover { border-color: var(--accent); color: var(--text); }
-  .mode-btn.active { background: rgba(232,93,47,0.08); border-color: var(--accent); color: var(--accent); }
+    header {
+      text-align: center;
+      margin-bottom: 40px;
+      padding-top: 20px;
+    }
 
-  /* Time */
-  .time-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-  .time-group label { display: block; font-size: 10px; letter-spacing: 0.15em; color: var(--muted); text-transform: uppercase; margin-bottom: 8px; }
-  .time-select {
-    width: 100%; background: var(--bg); border: 1px solid var(--border); border-radius: 10px;
-    padding: 12px 16px; color: var(--text); font-family: 'DM Mono', monospace; font-size: 14px;
-    outline: none; cursor: pointer; appearance: none;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%239a8878' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
-    background-repeat: no-repeat; background-position: right 14px center; padding-right: 36px;
-  }
-  .time-select:focus { border-color: var(--accent); }
+    .logo {
+      font-size: 48px;
+      font-weight: 700;
+      background: linear-gradient(135deg, var(--accent) 0%, var(--accent2) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 10px;
+      letter-spacing: -2px;
+    }
 
-  /* Button */
-  .btn-analyze {
-    width: 100%; margin-top: 24px; background: var(--accent); color: #fff; border: none;
-    border-radius: 12px; padding: 18px; font-family: 'Syne', sans-serif;
-    font-weight: 800; font-size: 16px; cursor: pointer; transition: all 0.15s;
-  }
-  .btn-analyze:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(232,93,47,0.35); }
-  .btn-analyze:disabled { opacity: 0.5; cursor: not-allowed; }
-  .btn-analyze .btn-inner { display: flex; align-items: center; justify-content: center; gap: 8px; }
-  .spinner { width: 16px; height: 16px; border: 2px solid rgba(255,255,255,0.3); border-top-color: #fff; border-radius: 50%; animation: spin 0.7s linear infinite; display: none; }
-  .btn-analyze.loading .spinner { display: block; }
+    .subtitle {
+      font-size: 14px;
+      color: var(--muted);
+      font-weight: 400;
+      letter-spacing: 0.5px;
+    }
 
-  /* Results */
-  .results { animation: fadeUp 0.5s ease both; display: none; }
-  .results.visible { display: block; }
-  .results-header { margin-bottom: 20px; }
-  .results-route { font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 800; line-height: 1.2; margin-bottom: 4px; }
-  .results-route .arrow { color: var(--accent); margin: 0 8px; }
-  .results-meta { font-size: 11px; color: var(--muted); letter-spacing: 0.1em; text-transform: uppercase; }
-  .results-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 20px; }
-  @media (max-width: 480px) { .results-grid { grid-template-columns: 1fr; } }
+    .form-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 28px;
+      margin-bottom: 24px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    }
 
-  .result-card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 20px 16px; text-align: center; position: relative; overflow: hidden; transition: transform 0.2s; }
-  .result-card:hover { transform: translateY(-2px); }
-  .result-card.best { border-color: rgba(42,157,111,0.35); }
-  .result-card.typical { border-color: rgba(232,93,47,0.35); }
-  .result-card.worst { border-color: rgba(180,60,30,0.25); }
-  .result-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; }
-  .result-card.best::before { background: var(--success); }
-  .result-card.typical::before { background: var(--accent); }
-  .result-card.worst::before { background: var(--accent); }
-  .result-label { font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase; margin-bottom: 12px; }
-  .result-card.best .result-label { color: var(--success); }
-  .result-card.typical .result-label { color: var(--accent); }
-  .result-card.worst .result-label { color: var(--accent); }
-  .result-time { font-family: 'Syne', sans-serif; font-size: 32px; font-weight: 800; line-height: 1; margin-bottom: 4px; }
-  .result-unit { font-size: 11px; color: var(--muted); margin-bottom: 10px; }
-  .result-dist { font-size: 11px; color: var(--muted); padding-top: 10px; border-top: 1px solid var(--border); }
-  .result-arrival { font-size: 12px; color: var(--muted); margin-top: 6px; }
-  .result-arrival strong { color: var(--text); font-family: 'Syne', sans-serif; }
+    .form-group {
+      margin-bottom: 24px;
+    }
 
-  .summary-bar { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 16px 20px; display: flex; align-items: center; justify-content: space-between; gap: 16px; }
-  .summary-text { font-size: 12px; color: var(--muted); line-height: 1.5; }
-  .summary-text strong { color: var(--text); }
-  .summary-tip { font-size: 11px; color: var(--accent2); text-align: right; flex-shrink: 0; }
+    .form-group:last-child {
+      margin-bottom: 0;
+    }
 
-  .delay-info { background: #fff8f0; border: 1px solid rgba(232,93,47,0.25); border-radius: 12px; padding: 14px 18px; margin-top: 12px; font-size: 12px; color: var(--muted); line-height: 1.6; }
-  .delay-info strong { color: var(--accent); }
-  .delay-info .delay-icon { font-size: 14px; margin-right: 6px; }
+    label {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--muted);
+      margin-bottom: 8px;
+    }
 
-  /* Arrival */
-  .arrival-hero { background: var(--surface); border: 1px solid rgba(232,93,47,0.35); border-radius: 14px; padding: 28px 24px; text-align: center; margin-bottom: 16px; position: relative; overflow: hidden; }
-  .arrival-hero::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: var(--accent); }
-  .arrival-hero-label { font-size: 10px; letter-spacing: 0.2em; color: var(--accent); text-transform: uppercase; margin-bottom: 12px; }
-  .arrival-hero-time { font-family: 'Syne', sans-serif; font-size: 52px; font-weight: 800; line-height: 1; letter-spacing: -0.03em; margin-bottom: 6px; }
-  .arrival-hero-sub { font-size: 13px; color: var(--muted); }
-  .arrival-hero-sub strong { color: var(--text); }
-  .arrival-scenarios { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 16px; }
-  @media (max-width: 480px) { .arrival-scenarios { grid-template-columns: 1fr; } }
-  .arrival-scenario-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 14px 12px; text-align: center; }
-  .arrival-scenario-label { font-size: 10px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--muted); margin-bottom: 8px; }
-  .arrival-scenario-dep { font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 800; margin-bottom: 2px; }
-  .arrival-scenario-dur { font-size: 11px; color: var(--muted); margin-bottom: 6px; }
-  .arrival-scenario-arr { font-size: 11px; padding-top: 8px; border-top: 1px solid var(--border); color: var(--muted); }
-  .arrival-scenario-arr strong { color: var(--text); }
-  .tag-safe { color: var(--success); }
-  .tag-tight { color: var(--accent); }
+    .input-wrapper {
+      position: relative;
+    }
 
-  .error-box { background: rgba(232,93,47,0.08); border: 1px solid rgba(232,93,47,0.3); border-radius: 12px; padding: 16px 20px; font-size: 13px; color: var(--accent); display: none; margin-bottom: 20px; }
-  .error-box.visible { display: block; }
+    input[type="text"],
+    input[type="number"],
+    select {
+      width: 100%;
+      padding: 12px 14px;
+      border: 1.5px solid var(--border);
+      border-radius: 8px;
+      background: var(--surface2);
+      color: var(--text);
+      font-family: 'Syne', sans-serif;
+      font-size: 14px;
+      transition: all 0.2s ease;
+    }
 
-  @keyframes fadeUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-  @keyframes spin { to { transform: rotate(360deg); } }
+    input[type="text"]:focus,
+    input[type="number"]:focus,
+    select:focus {
+      outline: none;
+      border-color: var(--accent);
+      background: var(--surface);
+      box-shadow: 0 0 0 3px rgba(232, 93, 47, 0.1);
+    }
 
-  .footer { margin-top: 48px; text-align: center; font-size: 11px; color: var(--muted); letter-spacing: 0.1em; opacity: 0.5; }
-  .footer a { color: var(--muted); text-decoration: none; border-bottom: 1px solid var(--border); }
-</style>
+    .dropdown {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      right: 0;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-top: none;
+      border-radius: 0 0 8px 8px;
+      max-height: 300px;
+      overflow-y: auto;
+      z-index: 1000;
+      display: none;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    }
+
+    .dropdown.active {
+      display: block;
+    }
+
+    .dropdown-item {
+      padding: 12px 14px;
+      cursor: pointer;
+      transition: background 0.15s ease;
+      border-bottom: 1px solid var(--surface2);
+      font-size: 14px;
+    }
+
+    .dropdown-item:last-child {
+      border-bottom: none;
+    }
+
+    .dropdown-item:hover {
+      background: var(--surface2);
+    }
+
+    .dropdown-item-primary {
+      font-weight: 500;
+      color: var(--text);
+    }
+
+    .dropdown-item-secondary {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+
+    .mode-toggle {
+      display: flex;
+      background: var(--surface2);
+      border-radius: 8px;
+      padding: 4px;
+      gap: 4px;
+      margin-bottom: 24px;
+    }
+
+    .toggle-btn {
+      flex: 1;
+      padding: 10px 16px;
+      border: none;
+      background: transparent;
+      color: var(--muted);
+      font-family: 'Syne', sans-serif;
+      font-size: 13px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      cursor: pointer;
+      border-radius: 6px;
+      transition: all 0.2s ease;
+    }
+
+    .toggle-btn.active {
+      background: var(--surface);
+      color: var(--accent);
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+
+    @media (max-width: 600px) {
+      .form-row {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .checkbox-wrapper {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      cursor: pointer;
+    }
+
+    input[type="checkbox"] {
+      width: 20px;
+      height: 20px;
+      cursor: pointer;
+      accent-color: var(--accent);
+    }
+
+    .checkbox-label {
+      font-size: 14px;
+      font-weight: 500;
+      margin: 0;
+      cursor: pointer;
+      color: var(--text);
+    }
+
+    .ev-section {
+      background: linear-gradient(135deg, rgba(0, 102, 204, 0.05) 0%, rgba(0, 102, 204, 0.02) 100%);
+      border: 1.5px solid rgba(0, 102, 204, 0.2);
+      border-radius: 12px;
+      padding: 16px;
+      margin-top: 16px;
+      display: none;
+    }
+
+    .ev-section.visible {
+      display: block;
+    }
+
+    .ev-section-title {
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      color: var(--ev-blue);
+      letter-spacing: 0.5px;
+      margin-bottom: 14px;
+    }
+
+    .ev-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+
+    @media (max-width: 600px) {
+      .ev-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    input[type="range"] {
+      width: 100%;
+      height: 6px;
+      border-radius: 3px;
+      background: var(--surface2);
+      outline: none;
+      -webkit-appearance: none;
+      appearance: none;
+    }
+
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: var(--accent);
+      cursor: pointer;
+      box-shadow: 0 2px 6px rgba(232, 93, 47, 0.3);
+      transition: all 0.2s ease;
+    }
+
+    input[type="range"]::-webkit-slider-thumb:hover {
+      transform: scale(1.15);
+      box-shadow: 0 3px 10px rgba(232, 93, 47, 0.4);
+    }
+
+    input[type="range"]::-moz-range-thumb {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: var(--accent);
+      cursor: pointer;
+      border: none;
+      box-shadow: 0 2px 6px rgba(232, 93, 47, 0.3);
+      transition: all 0.2s ease;
+    }
+
+    input[type="range"]::-moz-range-thumb:hover {
+      transform: scale(1.15);
+      box-shadow: 0 3px 10px rgba(232, 93, 47, 0.4);
+    }
+
+    .slider-value {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 6px;
+      text-align: center;
+      font-family: 'DM Mono', monospace;
+      font-weight: 500;
+    }
+
+    button[type="button"] {
+      background: linear-gradient(135deg, var(--accent) 0%, #d84a1f 100%);
+      color: white;
+      border: none;
+      padding: 14px 28px;
+      border-radius: 8px;
+      font-family: 'Syne', sans-serif;
+      font-size: 14px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      width: 100%;
+      box-shadow: 0 4px 12px rgba(232, 93, 47, 0.3);
+    }
+
+    button[type="button"]:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(232, 93, 47, 0.4);
+    }
+
+    button[type="button"]:active {
+      transform: translateY(0);
+      box-shadow: 0 2px 8px rgba(232, 93, 47, 0.3);
+    }
+
+    .results-section {
+      display: none;
+    }
+
+    .results-section.visible {
+      display: block;
+    }
+
+    .hero-card {
+      background: linear-gradient(135deg, var(--accent) 0%, #d84a1f 100%);
+      color: white;
+      border-radius: 16px;
+      padding: 32px;
+      margin-bottom: 24px;
+      box-shadow: 0 8px 24px rgba(232, 93, 47, 0.3);
+      text-align: center;
+    }
+
+    .hero-time {
+      font-size: 64px;
+      font-weight: 700;
+      margin-bottom: 12px;
+      letter-spacing: -2px;
+    }
+
+    .hero-label {
+      font-size: 14px;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      opacity: 0.95;
+      margin-bottom: 16px;
+    }
+
+    .hero-meta {
+      font-size: 12px;
+      opacity: 0.85;
+      line-height: 1.6;
+    }
+
+    .info-box {
+      background: var(--surface);
+      border: 1.5px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 16px;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    .info-box.ev {
+      background: rgba(0, 102, 204, 0.08);
+      border-color: rgba(0, 102, 204, 0.3);
+      color: var(--ev-blue);
+    }
+
+    .time-cards {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    @media (max-width: 600px) {
+      .time-cards {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .time-card {
+      background: var(--surface);
+      border: 1.5px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+      text-align: center;
+      transition: all 0.2s ease;
+    }
+
+    .time-card:hover {
+      border-color: var(--accent);
+      box-shadow: 0 4px 12px rgba(232, 93, 47, 0.1);
+    }
+
+    .time-card-time {
+      font-size: 36px;
+      font-weight: 700;
+      color: var(--accent);
+      margin-bottom: 8px;
+      letter-spacing: -1px;
+    }
+
+    .time-card-label {
+      font-size: 13px;
+      font-weight: 600;
+      text-transform: uppercase;
+      color: var(--muted);
+      letter-spacing: 0.5px;
+      margin-bottom: 8px;
+    }
+
+    .time-card-desc {
+      font-size: 12px;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    .arrival-cards {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    @media (max-width: 600px) {
+      .arrival-cards {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .arrival-card {
+      background: var(--surface);
+      border: 1.5px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+      text-align: center;
+      position: relative;
+    }
+
+    .arrival-card.safe {
+      background: linear-gradient(135deg, rgba(42, 157, 111, 0.08), rgba(42, 157, 111, 0.03));
+      border-color: rgba(42, 157, 111, 0.2);
+    }
+
+    .arrival-card.bestguess {
+      background: linear-gradient(135deg, rgba(232, 93, 47, 0.08), rgba(232, 93, 47, 0.03));
+      border-color: rgba(232, 93, 47, 0.2);
+    }
+
+    .arrival-card.relaxed {
+      background: linear-gradient(135deg, rgba(244, 164, 96, 0.08), rgba(244, 164, 96, 0.03));
+      border-color: rgba(244, 164, 96, 0.2);
+    }
+
+    .arrival-time {
+      font-size: 36px;
+      font-weight: 700;
+      margin-bottom: 8px;
+      letter-spacing: -1px;
+    }
+
+    .arrival-card.safe .arrival-time {
+      color: var(--success);
+    }
+
+    .arrival-card.bestguess .arrival-time {
+      color: var(--accent);
+    }
+
+    .arrival-card.relaxed .arrival-time {
+      color: var(--warning);
+    }
+
+    .arrival-label {
+      font-size: 13px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 8px;
+    }
+
+    .arrival-card.safe .arrival-label {
+      color: var(--success);
+    }
+
+    .arrival-card.bestguess .arrival-label {
+      color: var(--accent);
+    }
+
+    .arrival-card.relaxed .arrival-label {
+      color: var(--warning);
+    }
+
+    .arrival-desc {
+      font-size: 12px;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    .risk-indicator {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: var(--success);
+    }
+
+    .arrival-card.safe .risk-indicator {
+      background: var(--success);
+    }
+
+    .arrival-card.bestguess .risk-indicator {
+      background: var(--warning);
+    }
+
+    .arrival-card.relaxed .risk-indicator {
+      background: var(--danger);
+    }
+
+    .delay-info {
+      background: var(--surface);
+      border: 1.5px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 24px;
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 20px;
+      align-items: center;
+    }
+
+    @media (max-width: 600px) {
+      .delay-info {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .delay-content {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .delay-icon {
+      font-size: 32px;
+      flex-shrink: 0;
+    }
+
+    .delay-text-label {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      color: var(--muted);
+      letter-spacing: 0.5px;
+      margin-bottom: 4px;
+    }
+
+    .delay-text-main {
+      font-size: 16px;
+      font-weight: 600;
+      line-height: 1.3;
+    }
+
+    .delay-bar {
+      width: 100%;
+      height: 8px;
+      background: var(--surface2);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+
+    .delay-bar-fill {
+      height: 100%;
+      background: var(--success);
+      transition: width 0.3s ease, background-color 0.3s ease;
+    }
+
+    .map-container {
+      background: var(--surface);
+      border: 1.5px solid var(--border);
+      border-radius: 16px;
+      overflow: hidden;
+      margin-bottom: 24px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+      display: none;
+    }
+
+    .map-container.visible {
+      display: block;
+    }
+
+    #map {
+      width: 100%;
+      height: 350px;
+    }
+
+    @media (max-width: 600px) {
+      #map {
+        height: 250px;
+      }
+    }
+
+    .route-info {
+      padding: 16px;
+      border-top: 1px solid var(--border);
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      font-size: 13px;
+    }
+
+    @media (max-width: 600px) {
+      .route-info {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .route-info-item {
+      text-align: center;
+    }
+
+    .route-info-label {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      color: var(--muted);
+      letter-spacing: 0.5px;
+      margin-bottom: 4px;
+    }
+
+    .route-info-value {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text);
+      font-family: 'DM Mono', monospace;
+    }
+
+    .error-message {
+      background: rgba(215, 58, 73, 0.1);
+      border: 1.5px solid rgba(215, 58, 73, 0.3);
+      color: #d73a49;
+      padding: 16px;
+      border-radius: 8px;
+      margin-bottom: 16px;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    @media (max-width: 600px) {
+      .container {
+        padding: 16px;
+      }
+
+      header {
+        margin-bottom: 32px;
+        padding-top: 16px;
+      }
+
+      .logo {
+        font-size: 36px;
+      }
+
+      .form-card {
+        padding: 20px;
+        margin-bottom: 20px;
+      }
+
+      .hero-card {
+        padding: 24px;
+        margin-bottom: 20px;
+      }
+
+      .hero-time {
+        font-size: 48px;
+      }
+    }
+  </style>
 </head>
 <body>
-<div class="app">
-  <div class="header">
-    <div class="header-label">// Reisezeit-Prognose</div>
-    <h1>Fahr<span>zeit</span></h1>
-    <p>Historisch basierte Fahrzeitprognose für Deutschland.</p>
-  </div>
+  <div class="container">
+    <header>
+      <div class="logo">Fahrtzeit</div>
+      <div class="subtitle">Reisezeit-Rechner mit Echtzeit-Verkehr</div>
+    </header>
 
-  <div class="form-card">
-    <div class="form-section-label">// Route</div>
-    <div class="route-inputs">
-      <div class="ac-wrap">
-        <div class="input-group">
-          <span class="input-prefix">Von</span>
-          <input type="text" class="route-input" id="originInput" placeholder="Adresse, Straße oder Stadt..." autocomplete="off">
+    <div class="form-card">
+      <div class="mode-toggle">
+        <button type="button" class="toggle-btn active" data-mode="departure">Abfahrtsmodus</button>
+        <button type="button" class="toggle-btn" data-mode="arrival">Ankunftsmodus</button>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="from">Startort</label>
+          <div class="input-wrapper">
+            <input type="text" id="from" placeholder="Adresse eingeben...">
+            <div class="dropdown" id="from-dropdown"></div>
+          </div>
         </div>
-        <div class="ac-dropdown" id="originDropdown"></div>
-      </div>
-      <div class="route-arrow">↓</div>
-      <div class="ac-wrap">
-        <div class="input-group">
-          <span class="input-prefix">Nach</span>
-          <input type="text" class="route-input" id="destInput" placeholder="Adresse, Straße oder Stadt..." autocomplete="off">
+        <div class="form-group">
+          <label for="to">Zielort</label>
+          <div class="input-wrapper">
+            <input type="text" id="to" placeholder="Adresse eingeben...">
+            <div class="dropdown" id="to-dropdown"></div>
+          </div>
         </div>
-        <div class="ac-dropdown" id="destDropdown"></div>
+      </div>
+
+      <div id="departure-mode">
+        <div class="form-group">
+          <label for="departure-time">Abfahrtszeit</label>
+          <input type="text" id="departure-time" placeholder="z.B. 09:00">
+        </div>
+      </div>
+
+      <div id="arrival-mode" style="display: none;">
+        <div class="form-group">
+          <label for="arrival-time">Gewünschte Ankunftszeit</label>
+          <input type="text" id="arrival-time" placeholder="z.B. 14:00">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <div class="checkbox-wrapper">
+          <input type="checkbox" id="ev-toggle">
+          <label for="ev-toggle" class="checkbox-label">⚡ Ich fahre ein E-Auto</label>
+        </div>
+      </div>
+
+      <div id="ev-section" class="ev-section">
+        <div class="ev-section-title">E-Auto Einstellungen</div>
+
+        <div class="ev-grid">
+          <div class="form-group">
+            <label for="ev-model">Fahrzeugmodell</label>
+            <select id="ev-model">
+              <option value="">-- Modell auswählen --</option>
+              <optgroup label="Tesla">
+                <option value="tesla-model-3-lr">Model 3 LR (629 km)</option>
+                <option value="tesla-model-3-sr">Model 3 SR (513 km)</option>
+                <option value="tesla-model-y-lr">Model Y LR (533 km)</option>
+                <option value="tesla-model-y-sr">Model Y SR (430 km)</option>
+                <option value="tesla-model-s">Model S (634 km)</option>
+                <option value="tesla-model-x">Model X (576 km)</option>
+              </optgroup>
+              <optgroup label="VW">
+                <option value="vw-id3-pro-s">ID.3 Pro S (551 km)</option>
+                <option value="vw-id3-pro">ID.3 Pro (426 km)</option>
+                <option value="vw-id4-pro">ID.4 Pro (520 km)</option>
+                <option value="vw-id4-gtx">ID.4 GTX (480 km)</option>
+                <option value="vw-id5-gtx">ID.5 GTX (490 km)</option>
+                <option value="vw-id7-pro-s">ID.7 Pro S (615 km)</option>
+              </optgroup>
+              <optgroup label="BMW">
+                <option value="bmw-i4-edrive40">i4 eDrive40 (590 km)</option>
+                <option value="bmw-ix1-xdrive30">iX1 xDrive30 (440 km)</option>
+                <option value="bmw-ix3">iX3 (461 km)</option>
+                <option value="bmw-ix-xdrive50">iX xDrive50 (630 km)</option>
+                <option value="bmw-i5-edrive40">i5 eDrive40 (582 km)</option>
+              </optgroup>
+              <optgroup label="Mercedes">
+                <option value="mercedes-eqa-250">EQA 250+ (528 km)</option>
+                <option value="mercedes-eqb-250">EQB 250+ (474 km)</option>
+                <option value="mercedes-eqe-300">EQE 300 (639 km)</option>
+                <option value="mercedes-eqs-450">EQS 450+ (770 km)</option>
+              </optgroup>
+              <optgroup label="Audi">
+                <option value="audi-q4-etron-45">Q4 e-tron 45 (520 km)</option>
+                <option value="audi-q6-etron">Q6 e-tron (625 km)</option>
+                <option value="audi-q8-etron-55">Q8 e-tron 55 (582 km)</option>
+                <option value="audi-etron-gt">e-tron GT (488 km)</option>
+              </optgroup>
+              <optgroup label="Hyundai">
+                <option value="hyundai-ioniq5-lr">Ioniq 5 LR (507 km)</option>
+                <option value="hyundai-ioniq6-lr">Ioniq 6 LR (614 km)</option>
+              </optgroup>
+              <optgroup label="Kia">
+                <option value="kia-ev6-lr">EV6 LR (528 km)</option>
+                <option value="kia-ev9-lr">EV9 LR (541 km)</option>
+              </optgroup>
+              <optgroup label="Porsche">
+                <option value="porsche-taycan">Taycan (484 km)</option>
+                <option value="porsche-taycan-4s">Taycan 4S (464 km)</option>
+              </optgroup>
+              <optgroup label="Skoda">
+                <option value="skoda-enyaq-85">Enyaq 85 (557 km)</option>
+                <option value="skoda-enyaq-coupe-85">Enyaq Coupé 85 (560 km)</option>
+              </optgroup>
+              <optgroup label="Cupra">
+                <option value="cupra-born-77">Born 77 (548 km)</option>
+              </optgroup>
+              <optgroup label="Opel">
+                <option value="opel-mokka-e">Mokka-e (338 km)</option>
+                <option value="opel-corsa-e">Corsa-e (357 km)</option>
+              </optgroup>
+              <optgroup label="Renault">
+                <option value="renault-megane-ev60">Megane E-Tech EV60 (450 km)</option>
+                <option value="renault-scenic-etech">Scenic E-Tech (620 km)</option>
+              </optgroup>
+              <optgroup label="Peugeot">
+                <option value="peugeot-e3008">e-3008 (527 km)</option>
+                <option value="peugeot-e208">e-208 (400 km)</option>
+              </optgroup>
+              <optgroup label="Fiat">
+                <option value="fiat-500e">500e (321 km)</option>
+              </optgroup>
+              <optgroup label="Mini">
+                <option value="mini-cooper-se">Cooper SE (305 km)</option>
+              </optgroup>
+              <optgroup label="Volvo">
+                <option value="volvo-ex30-lr">EX30 LR (476 km)</option>
+                <option value="volvo-ex40">EX40 (573 km)</option>
+                <option value="volvo-c40">C40 (550 km)</option>
+              </optgroup>
+              <optgroup label="Polestar">
+                <option value="polestar-2-lr">2 LR (592 km)</option>
+              </optgroup>
+              <optgroup label="BYD">
+                <option value="byd-atto-3">Atto 3 (420 km)</option>
+                <option value="byd-seal">Seal (570 km)</option>
+              </optgroup>
+              <optgroup label="Smart">
+                <option value="smart-1-pro">#1 Pro+ (440 km)</option>
+                <option value="smart-3-pro">#3 Pro+ (455 km)</option>
+              </optgroup>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="ev-start-battery">Startladung</label>
+            <input type="range" id="ev-start-battery" min="10" max="100" value="80">
+            <div class="slider-value"><span id="ev-start-battery-value">80</span>%</div>
+          </div>
+        </div>
+
+        <div class="ev-grid">
+          <div class="form-group">
+            <label for="ev-end-battery">Zielladung (mindestens)</label>
+            <input type="range" id="ev-end-battery" min="10" max="50" value="10">
+            <div class="slider-value"><span id="ev-end-battery-value">10</span>%</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <button type="button" id="calculate-btn">Berechnen</button>
       </div>
     </div>
 
-    <div class="form-section-label">// Modus</div>
-    <div class="mode-toggle">
-      <button class="mode-btn active" id="modeDeparture" onclick="setMode('departure')">&#x1F697; Abfahrt planen</button>
-      <button class="mode-btn" id="modeArrival" onclick="setMode('arrival')">&#x1F3AF; Ankunft planen</button>
-    </div>
+    <div class="results-section" id="results">
+      <div id="error-container"></div>
 
-    <div class="form-section-label" id="timeLabel" style="margin-top:24px;">// Abfahrtszeit</div>
-    <div class="time-grid">
-      <div class="time-group">
-        <label>Wochentag</label>
-        <select class="time-select" id="weekday">
-          <option value="1">Montag</option><option value="2">Dienstag</option><option value="3">Mittwoch</option>
-          <option value="4">Donnerstag</option><option value="5">Freitag</option><option value="6">Samstag</option>
-          <option value="0">Sonntag</option>
-        </select>
+      <div id="hero-card" class="hero-card" style="display: none;">
+        <div class="hero-time" id="hero-time">14:30</div>
+        <div class="hero-label" id="hero-label">Sichere Abfahrtszeit</div>
+        <div class="hero-meta" id="hero-meta">
+          <div>Ankunft: 18:45 (pessimistisches Szenario)</div>
+        </div>
       </div>
-      <div class="time-group">
-        <label id="timeSelectLabel">Abfahrt um</label>
-        <select class="time-select" id="timeOfDay"></select>
+
+      <div class="delay-info" id="delay-info" style="display: none;">
+        <div class="delay-content">
+          <div class="delay-icon" id="delay-icon">⚠️</div>
+          <div>
+            <div class="delay-text-label">Verzögerungsrisiko</div>
+            <div class="delay-text-main" id="delay-text">Verkehr unvorhersehbar</div>
+          </div>
+        </div>
+        <div>
+          <div class="delay-bar">
+            <div class="delay-bar-fill" id="delay-bar-fill" style="width: 50%;"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="time-cards" id="time-cards" style="display: none;">
+        <div class="time-card">
+          <div class="time-card-time" id="time-optimistic">14:35</div>
+          <div class="time-card-label">Günstig</div>
+          <div class="time-card-desc">Optimaler Verkehr</div>
+        </div>
+        <div class="time-card">
+          <div class="time-card-time" id="time-best-guess">14:50</div>
+          <div class="time-card-label">Typisch</div>
+          <div class="time-card-desc">Erwarteter Verkehr</div>
+        </div>
+        <div class="time-card">
+          <div class="time-card-time" id="time-pessimistic">15:10</div>
+          <div class="time-card-label">Ungünstig</div>
+          <div class="time-card-desc">Verspäteter Verkehr</div>
+        </div>
+      </div>
+
+      <div class="arrival-cards" id="arrival-cards" style="display: none;">
+        <div class="arrival-card safe">
+          <div class="risk-indicator"></div>
+          <div class="arrival-time" id="arrival-safe">13:00</div>
+          <div class="arrival-label">Entspannt</div>
+          <div class="arrival-desc">Früh genug ankommen</div>
+        </div>
+        <div class="arrival-card bestguess">
+          <div class="risk-indicator"></div>
+          <div class="arrival-time" id="arrival-bestguess">13:45</div>
+          <div class="arrival-label">Typisch</div>
+          <div class="arrival-desc">Rechtzeitig ankommen</div>
+        </div>
+        <div class="arrival-card relaxed">
+          <div class="risk-indicator"></div>
+          <div class="arrival-time" id="arrival-relaxed">14:15</div>
+          <div class="arrival-label">Knapp</div>
+          <div class="arrival-desc">Riskante Zeitplanung</div>
+        </div>
+      </div>
+
+      <div id="ev-info-box" class="info-box ev" style="display: none;">
+        <div id="ev-info-text">⚡ 2 Ladestopp(s) empfohlen, ca. 50 Min. Ladezeit</div>
+      </div>
+
+      <div class="map-container" id="map-container">
+        <div id="map"></div>
+        <div class="route-info">
+          <div class="route-info-item">
+            <div class="route-info-label">Entfernung</div>
+            <div class="route-info-value" id="route-distance">--</div>
+          </div>
+          <div class="route-info-item">
+            <div class="route-info-label">Fahrzeit (beste Schätzung)</div>
+            <div class="route-info-value" id="route-duration">--</div>
+          </div>
+          <div class="route-info-item">
+            <div class="route-info-label">Geschwindigkeit (ø)</div>
+            <div class="route-info-value" id="route-speed">--</div>
+          </div>
+        </div>
       </div>
     </div>
-
-    <button class="btn-analyze" id="analyzeBtn" onclick="analyze()">
-      <div class="btn-inner">
-        <div class="spinner" id="spinner"></div>
-        <span id="btnText">Fahrtzeit berechnen</span>
-      </div>
-    </button>
   </div>
 
-  <div class="error-box" id="errorBox"></div>
+  <script>
+    let distanceService, autocompleteService, sessionToken, directionsService, directionsRenderer;
+    let currentMode = 'departure';
+    let lastResults = null;
+    let currentMap = null;
 
-  <!-- Departure results -->
-  <div class="results" id="resultsDeparture">
-    <div class="results-header">
-      <div class="results-route" id="resultsRoute"></div>
-      <div class="results-meta" id="resultsMeta"></div>
-    </div>
-    <div class="results-grid">
-      <div class="result-card best"><div class="result-label">Günstig</div><div class="result-time" id="timeOptimistic">—</div><div class="result-unit">Fahrtzeit</div><div class="result-dist" id="distOptimistic">—</div><div class="result-arrival" id="arrivalOptimistic"></div></div>
-      <div class="result-card typical"><div class="result-label">Typisch</div><div class="result-time" id="timeBest">—</div><div class="result-unit">Fahrtzeit</div><div class="result-dist" id="distBest">—</div><div class="result-arrival" id="arrivalBest"></div></div>
-      <div class="result-card worst"><div class="result-label">Ungünstig</div><div class="result-time" id="timePessimistic">—</div><div class="result-unit">Fahrtzeit</div><div class="result-dist" id="distPessimistic">—</div><div class="result-arrival" id="arrivalPessimistic"></div></div>
-    </div>
-    <div class="summary-bar"><div class="summary-text" id="summaryText"></div><div class="summary-tip" id="summaryTip"></div></div>
-    <div class="delay-info" id="delayInfoDep" style="display:none;"></div>
-  </div>
+    const EV_DATABASE = {
+      'tesla-model-3-lr': { name: 'Tesla Model 3 LR', wltp: 629 },
+      'tesla-model-3-sr': { name: 'Tesla Model 3 SR', wltp: 513 },
+      'tesla-model-y-lr': { name: 'Tesla Model Y LR', wltp: 533 },
+      'tesla-model-y-sr': { name: 'Tesla Model Y SR', wltp: 430 },
+      'tesla-model-s': { name: 'Tesla Model S', wltp: 634 },
+      'tesla-model-x': { name: 'Tesla Model X', wltp: 576 },
+      'vw-id3-pro-s': { name: 'VW ID.3 Pro S', wltp: 551 },
+      'vw-id3-pro': { name: 'VW ID.3 Pro', wltp: 426 },
+      'vw-id4-pro': { name: 'VW ID.4 Pro', wltp: 520 },
+      'vw-id4-gtx': { name: 'VW ID.4 GTX', wltp: 480 },
+      'vw-id5-gtx': { name: 'VW ID.5 GTX', wltp: 490 },
+      'vw-id7-pro-s': { name: 'VW ID.7 Pro S', wltp: 615 },
+      'bmw-i4-edrive40': { name: 'BMW i4 eDrive40', wltp: 590 },
+      'bmw-ix1-xdrive30': { name: 'BMW iX1 xDrive30', wltp: 440 },
+      'bmw-ix3': { name: 'BMW iX3', wltp: 461 },
+      'bmw-ix-xdrive50': { name: 'BMW iX xDrive50', wltp: 630 },
+      'bmw-i5-edrive40': { name: 'BMW i5 eDrive40', wltp: 582 },
+      'mercedes-eqa-250': { name: 'Mercedes EQA 250+', wltp: 528 },
+      'mercedes-eqb-250': { name: 'Mercedes EQB 250+', wltp: 474 },
+      'mercedes-eqe-300': { name: 'Mercedes EQE 300', wltp: 639 },
+      'mercedes-eqs-450': { name: 'Mercedes EQS 450+', wltp: 770 },
+      'audi-q4-etron-45': { name: 'Audi Q4 e-tron 45', wltp: 520 },
+      'audi-q6-etron': { name: 'Audi Q6 e-tron', wltp: 625 },
+      'audi-q8-etron-55': { name: 'Audi Q8 e-tron 55', wltp: 582 },
+      'audi-etron-gt': { name: 'Audi e-tron GT', wltp: 488 },
+      'hyundai-ioniq5-lr': { name: 'Hyundai Ioniq 5 LR', wltp: 507 },
+      'hyundai-ioniq6-lr': { name: 'Hyundai Ioniq 6 LR', wltp: 614 },
+      'kia-ev6-lr': { name: 'Kia EV6 LR', wltp: 528 },
+      'kia-ev9-lr': { name: 'Kia EV9 LR', wltp: 541 },
+      'porsche-taycan': { name: 'Porsche Taycan', wltp: 484 },
+      'porsche-taycan-4s': { name: 'Porsche Taycan 4S', wltp: 464 },
+      'skoda-enyaq-85': { name: 'Skoda Enyaq 85', wltp: 557 },
+      'skoda-enyaq-coupe-85': { name: 'Skoda Enyaq Coupé 85', wltp: 560 },
+      'cupra-born-77': { name: 'Cupra Born 77', wltp: 548 },
+      'opel-mokka-e': { name: 'Opel Mokka-e', wltp: 338 },
+      'opel-corsa-e': { name: 'Opel Corsa-e', wltp: 357 },
+      'renault-megane-ev60': { name: 'Renault Megane E-Tech EV60', wltp: 450 },
+      'renault-scenic-etech': { name: 'Renault Scenic E-Tech', wltp: 620 },
+      'peugeot-e3008': { name: 'Peugeot e-3008', wltp: 527 },
+      'peugeot-e208': { name: 'Peugeot e-208', wltp: 400 },
+      'fiat-500e': { name: 'Fiat 500e', wltp: 321 },
+      'mini-cooper-se': { name: 'Mini Cooper SE', wltp: 305 },
+      'volvo-ex30-lr': { name: 'Volvo EX30 LR', wltp: 476 },
+      'volvo-ex40': { name: 'Volvo EX40', wltp: 573 },
+      'volvo-c40': { name: 'Volvo C40', wltp: 550 },
+      'polestar-2-lr': { name: 'Polestar 2 LR', wltp: 592 },
+      'byd-atto-3': { name: 'BYD Atto 3', wltp: 420 },
+      'byd-seal': { name: 'BYD Seal', wltp: 570 },
+      'smart-1-pro': { name: 'Smart #1 Pro+', wltp: 440 },
+      'smart-3-pro': { name: 'Smart #3 Pro+', wltp: 455 },
+    };
 
-  <!-- Arrival results -->
-  <div class="results" id="resultsArrival">
-    <div class="results-header">
-      <div class="results-route" id="arrRouteLabel"></div>
-      <div class="results-meta" id="arrMetaLabel"></div>
-    </div>
-    <div class="arrival-hero">
-      <div class="arrival-hero-label">// Empfohlene Abfahrt</div>
-      <div class="arrival-hero-time" id="arrHeroTime">—</div>
-      <div class="arrival-hero-sub" id="arrHeroSub"></div>
-    </div>
-    <div class="arrival-scenarios">
-      <div class="arrival-scenario-card"><div class="arrival-scenario-label">Entspannt</div><div class="arrival-scenario-dep tag-safe" id="arrDepOpt">—</div><div class="arrival-scenario-dur" id="arrDurOpt">—</div><div class="arrival-scenario-arr" id="arrArrOpt"></div></div>
-      <div class="arrival-scenario-card"><div class="arrival-scenario-label">Typisch</div><div class="arrival-scenario-dep" id="arrDepBest">—</div><div class="arrival-scenario-dur" id="arrDurBest">—</div><div class="arrival-scenario-arr" id="arrArrBest"></div></div>
-      <div class="arrival-scenario-card"><div class="arrival-scenario-label">Knapp</div><div class="arrival-scenario-dep tag-tight" id="arrDepPess">—</div><div class="arrival-scenario-dur" id="arrDurPess">—</div><div class="arrival-scenario-arr" id="arrArrPess"></div></div>
-    </div>
-    <div class="summary-bar"><div class="summary-text" id="arrSummaryText"></div><div class="summary-tip" id="arrSummaryTip"></div></div>
-    <div class="delay-info" id="delayInfoArr" style="display:none;"></div>
-  </div>
+    const REAL_WORLD_RANGE_FACTOR = 0.78;
 
-  <div class="footer">FAHRTZEIT PWA · HISTORISCHE VERKEHRSPROGNOSE · DE<br><a href="impressum.html">Impressum & Datenschutz</a></div>
-</div>
+    function initApp() {
+      distanceService = new google.maps.DistanceMatrixService();
+      autocompleteService = new google.maps.places.AutocompleteService();
+      directionsService = new google.maps.DirectionsService();
+      sessionToken = new google.maps.places.AutocompleteSessionToken();
 
-<script>
-// ——— State ———
-let currentMode = 'departure';
-let distanceService, autocompleteService, sessionToken;
-let debounceTimers = {};
+      const mapElement = document.getElementById('map');
+      if (mapElement) {
+        currentMap = new google.maps.Map(mapElement, {
+          center: { lat: 51.1657, lng: 10.4515 },
+          zoom: 6,
+          styles: [
+            { elementType: 'geometry', stylers: [{ color: '#f5f0eb' }] },
+            { elementType: 'labels.text.stroke', stylers: [{ color: '#f5f0eb' }] },
+            { elementType: 'labels.text.fill', stylers: [{ color: '#1e1812' }] },
+            { featureType: 'administrative.locality', elementType: 'labels.text.fill', stylers: [{ color: '#9a8878' }] },
+            { featureType: 'road', elementType: 'geometry', stylers: [{ color: '#ffffff' }] },
+            { featureType: 'road.arterial', elementType: 'geometry', stylers: [{ color: '#faf7f4' }] },
+            { featureType: 'water', elementType: 'geometry.fill', stylers: [{ color: '#c5ddf5' }] },
+          ],
+        });
+        directionsRenderer = new google.maps.DirectionsRenderer({
+          map: currentMap,
+          polylineOptions: {
+            strokeColor: '#e85d2f',
+            strokeWeight: 3,
+          },
+          markerOptions: {
+            icon: 'http://maps.google.com/mapfiles/ms/icons/orange-dot.png',
+          },
+        });
+      }
 
-function setMode(mode) {
-  currentMode = mode;
-  document.getElementById('modeDeparture').classList.toggle('active', mode === 'departure');
-  document.getElementById('modeArrival').classList.toggle('active', mode === 'arrival');
-  document.getElementById('timeLabel').textContent = mode === 'departure' ? '// Abfahrtszeit' : '// Gewünschte Ankunftszeit';
-  document.getElementById('timeSelectLabel').textContent = mode === 'departure' ? 'Abfahrt um' : 'Ankommen um';
-  document.getElementById('btnText').textContent = mode === 'departure' ? 'Fahrtzeit berechnen' : 'Abfahrtszeit berechnen';
-  document.getElementById('resultsDeparture').classList.remove('visible');
-  document.getElementById('resultsArrival').classList.remove('visible');
-  hideError();
-}
+      setupEventListeners();
+    }
 
-// ——— Init (called by Google Maps callback) ———
-function initApp() {
-  try {
-    distanceService = new google.maps.DistanceMatrixService();
-    autocompleteService = new google.maps.places.AutocompleteService();
-    sessionToken = new google.maps.places.AutocompleteSessionToken();
-    console.log('[Fahrtzeit] initApp OK – AutocompleteService ready');
-    setupAutocomplete('originInput', 'originDropdown');
-    setupAutocomplete('destInput', 'destDropdown');
-    populateTimeSelect();
-    setDefaultWeekday();
-  } catch (e) {
-    console.error('[Fahrtzeit] initApp error:', e);
-  }
-}
+    function setupEventListeners() {
+      document.querySelectorAll('.toggle-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          document.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
+          e.target.classList.add('active');
+          currentMode = e.target.dataset.mode;
+          toggleModeUI();
+        });
+      });
 
-// ——— Custom Autocomplete ———
-function setupAutocomplete(inputId, dropdownId) {
-  const input = document.getElementById(inputId);
-  const dropdown = document.getElementById(dropdownId);
-  let selectedIdx = -1;
+      setupAutocomplete('from', 'from-dropdown');
+      setupAutocomplete('to', 'to-dropdown');
 
-  input.addEventListener('input', () => {
-    clearTimeout(debounceTimers[inputId]);
-    const q = input.value.trim();
-    if (q.length < 2) { hideDropdown(dropdown); return; }
-    debounceTimers[inputId] = setTimeout(() => {
-      autocompleteService.getPlacePredictions({
-        input: q,
-        componentRestrictions: { country: 'de' },
-        sessionToken: sessionToken,
-      }, (predictions, status) => {
-        if (status !== google.maps.places.PlacesServiceStatus.OK || !predictions) {
-          console.warn('[Fahrtzeit] AC status:', status);
+      document.getElementById('ev-toggle').addEventListener('change', (e) => {
+        const evSection = document.getElementById('ev-section');
+        evSection.classList.toggle('visible', e.target.checked);
+      });
+
+      document.getElementById('ev-start-battery').addEventListener('input', (e) => {
+        document.getElementById('ev-start-battery-value').textContent = e.target.value;
+      });
+      document.getElementById('ev-end-battery').addEventListener('input', (e) => {
+        document.getElementById('ev-end-battery-value').textContent = e.target.value;
+      });
+
+      document.getElementById('calculate-btn').addEventListener('click', handleCalculate);
+
+      document.addEventListener('click', (e) => {
+        if (!e.target.matches('input[type="text"]')) {
+          document.querySelectorAll('.dropdown').forEach(d => d.classList.remove('active'));
+        }
+      });
+    }
+
+    function setupAutocomplete(inputId, dropdownId) {
+      const input = document.getElementById(inputId);
+      const dropdown = document.getElementById(dropdownId);
+
+      input.addEventListener('input', (e) => {
+        const query = e.target.value;
+        if (!query || query.length < 2) {
           hideDropdown(dropdown);
           return;
         }
-        selectedIdx = -1;
-        renderDropdown(predictions, dropdown, input);
+
+        autocompleteService.getPlacePredictions({
+          input: query,
+          componentRestrictions: { country: 'de' },
+          sessionToken: sessionToken,
+        }, (predictions, status) => {
+          if (status !== google.maps.places.PlacesServiceStatus.OK || !predictions) {
+            hideDropdown(dropdown);
+            return;
+          }
+          renderDropdown(predictions, dropdown, input);
+        });
       });
-    }, 250);
-  });
 
-  input.addEventListener('keydown', (e) => {
-    if (!dropdown.classList.contains('visible')) return;
-    const els = dropdown.querySelectorAll('.ac-item');
-    if (e.key === 'ArrowDown') { e.preventDefault(); selectedIdx = Math.min(selectedIdx + 1, els.length - 1); updateSelection(els, selectedIdx); }
-    else if (e.key === 'ArrowUp') { e.preventDefault(); selectedIdx = Math.max(selectedIdx - 1, 0); updateSelection(els, selectedIdx); }
-    else if (e.key === 'Enter' && selectedIdx >= 0) { e.preventDefault(); els[selectedIdx].click(); }
-    else if (e.key === 'Escape') { hideDropdown(dropdown); }
-  });
-
-  document.addEventListener('click', (e) => {
-    if (!input.contains(e.target) && !dropdown.contains(e.target)) hideDropdown(dropdown);
-  });
-}
-
-function renderDropdown(predictions, dropdown, input) {
-  dropdown.innerHTML = '';
-  predictions.forEach((pred) => {
-    const el = document.createElement('div');
-    el.className = 'ac-item';
-    const main = pred.structured_formatting?.main_text || pred.description;
-    const sub = pred.structured_formatting?.secondary_text || '';
-    el.innerHTML = `<div class="ac-main">${main}</div>${sub ? `<div class="ac-sub">${sub}</div>` : ''}`;
-    el.addEventListener('click', () => {
-      input.value = pred.description;
-      hideDropdown(dropdown);
-      sessionToken = new google.maps.places.AutocompleteSessionToken();
-    });
-    dropdown.appendChild(el);
-  });
-  dropdown.classList.add('visible');
-}
-
-function updateSelection(els, idx) { els.forEach((el, i) => el.classList.toggle('selected', i === idx)); }
-function hideDropdown(d) { d.classList.remove('visible'); }
-
-// ——— Time helpers ———
-function populateTimeSelect() {
-  const sel = document.getElementById('timeOfDay');
-  for (let h = 4; h <= 23; h++) {
-    for (let m of [0, 30]) {
-      const opt = document.createElement('option');
-      opt.value = `${h}:${m}`;
-      opt.textContent = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
-      if (h === 7 && m === 0) opt.selected = true;
-      sel.appendChild(opt);
+      input.addEventListener('focus', (e) => {
+        if (e.target.value.length >= 2) {
+          dropdown.classList.add('active');
+        }
+      });
     }
-  }
-}
 
-function setDefaultWeekday() {
-  const d = new Date().getDay();
-  document.getElementById('weekday').value = d === 0 ? '0' : String(d);
-}
-
-function getNextWeekdayDate(targetDay, hour, minute) {
-  const now = new Date();
-  let daysAhead = (targetDay - now.getDay() + 7) % 7;
-  if (daysAhead === 0) {
-    const t = new Date(now); t.setHours(hour, minute, 0, 0);
-    if (t <= now) daysAhead = 7;
-  }
-  const target = new Date(now);
-  target.setDate(now.getDate() + daysAhead);
-  target.setHours(hour, minute, 0, 0);
-  return target;
-}
-
-// ——— Distance Matrix (JS SDK – no CORS issues) ———
-function queryDM(origin, dest, departureDate, trafficModel) {
-  return new Promise((resolve, reject) => {
-    distanceService.getDistanceMatrix({
-      origins: [origin],
-      destinations: [dest],
-      travelMode: google.maps.TravelMode.DRIVING,
-      drivingOptions: { departureTime: departureDate, trafficModel },
-      unitSystem: google.maps.UnitSystem.METRIC,
-    }, (resp, status) => {
-      if (status !== 'OK') return reject(new Error(`API-Fehler: ${status}`));
-      const el = resp.rows[0]?.elements[0];
-      if (!el || el.status !== 'OK') return reject(new Error(`Route nicht gefunden: ${el?.status || 'unbekannt'}`));
-      resolve({
-        duration: el.duration_in_traffic?.value || el.duration.value,
-        durationText: el.duration_in_traffic?.text || el.duration.text,
-        distance: el.distance.value,
-        distanceText: el.distance.text,
+    function renderDropdown(predictions, dropdown, input) {
+      dropdown.innerHTML = '';
+      predictions.forEach(pred => {
+        const item = document.createElement('div');
+        item.className = 'dropdown-item';
+        item.innerHTML = `
+          <div class="dropdown-item-primary">${pred.main_text}</div>
+          <div class="dropdown-item-secondary">${pred.secondary_text || ''}</div>
+        `;
+        item.addEventListener('click', () => {
+          input.value = pred.description;
+          hideDropdown(dropdown);
+        });
+        dropdown.appendChild(item);
       });
-    });
-  });
-}
+      dropdown.classList.add('active');
+    }
 
-// ——— Analyze: Departure ———
-async function analyze() {
-  if (currentMode === 'arrival') return analyzeArrival();
-  const origin = document.getElementById('originInput').value.trim();
-  const dest = document.getElementById('destInput').value.trim();
-  const weekday = parseInt(document.getElementById('weekday').value);
-  const [hour, minute] = document.getElementById('timeOfDay').value.split(':').map(Number);
+    function hideDropdown(dropdown) {
+      dropdown.classList.remove('active');
+    }
 
-  hideError();
-  document.getElementById('resultsDeparture').classList.remove('visible');
-  document.getElementById('resultsArrival').classList.remove('visible');
-  if (!origin) return showError('Bitte Startort eingeben.');
-  if (!dest) return showError('Bitte Zielort eingeben.');
+    function toggleModeUI() {
+      const departureMode = document.getElementById('departure-mode');
+      const arrivalMode = document.getElementById('arrival-mode');
 
-  setLoading(true);
-  const depDate = getNextWeekdayDate(weekday, hour, minute);
+      if (currentMode === 'departure') {
+        departureMode.style.display = 'block';
+        arrivalMode.style.display = 'none';
+      } else {
+        departureMode.style.display = 'none';
+        arrivalMode.style.display = 'block';
+      }
+    }
 
-  try {
-    const [opt, best, pess] = await Promise.all([
-      queryDM(origin, dest, depDate, google.maps.TrafficModel.OPTIMISTIC),
-      queryDM(origin, dest, depDate, google.maps.TrafficModel.BEST_GUESS),
-      queryDM(origin, dest, depDate, google.maps.TrafficModel.PESSIMISTIC),
-    ]);
-    const depTs = Math.floor(depDate.getTime() / 1000);
-    renderDeparture(origin, dest, weekday, hour, minute, depTs, opt, best, pess);
-  } catch (e) { showError(e.message); }
-  finally { setLoading(false); }
-}
+    function handleCalculate() {
+      const from = document.getElementById('from').value.trim();
+      const to = document.getElementById('to').value.trim();
+      const errorContainer = document.getElementById('error-container');
+      errorContainer.innerHTML = '';
 
-// ——— Analyze: Arrival ———
-async function analyzeArrival() {
-  const origin = document.getElementById('originInput').value.trim();
-  const dest = document.getElementById('destInput').value.trim();
-  const weekday = parseInt(document.getElementById('weekday').value);
-  const [arrH, arrM] = document.getElementById('timeOfDay').value.split(':').map(Number);
+      if (!from || !to) {
+        showError('Bitte beide Orte eingeben.');
+        return;
+      }
 
-  hideError();
-  document.getElementById('resultsDeparture').classList.remove('visible');
-  document.getElementById('resultsArrival').classList.remove('visible');
-  if (!origin) return showError('Bitte Startort eingeben.');
-  if (!dest) return showError('Bitte Zielort eingeben.');
+      const timeInput = currentMode === 'departure'
+        ? document.getElementById('departure-time').value.trim()
+        : document.getElementById('arrival-time').value.trim();
 
-  setLoading(true);
-  const arrDate = getNextWeekdayDate(weekday, arrH, arrM);
-  const arrTs = Math.floor(arrDate.getTime() / 1000);
+      if (!timeInput) {
+        showError('Bitte Zeit eingeben.');
+        return;
+      }
 
-  try {
-    // Rough estimate
-    const roughDep = new Date(arrDate.getTime() - 3 * 3600000);
-    const rough = await queryDM(origin, dest, roughDep, google.maps.TrafficModel.BEST_GUESS);
-    const durMs = rough.duration * 1000;
+      document.getElementById('results').classList.add('visible');
+      document.getElementById('time-cards').style.display = 'none';
+      document.getElementById('arrival-cards').style.display = 'none';
+      document.getElementById('hero-card').style.display = 'none';
+      document.getElementById('delay-info').style.display = 'none';
+      document.getElementById('map-container').classList.remove('visible');
 
-    const [opt, best, pess] = await Promise.all([
-      queryDM(origin, dest, new Date(arrDate.getTime() - durMs - 1800000), google.maps.TrafficModel.OPTIMISTIC),
-      queryDM(origin, dest, new Date(arrDate.getTime() - durMs), google.maps.TrafficModel.BEST_GUESS),
-      queryDM(origin, dest, new Date(arrDate.getTime() - durMs - 3600000), google.maps.TrafficModel.PESSIMISTIC),
-    ]);
+      calculateRoute(from, to, timeInput);
+    }
 
-    renderArrival(origin, dest, weekday, arrH, arrM, arrTs, {
-      safe:    { depTs: arrTs - pess.duration, duration: pess.duration, dist: pess.distanceText },
-      typical: { depTs: arrTs - best.duration, duration: best.duration, dist: best.distanceText },
-      relaxed: { depTs: arrTs - opt.duration,  duration: opt.duration,  dist: opt.distanceText },
-    });
-  } catch (e) { showError(e.message); }
-  finally { setLoading(false); }
-}
+    function calculateRoute(from, to, timeInput) {
+      const now = new Date();
+      let departureTime;
 
-// ——— Render helpers ———
-const WDAYS = ['Sonntag','Montag','Dienstag','Mittwoch','Donnerstag','Freitag','Samstag'];
-const hm = s => { const h = Math.floor(s/3600), m = Math.round((s%3600)/60); return h > 0 ? `${h}h ${m}m` : `${m}m`; };
-const tsTime = ts => { const d = new Date(ts*1000); return `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`; };
-const short = s => s.split(',')[0].trim();
+      if (currentMode === 'departure') {
+        departureTime = parseTimeToDate(timeInput, now);
+        if (!departureTime || departureTime < now) {
+          showError('Ungültige Abfahrtszeit. Bitte eine zukünftige Zeit eingeben.');
+          return;
+        }
+      } else {
+        departureTime = new Date(now);
+      }
 
-function renderDelayInfo(elId, optSec, bestSec, pessSec) {
-  const el = document.getElementById(elId);
-  const delayMin = Math.round((pessSec - optSec) / 60);
-  const bestVsOpt = Math.round((bestSec - optSec) / 60);
-  if (delayMin < 10) {
-    el.style.display = 'none';
-    return;
-  }
-  let level, icon;
-  if (delayMin >= 60) { level = 'hoch'; icon = '🔴'; }
-  else if (delayMin >= 30) { level = 'mittel'; icon = '🟡'; }
-  else { level = 'gering'; icon = '🟢'; }
+      const request = {
+        origins: [from],
+        destinations: [to],
+        travelMode: google.maps.TravelMode.DRIVING,
+        durationInTraffic: true,
+        unitSystem: google.maps.UnitSystem.METRIC,
+      };
 
-  let html = `<span class="delay-icon">${icon}</span>`;
-  html += `<strong>Verzögerungsrisiko ${level}:</strong> `;
-  html += `Auf dieser Strecke sind zu dieser Zeit Verzögerungen von bis zu <strong>${delayMin} Min.</strong> möglich (Verkehr, Baustellen, Stau). `;
-  if (bestVsOpt >= 5) {
-    html += `Typisch sind etwa <strong>${bestVsOpt} Min.</strong> Verzögerung gegenüber freier Fahrt.`;
-  }
-  el.innerHTML = html;
-  el.style.display = 'block';
-}
+      if (currentMode === 'departure') {
+        request.departureTime = departureTime;
+      }
 
-function renderDeparture(origin, dest, wd, h, m, depTs, opt, best, pess) {
-  const t = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
-  document.getElementById('resultsRoute').innerHTML = `${short(origin)} <span class="arrow">→</span> ${short(dest)}`;
-  document.getElementById('resultsMeta').textContent = `${WDAYS[wd]}, ${t} Uhr Abfahrt · Historische Prognose`;
+      distanceService.getDistanceMatrix(request, (response, status) => {
+        if (status !== google.maps.DistanceMatrixStatus.OK || !response.rows[0].elements[0].duration_in_traffic) {
+          showError('Fehler bei der Routenberechnung. Bitte versuchen Sie es später erneut.');
+          return;
+        }
 
-  const arr = (dur) => tsTime(depTs + dur) + ' Uhr';
+        const element = response.rows[0].elements[0];
+        const distanceMeters = element.distance.value;
+        const distanceKm = distanceMeters / 1000;
 
-  document.getElementById('timeOptimistic').textContent = hm(opt.duration);
-  document.getElementById('distOptimistic').textContent = opt.distanceText;
-  document.getElementById('arrivalOptimistic').innerHTML = `Ankunft ca. <strong>${arr(opt.duration)}</strong>`;
+        const scenarios = getTrafficScenarios(element, departureTime, distanceKm);
 
-  document.getElementById('timeBest').textContent = hm(best.duration);
-  document.getElementById('distBest').textContent = best.distanceText;
-  document.getElementById('arrivalBest').innerHTML = `Ankunft ca. <strong>${arr(best.duration)}</strong>`;
+        lastResults = {
+          from,
+          to,
+          distanceKm,
+          scenarios,
+          departureTime,
+        };
 
-  document.getElementById('timePessimistic').textContent = hm(pess.duration);
-  document.getElementById('distPessimistic').textContent = pess.distanceText;
-  document.getElementById('arrivalPessimistic').innerHTML = `Ankunft ca. <strong>${arr(pess.duration)}</strong>`;
+        if (currentMode === 'departure') {
+          displayDepartureResults(scenarios, departureTime);
+        } else {
+          const targetTime = parseTimeToDate(document.getElementById('arrival-time').value.trim(), now);
+          displayArrivalResults(scenarios, targetTime);
+        }
 
-  const diff = Math.round(pess.duration/60) - Math.round(opt.duration/60);
-  document.getElementById('summaryText').innerHTML = `Puffer einplanen: <strong>${diff} Min.</strong> zwischen günstigem und ungünstigem Szenario.`;
+        displayMap(from, to);
 
-  let tip = '';
-  if (wd >= 1 && wd <= 5) {
-    if (h >= 7 && h <= 9) tip = '⚠ Morgenspitze';
-    else if (h >= 16 && h <= 18) tip = '⚠ Abendspitze';
-    else tip = '✓ Ruhige Zeit';
-  } else tip = '✓ Wochenende';
-  document.getElementById('summaryTip').textContent = tip;
+        if (document.getElementById('ev-toggle').checked) {
+          calculateEVNeeds(distanceKm, scenarios);
+        }
+      });
+    }
 
-  renderDelayInfo('delayInfoDep', opt.duration, best.duration, pess.duration);
+    function getTrafficScenarios(element, departureTime, distanceKm) {
+      const bestGuessDuration = element.duration_in_traffic.value;
+      const pessimisticDuration = Math.ceil(bestGuessDuration * 1.25);
+      const optimisticDuration = Math.ceil(bestGuessDuration * 0.85);
 
-  document.getElementById('resultsDeparture').classList.add('visible');
-  document.getElementById('resultsDeparture').scrollIntoView({ behavior: 'smooth', block: 'start' });
-}
+      return {
+        optimistic: {
+          durationSeconds: optimisticDuration,
+          label: 'Günstig',
+        },
+        bestGuess: {
+          durationSeconds: bestGuessDuration,
+          label: 'Typisch',
+        },
+        pessimistic: {
+          durationSeconds: pessimisticDuration,
+          label: 'Ungünstig',
+        },
+      };
+    }
 
-function renderArrival(origin, dest, wd, arrH, arrM, arrTs, sc) {
-  const at = `${String(arrH).padStart(2,'0')}:${String(arrM).padStart(2,'0')}`;
-  document.getElementById('arrRouteLabel').innerHTML = `${short(origin)} <span class="arrow">→</span> ${short(dest)}`;
-  document.getElementById('arrMetaLabel').textContent = `Ankunft bis ${WDAYS[wd]}, ${at} Uhr · Historische Prognose`;
+    function displayDepartureResults(scenarios, departureTime) {
+      const safeTime = new Date(departureTime);
+      const safeArrival = new Date(departureTime.getTime() + scenarios.pessimistic.durationSeconds * 1000);
 
-  document.getElementById('arrHeroTime').textContent = tsTime(sc.safe.depTs) + ' Uhr';
-  document.getElementById('arrHeroSub').innerHTML = `Späteste sichere Abfahrt — Ankunft ca. <strong>${at} Uhr</strong> auch bei schlechtem Verkehr`;
+      document.getElementById('hero-time').textContent = formatTime(safeTime);
+      document.getElementById('hero-label').textContent = 'Sichere Abfahrtszeit';
+      document.getElementById('hero-meta').innerHTML = `
+        <div>Ankunft: ${formatTime(safeArrival)} (pessimistisches Szenario)</div>
+      `;
+      document.getElementById('hero-card').style.display = 'block';
 
-  // Entspannt = früh losfahren (pessimistisch), viel Puffer
-  document.getElementById('arrDepOpt').textContent = tsTime(sc.safe.depTs) + ' Uhr';
-  document.getElementById('arrDurOpt').textContent = hm(sc.safe.duration) + ' · ungünstig';
-  document.getElementById('arrArrOpt').innerHTML = `Ankunft ca. <strong>${at} Uhr</strong>`;
+      const timeOptimal = new Date(departureTime.getTime() + scenarios.optimistic.durationSeconds * 1000);
+      const timeBest = new Date(departureTime.getTime() + scenarios.bestGuess.durationSeconds * 1000);
+      const timePessimistic = new Date(departureTime.getTime() + scenarios.pessimistic.durationSeconds * 1000);
 
-  document.getElementById('arrDepBest').textContent = tsTime(sc.typical.depTs) + ' Uhr';
-  document.getElementById('arrDurBest').textContent = hm(sc.typical.duration) + ' · typisch';
-  document.getElementById('arrArrBest').innerHTML = `Ankunft ca. <strong>${at} Uhr</strong>`;
+      document.getElementById('time-optimistic').textContent = formatTime(timeOptimal);
+      document.getElementById('time-best-guess').textContent = formatTime(timeBest);
+      document.getElementById('time-pessimistic').textContent = formatTime(timePessimistic);
 
-  // Knapp = spät losfahren (optimistisch), wenig Puffer
-  document.getElementById('arrDepPess').textContent = tsTime(sc.relaxed.depTs) + ' Uhr';
-  document.getElementById('arrDurPess').textContent = hm(sc.relaxed.duration) + ' · günstig';
-  document.getElementById('arrArrPess').innerHTML = `Ankunft ca. <strong>${at} Uhr</strong>`;
+      document.getElementById('time-cards').style.display = 'grid';
 
-  const buf = Math.abs(Math.round((sc.relaxed.depTs - sc.safe.depTs) / 60));
-  document.getElementById('arrSummaryText').innerHTML = `Zwischen frühester und spätester Abfahrt liegen <strong>${buf} Min.</strong> Puffer.`;
+      const diff = scenarios.pessimistic.durationSeconds - scenarios.optimistic.durationSeconds;
+      const diffMinutes = Math.round(diff / 60);
+      const riskLevel = diffMinutes < 10 ? 'low' : diffMinutes < 30 ? 'medium' : 'high';
 
-  let tip = '';
-  if (wd >= 1 && wd <= 5) {
-    if (arrH >= 8 && arrH <= 10) tip = '⚠ Morgenspitze als Ziel';
-    else if (arrH >= 17 && arrH <= 19) tip = '⚠ Abendspitze als Ziel';
-    else tip = '✓ Entspannte Ankunftszeit';
-  } else tip = '✓ Wochenende';
-  document.getElementById('arrSummaryTip').textContent = tip;
+      displayDelayInfo(diffMinutes, riskLevel);
+    }
 
-  renderDelayInfo('delayInfoArr', sc.relaxed.duration, sc.typical.duration, sc.safe.duration);
+    function displayArrivalResults(scenarios, targetTime) {
+      const now = new Date();
 
-  document.getElementById('resultsArrival').classList.add('visible');
-  document.getElementById('resultsArrival').scrollIntoView({ behavior: 'smooth', block: 'start' });
-}
+      const safeDeparture = new Date(targetTime.getTime() - scenarios.pessimistic.durationSeconds * 1000);
+      const bestDeparture = new Date(targetTime.getTime() - scenarios.bestGuess.durationSeconds * 1000);
+      const relaxedDeparture = new Date(targetTime.getTime() - scenarios.optimistic.durationSeconds * 1000);
 
-// ——— UI ———
-function setLoading(on) {
-  document.getElementById('analyzeBtn').disabled = on;
-  document.getElementById('spinner').style.display = on ? 'block' : 'none';
-  document.getElementById('btnText').textContent = on
-    ? (currentMode === 'arrival' ? 'Berechne Abfahrtszeiten...' : 'Berechne...')
-    : (currentMode === 'arrival' ? 'Abfahrtszeit berechnen' : 'Fahrtzeit berechnen');
-}
-function showError(msg) { const b = document.getElementById('errorBox'); b.textContent = msg; b.classList.add('visible'); }
-function hideError() { document.getElementById('errorBox').classList.remove('visible'); }
+      document.getElementById('arrival-safe').textContent = formatTime(safeDeparture);
+      document.getElementById('arrival-bestguess').textContent = formatTime(bestDeparture);
+      document.getElementById('arrival-relaxed').textContent = formatTime(relaxedDeparture);
 
-// ——— Expose initApp globally for Google Maps callback ———
-window.initApp = initApp;
+      document.getElementById('hero-time').textContent = formatTime(safeDeparture);
+      document.getElementById('hero-label').textContent = 'Empfohlene Abfahrtszeit';
+      document.getElementById('hero-meta').innerHTML = `
+        <div>Ankunft: ${formatTime(targetTime)} (pessimistisches Szenario)</div>
+      `;
+      document.getElementById('hero-card').style.display = 'block';
 
-// ——— Service Worker ———
-if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(() => {});
-</script>
-<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCVxgaDTwgPR8SwgLaB6zHiHNmeQcPPzow&libraries=places&language=de&region=DE&callback=initApp" async defer></script>
+      document.getElementById('arrival-cards').style.display = 'grid';
+
+      const diff = scenarios.pessimistic.durationSeconds - scenarios.optimistic.durationSeconds;
+      const diffMinutes = Math.round(diff / 60);
+      const riskLevel = diffMinutes < 10 ? 'low' : diffMinutes < 30 ? 'medium' : 'high';
+
+      displayDelayInfo(diffMinutes, riskLevel);
+    }
+
+    function displayDelayInfo(diffMinutes, riskLevel) {
+      const delayInfo = document.getElementById('delay-info');
+      const delayIcon = document.getElementById('delay-icon');
+      const delayText = document.getElementById('delay-text');
+      const delayBarFill = document.getElementById('delay-bar-fill');
+
+      let icon, text, fillPercent, fillColor;
+
+      if (riskLevel === 'low') {
+        icon = 'V';
+        text = `Zeitpuffer: ${diffMinutes} Min. - Verkehr sehr zuverlaessig`;
+        fillPercent = 20;
+        fillColor = '#2a9d6f';
+      } else if (riskLevel === 'medium') {
+        icon = 'W';
+        text = `Zeitpuffer: ${diffMinutes} Min. - Verkehr moderat variabel`;
+        fillPercent = 60;
+        fillColor = '#f4a460';
+      } else {
+        icon = 'W';
+        text = `Zeitpuffer: ${diffMinutes} Min. - Verkehr sehr variabel`;
+        fillPercent = 100;
+        fillColor = '#d73a49';
+      }
+
+      delayIcon.textContent = icon;
+      delayText.textContent = text;
+      delayBarFill.style.width = fillPercent + '%';
+      delayBarFill.style.backgroundColor = fillColor;
+      delayInfo.style.display = 'grid';
+    }
+
+    function displayMap(from, to) {
+      const directionsRequest = {
+        origin: from,
+        destination: to,
+        travelMode: google.maps.TravelMode.DRIVING,
+        language: 'de',
+      };
+
+      directionsService.route(directionsRequest, (result, status) => {
+        if (status === google.maps.DirectionsStatus.OK) {
+          directionsRenderer.setDirections(result);
+
+          const route = result.routes[0];
+          const leg = route.legs[0];
+
+          const distanceKm = leg.distance.value / 1000;
+          const durationMin = Math.round(leg.duration.value / 60);
+          const speedAvg = Math.round(distanceKm / (durationMin / 60));
+
+          document.getElementById('route-distance').textContent = distanceKm.toFixed(1) + ' km';
+          document.getElementById('route-duration').textContent = formatDuration(durationMin);
+          document.getElementById('route-speed').textContent = speedAvg + ' km/h';
+
+          document.getElementById('map-container').classList.add('visible');
+
+          if (document.getElementById('ev-toggle').checked && lastResults) {
+            addChargingMarkers(route, lastResults.distanceKm);
+          }
+        }
+      });
+    }
+
+    function calculateEVNeeds(distanceKm, scenarios) {
+      const evToggle = document.getElementById('ev-toggle');
+      if (!evToggle.checked) return;
+
+      const modelId = document.getElementById('ev-model').value;
+      if (!modelId) {
+        showError('Bitte ein E-Auto-Modell auswaehlen.');
+        return;
+      }
+
+      const startBattery = parseInt(document.getElementById('ev-start-battery').value);
+      const endBattery = parseInt(document.getElementById('ev-end-battery').value);
+      const evData = EV_DATABASE[modelId];
+
+      const usableRange = evData.wltp * REAL_WORLD_RANGE_FACTOR * (startBattery - endBattery) / 100;
+
+      if (distanceKm <= usableRange) {
+        document.getElementById('ev-info-box').style.display = 'none';
+        return;
+      }
+
+      const chargableRange = evData.wltp * REAL_WORLD_RANGE_FACTOR * (80 - endBattery) / 100;
+      const stopsNeeded = Math.ceil((distanceKm - usableRange) / chargableRange);
+      const chargingTimePerStop = 25;
+      const totalChargingTime = stopsNeeded * chargingTimePerStop;
+
+      const evInfoBox = document.getElementById('ev-info-box');
+      evInfoBox.innerHTML = `<div id="ev-info-text">⚡ ${stopsNeeded} Ladestopp(s) empfohlen, ca. ${totalChargingTime} Min. Ladezeit</div>`;
+      evInfoBox.style.display = 'block';
+
+      if (currentMode === 'departure' && lastResults) {
+        const heroMeta = document.getElementById('hero-meta');
+        const currentMeta = heroMeta.innerHTML;
+        heroMeta.innerHTML = currentMeta + `<div>+ ${totalChargingTime} Min. Ladezeit (${stopsNeeded} Stopp)</div>`;
+      }
+    }
+
+    function addChargingMarkers(route, totalDistance) {
+      const leg = route.legs[0];
+      const modelId = document.getElementById('ev-model').value;
+      const endBattery = parseInt(document.getElementById('ev-end-battery').value);
+      const startBattery = parseInt(document.getElementById('ev-start-battery').value);
+      const evData = EV_DATABASE[modelId];
+      const fullRange = evData.wltp * REAL_WORLD_RANGE_FACTOR;
+      const kmPerPercent = fullRange / 100;
+
+      let currentSoC = startBattery;
+      let cumulativeDistance = 0;
+      const steps = leg.steps || [];
+
+      for (let i = 0; i < steps.length; i++) {
+        const step = steps[i];
+        const stepKm = step.distance.value / 1000;
+        cumulativeDistance += stepKm;
+        currentSoC -= stepKm / kmPerPercent;
+
+        if (currentSoC <= 15) {
+          new google.maps.Marker({
+            position: step.end_location,
+            map: currentMap,
+            title: `Ladestopp (Akku ~${Math.max(0,Math.round(currentSoC))}% → 80%)`,
+            icon: 'https://maps.google.com/mapfiles/ms/icons/blue-dot.png',
+          });
+          currentSoC = 80; // charged to 80%
+        }
+      }
+    }
+
+    function parseTimeToDate(timeStr, baseDate) {
+      const match = timeStr.match(/^(\d{1,2}):(\d{2})$/);
+      if (!match) return null;
+
+      const hours = parseInt(match[1], 10);
+      const minutes = parseInt(match[2], 10);
+
+      if (hours < 0 || hours > 23 || minutes < 0 || minutes > 59) return null;
+
+      const result = new Date(baseDate);
+      result.setHours(hours, minutes, 0, 0);
+
+      return result;
+    }
+
+    function formatTime(date) {
+      const hours = String(date.getHours()).padStart(2, '0');
+      const minutes = String(date.getMinutes()).padStart(2, '0');
+      return `${hours}:${minutes}`;
+    }
+
+    function formatDuration(minutes) {
+      const hours = Math.floor(minutes / 60);
+      const mins = minutes % 60;
+      return hours > 0 ? `${hours}h ${mins}m` : `${mins}m`;
+    }
+
+    function showError(message) {
+      const container = document.getElementById('error-container');
+      container.innerHTML = `<div class="error-message">${message}</div>`;
+      document.getElementById('results').classList.add('visible');
+    }
+
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('./sw.js').catch(() => {});
+    }
+
+    window.initApp = initApp;
+  </script>
+
+  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCVxgaDTwgPR8SwgLaB6zHiHNmeQcPPzow&libraries=places&language=de&region=DE&callback=initApp" async defer></script>
 </body>
 </html>
