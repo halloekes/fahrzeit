@@ -351,6 +351,7 @@
     <header>
       <div class="logo">Fahrtzeit</div>
       <div class="subtitle">Reisezeit-Rechner mit Echtzeit-Verkehr</div>
+      <div style="font-size:10px;color:var(--muted);margin-top:4px;" id="version-tag">v11</div>
     </header>
 
     <div class="form-card">
@@ -872,14 +873,22 @@
 
       document.getElementById('calculate-btn').addEventListener('click', function() {
         try {
+          var btn = document.getElementById('calculate-btn');
+          btn.textContent = 'Berechne...';
+          btn.disabled = true;
+          setTimeout(function() { btn.textContent = 'Berechnen'; btn.disabled = false; }, 10000);
+
           if (!mapsReady) {
-            showError('Google Maps wird noch geladen. Bitte kurz warten...');
+            showError('Google Maps wird noch geladen. Bitte kurz warten und nochmal versuchen.');
+            btn.textContent = 'Berechnen'; btn.disabled = false;
             return;
           }
           handleCalculate();
         } catch (e) {
           console.error('Calculate error:', e);
           showError('Fehler: ' + e.message);
+          document.getElementById('calculate-btn').textContent = 'Berechnen';
+          document.getElementById('calculate-btn').disabled = false;
         }
       });
 
@@ -993,7 +1002,6 @@
         origins: [from],
         destinations: [to],
         travelMode: google.maps.TravelMode.DRIVING,
-        durationInTraffic: true,
         unitSystem: google.maps.UnitSystem.METRIC,
       };
 
@@ -1008,12 +1016,18 @@
       distanceService.getDistanceMatrix(request, (response, status) => {
         try {
         if (status !== google.maps.DistanceMatrixStatus.OK) {
-          showError('Fehler bei der Routenberechnung (Status: ' + status + ').'); return;
+          showError('Fehler bei der Routenberechnung (Status: ' + status + ').');
+          document.getElementById('calculate-btn').textContent = 'Berechnen';
+          document.getElementById('calculate-btn').disabled = false;
+          return;
         }
 
         const element = response.rows[0].elements[0];
         if (element.status !== 'OK' || !element.duration_in_traffic) {
-          showError('Route konnte nicht berechnet werden. Bitte Adressen prüfen.'); return;
+          showError('Route konnte nicht berechnet werden (Element-Status: ' + element.status + ', Traffic: ' + !!element.duration_in_traffic + '). Bitte Adressen prüfen.');
+          document.getElementById('calculate-btn').textContent = 'Berechnen';
+          document.getElementById('calculate-btn').disabled = false;
+          return;
         }
 
         const distanceKm = element.distance.value / 1000;
@@ -1038,9 +1052,13 @@
         if (chargingTimeMin > 0) {
           displayEVInfo(distanceKm, chargingTimeMin);
         }
+        document.getElementById('calculate-btn').textContent = 'Berechnen';
+        document.getElementById('calculate-btn').disabled = false;
         } catch (e) {
           console.error('DistanceMatrix callback error:', e);
           showError('Berechnungsfehler: ' + e.message);
+          document.getElementById('calculate-btn').textContent = 'Berechnen';
+          document.getElementById('calculate-btn').disabled = false;
         }
       });
     }
@@ -1367,17 +1385,33 @@
       document.getElementById('results').classList.add('visible');
     }
 
+    // Global error handler — show ALL JS errors on page
+    window.onerror = function(msg, url, line) {
+      var el = document.getElementById('error-container');
+      if (el) {
+        el.innerHTML = '<div class="error-message">JS-Fehler: ' + msg + ' (Zeile ' + line + ')</div>';
+        document.getElementById('results').classList.add('visible');
+      }
+    };
+
     // Boot: set up UI immediately (don't wait for Maps)
     try {
       initAllPickers();
       setupEventListeners();
       selectTodayWeekday();
+      console.log('[Fahrtzeit] UI initialized OK');
     } catch (e) {
       console.error('Boot error:', e);
+      showError('Initialisierungsfehler: ' + e.message);
     }
 
+    // Force-unregister ALL old service workers, then register fresh
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('./sw.js').catch(() => {});
+      navigator.serviceWorker.getRegistrations().then(function(regs) {
+        regs.forEach(function(r) { r.unregister(); });
+      }).then(function() {
+        navigator.serviceWorker.register('./sw.js').catch(function() {});
+      });
     }
 
     window.initApp = initApp;
