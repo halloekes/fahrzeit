@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html>
-<head><meta charset="UTF-8"><title>API Test</title></head>
+<head><meta charset="UTF-8"><meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"><title>API Test v3</title></head>
 <body>
-<h2>Google Places Autocomplete Test</h2>
+<h2>Google Places Autocomplete Test <small style="color:red">(v3 - callback)</small></h2>
 <input type="text" id="testInput" placeholder="Adresse eingeben..." style="font-size:18px;padding:10px;width:400px;">
 <div id="log" style="margin-top:20px;font-family:monospace;white-space:pre-wrap;"></div>
 
@@ -10,35 +10,44 @@
 function log(msg) {
   document.getElementById('log').textContent += new Date().toLocaleTimeString() + ' ' + msg + '\n';
 }
-log('Page loaded, waiting for Google Maps...');
+log('v3 loaded, waiting for Google Maps...');
 
 function initTest() {
   log('initTest called! google.maps loaded OK');
+  log('google.maps.places exists: ' + !!google.maps.places);
+  log('AutocompleteService exists: ' + !!google.maps.places.AutocompleteService);
+
   try {
-    const ac = new google.maps.places.AutocompleteService();
-    const token = new google.maps.places.AutocompleteSessionToken();
-    log('AutocompleteService created OK');
+    var ac = new google.maps.places.AutocompleteService();
+    var token = new google.maps.places.AutocompleteSessionToken();
+    log('AutocompleteService + token created OK');
 
     document.getElementById('testInput').addEventListener('input', function() {
-      const q = this.value.trim();
+      var q = this.value.trim();
       if (q.length < 2) return;
+      log('---');
       log('Searching: "' + q + '"');
-      ac.getPlacePredictions({
+
+      var retVal = ac.getPlacePredictions({
         input: q,
         componentRestrictions: { country: 'de' },
         sessionToken: token,
       }, function(predictions, status) {
-        log('Status: ' + status);
-        if (status !== google.maps.places.PlacesServiceStatus.OK || !predictions) {
-          log('No results (status: ' + status + ')');
+        log('Callback fired! Status: ' + status);
+        if (!predictions) {
+          log('predictions is null/undefined');
           return;
         }
         log('Got ' + predictions.length + ' results:');
-        predictions.forEach(function(p, i) { log('  ' + (i+1) + '. ' + p.description); });
+        predictions.slice(0, 3).forEach(function(p, i) {
+          log('  ' + (i+1) + '. ' + p.description);
+        });
       });
+
+      log('getPlacePredictions returned: ' + typeof retVal);
     });
   } catch(e) {
-    log('INIT ERROR: ' + e.message);
+    log('INIT ERROR: ' + e.message + '\n' + e.stack);
   }
 }
 window.initTest = initTest;
