@@ -351,7 +351,7 @@
     <header>
       <div class="logo">Fahrtzeit</div>
       <div class="subtitle">Reisezeit-Rechner mit Echtzeit-Verkehr</div>
-      <div style="font-size:10px;color:var(--muted);margin-top:4px;" id="version-tag">v15</div>
+      <div style="font-size:10px;color:var(--muted);margin-top:4px;" id="version-tag">v16</div>
     </header>
 
     <div class="form-card">
@@ -660,7 +660,7 @@
   </div>
 
   <script>
-    let distanceService, autocompleteService, sessionToken, directionsService, directionsRenderer;
+    let autocompleteService, sessionToken, directionsService, directionsRenderer;
     let currentMode = 'departure';
     let lastResults = null;
     let currentMap = null;
@@ -806,7 +806,6 @@
     /* ── App Init (called by Google Maps callback) ── */
     function initApp() {
       try {
-        distanceService = new google.maps.DistanceMatrixService();
         autocompleteService = new google.maps.places.AutocompleteService();
         directionsService = new google.maps.DirectionsService();
         sessionToken = new google.maps.places.AutocompleteSessionToken();
@@ -1010,63 +1009,65 @@
     }
 
     function calculateRoute(from, to, departureTime, arrivalTime) {
-      const request = {
-        origins: [from],
-        destinations: [to],
+      // Use Directions API instead of Distance Matrix API (one less API dependency)
+      var depTime = departureTime || new Date(arrivalTime.getTime() - 4 * 3600 * 1000);
+
+      var request = {
+        origin: from,
+        destination: to,
         travelMode: google.maps.TravelMode.DRIVING,
-        unitSystem: google.maps.UnitSystem.METRIC,
+        drivingOptions: {
+          departureTime: depTime,
+          trafficModel: 'bestguess'
+        },
+        unitSystem: google.maps.UnitSystem.METRIC
       };
 
-      // For traffic predictions we need a departure time
-      if (departureTime) {
-        request.departureTime = departureTime;
-      } else {
-        // For arrival mode, estimate a departure to get traffic data
-        request.departureTime = new Date(arrivalTime.getTime() - 4 * 3600 * 1000);
-      }
-
-      // Safety timeout: if callback never fires, show error after 12s
+      // Safety timeout
       var callbackFired = false;
       setTimeout(function() {
         if (!callbackFired) {
-          showBtnError('Die Google Distance Matrix API hat nicht geantwortet. Bitte prüfe in der Google Cloud Console, ob die Distance Matrix API aktiviert ist.');
+          showBtnError('Google Directions API hat nicht geantwortet. Bitte prüfe in der Google Cloud Console ob die Directions API aktiviert ist und ein Abrechnungskonto verknüpft ist.');
           resetBtn();
         }
       }, 12000);
 
       try {
-        distanceService.getDistanceMatrix(request, (response, status) => {
+        directionsService.route(request, function(result, status) {
           callbackFired = true;
           try {
             if (status !== 'OK') {
-              showBtnError('Routenberechnung fehlgeschlagen (Status: ' + status + '). Prüfe ob Distance Matrix API in der Google Cloud Console aktiviert ist.');
+              showBtnError('Routenberechnung fehlgeschlagen (Status: ' + status + '). Bitte Adressen prüfen oder Directions API in Google Cloud Console aktivieren.');
               resetBtn();
               return;
             }
 
-            const element = response.rows[0].elements[0];
-            if (element.status !== 'OK') {
-              showBtnError('Route konnte nicht berechnet werden (Status: ' + element.status + '). Bitte Adressen prüfen.');
+            if (!result.routes || !result.routes[0] || !result.routes[0].legs || !result.routes[0].legs[0]) {
+              showBtnError('Keine Route gefunden. Bitte Adressen prüfen.');
               resetBtn();
               return;
             }
 
-            if (!element.duration_in_traffic) {
-              showBtnError('Keine Verkehrsdaten verfügbar. Die Distance Matrix API benötigt ein Abrechnungskonto in der Google Cloud Console, um Verkehrsdaten zu liefern.');
-              resetBtn();
-              return;
-            }
+            var leg = result.routes[0].legs[0];
+            var distanceKm = leg.distance.value / 1000;
 
-            const distanceKm = element.distance.value / 1000;
-            const scenarios = getTrafficScenarios(element);
+            // duration_in_traffic requires billing; fall back to duration
+            var baseSec = leg.duration.value;
+            var trafficSec = (leg.duration_in_traffic ? leg.duration_in_traffic.value : baseSec);
+
+            var scenarios = {
+              optimistic: { durationSeconds: Math.ceil(trafficSec * 0.85) },
+              bestGuess:  { durationSeconds: trafficSec },
+              pessimistic:{ durationSeconds: Math.ceil(trafficSec * 1.25) }
+            };
 
             // Calculate EV charging time
-            let chargingTimeMin = 0;
+            var chargingTimeMin = 0;
             if (document.getElementById('ev-toggle').checked) {
               chargingTimeMin = getChargingTime(distanceKm);
             }
 
-            lastResults = { from, to, distanceKm, scenarios, departureTime, arrivalTime, chargingTimeMin };
+            lastResults = { from: from, to: to, distanceKm: distanceKm, scenarios: scenarios, departureTime: departureTime, arrivalTime: arrivalTime, chargingTimeMin: chargingTimeMin };
 
             if (currentMode === 'departure') {
               displayDepartureResults(scenarios, departureTime, chargingTimeMin);
@@ -1074,33 +1075,44 @@
               displayArrivalResults(scenarios, arrivalTime, chargingTimeMin);
             }
 
-            displayMap(from, to);
+            // Show map with the result we already have
+            try {
+              directionsRenderer.setDirections(result);
+              var durationMin = Math.round(trafficSec / 60);
+              var speedAvg = Math.round(distanceKm / (durationMin / 60));
+              document.getElementById('route-distance').textContent = distanceKm.toFixed(1) + ' km';
+              document.getElementById('route-duration').textContent = formatDuration(durationMin);
+              document.getElementById('route-speed').textContent = speedAvg + ' km/h';
+              document.getElementById('map-container').classList.add('visible');
+
+              if (document.getElementById('ev-toggle').checked && lastResults) {
+                addChargingMarkers(result.routes[0]);
+              }
+            } catch (mapErr) {
+              console.warn('Map display error:', mapErr);
+            }
 
             if (chargingTimeMin > 0) {
               displayEVInfo(distanceKm, chargingTimeMin);
             }
+
+            // Show delay info
+            var diffSec = scenarios.pessimistic.durationSeconds - scenarios.optimistic.durationSeconds;
+            displayDelayInfo(Math.round(diffSec / 60));
+
             resetBtn();
           } catch (e) {
-            console.error('DistanceMatrix callback error:', e);
+            console.error('Directions callback error:', e);
             showBtnError('Berechnungsfehler: ' + e.message);
             resetBtn();
           }
         });
       } catch (e) {
         callbackFired = true;
-        console.error('getDistanceMatrix call error:', e);
+        console.error('Directions call error:', e);
         showBtnError('API-Aufruffehler: ' + e.message);
         resetBtn();
       }
-    }
-
-    function getTrafficScenarios(element) {
-      const bg = element.duration_in_traffic.value;
-      return {
-        optimistic: { durationSeconds: Math.ceil(bg * 0.85) },
-        bestGuess: { durationSeconds: bg },
-        pessimistic: { durationSeconds: Math.ceil(bg * 1.25) },
-      };
     }
 
     /* ── Calculate EV charging time (returns minutes) ── */
@@ -1196,40 +1208,7 @@
       document.getElementById('delay-info').style.display = 'block';
     }
 
-    function displayMap(from, to) {
-      try {
-        directionsService.route({
-          origin: from, destination: to,
-          travelMode: google.maps.TravelMode.DRIVING, language: 'de',
-        }, (result, status) => {
-          try {
-            if (status === 'OK' && result && result.routes && result.routes[0]) {
-              directionsRenderer.setDirections(result);
-              const leg = result.routes[0].legs[0];
-              if (!leg) return;
-              const distanceKm = leg.distance.value / 1000;
-              const durationMin = Math.round(leg.duration.value / 60);
-              const speedAvg = Math.round(distanceKm / (durationMin / 60));
-
-              document.getElementById('route-distance').textContent = distanceKm.toFixed(1) + ' km';
-              document.getElementById('route-duration').textContent = formatDuration(durationMin);
-              document.getElementById('route-speed').textContent = speedAvg + ' km/h';
-              document.getElementById('map-container').classList.add('visible');
-
-              if (document.getElementById('ev-toggle').checked && lastResults) {
-                addChargingMarkers(result.routes[0]);
-              }
-            } else {
-              console.warn('Directions API status:', status);
-            }
-          } catch (e) {
-            console.error('displayMap callback error:', e);
-          }
-        });
-      } catch (e) {
-        console.error('displayMap error:', e);
-      }
-    }
+    // displayMap removed — map display now integrated into calculateRoute
 
     function getPlacesService() {
       if (!placesService && currentMap) {
@@ -1448,7 +1427,7 @@
     try { initAllPickers(); } catch (e) { console.error('initAllPickers error:', e); }
     try { setupEventListeners(); } catch (e) { console.error('setupEventListeners error:', e); }
     try { selectTodayWeekday(); } catch (e) { console.error('selectTodayWeekday error:', e); }
-    console.log('[Fahrtzeit v14] UI initialized OK');
+    console.log('[Fahrtzeit v16] UI initialized OK');
 
     // Timeout: if Maps hasn't loaded after 8 seconds, show clear error
     setTimeout(function() {
