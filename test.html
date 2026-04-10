@@ -19,21 +19,23 @@ function initTest() {
     const token = new google.maps.places.AutocompleteSessionToken();
     log('AutocompleteService created OK');
 
-    document.getElementById('testInput').addEventListener('input', async function() {
+    document.getElementById('testInput').addEventListener('input', function() {
       const q = this.value.trim();
       if (q.length < 2) return;
       log('Searching: "' + q + '"');
-      try {
-        const resp = await ac.getPlacePredictions({
-          input: q,
-          componentRestrictions: { country: 'de' },
-          sessionToken: token,
-        });
-        log('Got ' + resp.predictions.length + ' results:');
-        resp.predictions.forEach((p, i) => log('  ' + (i+1) + '. ' + p.description));
-      } catch(e) {
-        log('ERROR: ' + e.message);
-      }
+      ac.getPlacePredictions({
+        input: q,
+        componentRestrictions: { country: 'de' },
+        sessionToken: token,
+      }, function(predictions, status) {
+        log('Status: ' + status);
+        if (status !== google.maps.places.PlacesServiceStatus.OK || !predictions) {
+          log('No results (status: ' + status + ')');
+          return;
+        }
+        log('Got ' + predictions.length + ' results:');
+        predictions.forEach(function(p, i) { log('  ' + (i+1) + '. ' + p.description); });
+      });
     });
   } catch(e) {
     log('INIT ERROR: ' + e.message);

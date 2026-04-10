@@ -312,24 +312,20 @@ function setupAutocomplete(inputId, dropdownId) {
     clearTimeout(debounceTimers[inputId]);
     const q = input.value.trim();
     if (q.length < 2) { hideDropdown(dropdown); return; }
-    debounceTimers[inputId] = setTimeout(async () => {
-      try {
-        const response = await autocompleteService.getPlacePredictions({
-          input: q,
-          componentRestrictions: { country: 'de' },
-          sessionToken: sessionToken,
-        });
-        const predictions = response.predictions;
-        if (!predictions || predictions.length === 0) {
+    debounceTimers[inputId] = setTimeout(() => {
+      autocompleteService.getPlacePredictions({
+        input: q,
+        componentRestrictions: { country: 'de' },
+        sessionToken: sessionToken,
+      }, (predictions, status) => {
+        if (status !== google.maps.places.PlacesServiceStatus.OK || !predictions) {
+          console.warn('[Fahrtzeit] AC status:', status);
           hideDropdown(dropdown);
           return;
         }
         selectedIdx = -1;
         renderDropdown(predictions, dropdown, input);
-      } catch (e) {
-        console.warn('[Fahrtzeit] Autocomplete error:', e);
-        hideDropdown(dropdown);
-      }
+      });
     }, 250);
   });
 
