@@ -351,7 +351,7 @@
     <header>
       <div class="logo">Fahrtzeit</div>
       <div class="subtitle">Reisezeit-Rechner mit Echtzeit-Verkehr</div>
-      <div style="font-size:10px;color:var(--muted);margin-top:4px;" id="version-tag">v14</div>
+      <div style="font-size:10px;color:var(--muted);margin-top:4px;" id="version-tag">v15</div>
     </header>
 
     <div class="form-card">
@@ -1004,6 +1004,11 @@
       }
     }
 
+    function resetBtn() {
+      document.getElementById('calculate-btn').textContent = 'Berechnen';
+      document.getElementById('calculate-btn').disabled = false;
+    }
+
     function calculateRoute(from, to, departureTime, arrivalTime) {
       const request = {
         origins: [from],
@@ -1020,54 +1025,73 @@
         request.departureTime = new Date(arrivalTime.getTime() - 4 * 3600 * 1000);
       }
 
-      distanceService.getDistanceMatrix(request, (response, status) => {
-        try {
-        if (status !== google.maps.DistanceMatrixStatus.OK) {
-          showError('Fehler bei der Routenberechnung (Status: ' + status + ').');
-          document.getElementById('calculate-btn').textContent = 'Berechnen';
-          document.getElementById('calculate-btn').disabled = false;
-          return;
+      // Safety timeout: if callback never fires, show error after 12s
+      var callbackFired = false;
+      setTimeout(function() {
+        if (!callbackFired) {
+          showBtnError('Die Google Distance Matrix API hat nicht geantwortet. Bitte prüfe in der Google Cloud Console, ob die Distance Matrix API aktiviert ist.');
+          resetBtn();
         }
+      }, 12000);
 
-        const element = response.rows[0].elements[0];
-        if (element.status !== 'OK' || !element.duration_in_traffic) {
-          showError('Route konnte nicht berechnet werden (Element-Status: ' + element.status + ', Traffic: ' + !!element.duration_in_traffic + '). Bitte Adressen prüfen.');
-          document.getElementById('calculate-btn').textContent = 'Berechnen';
-          document.getElementById('calculate-btn').disabled = false;
-          return;
-        }
+      try {
+        distanceService.getDistanceMatrix(request, (response, status) => {
+          callbackFired = true;
+          try {
+            if (status !== 'OK') {
+              showBtnError('Routenberechnung fehlgeschlagen (Status: ' + status + '). Prüfe ob Distance Matrix API in der Google Cloud Console aktiviert ist.');
+              resetBtn();
+              return;
+            }
 
-        const distanceKm = element.distance.value / 1000;
-        const scenarios = getTrafficScenarios(element);
+            const element = response.rows[0].elements[0];
+            if (element.status !== 'OK') {
+              showBtnError('Route konnte nicht berechnet werden (Status: ' + element.status + '). Bitte Adressen prüfen.');
+              resetBtn();
+              return;
+            }
 
-        // Calculate EV charging time
-        let chargingTimeMin = 0;
-        if (document.getElementById('ev-toggle').checked) {
-          chargingTimeMin = getChargingTime(distanceKm);
-        }
+            if (!element.duration_in_traffic) {
+              showBtnError('Keine Verkehrsdaten verfügbar. Die Distance Matrix API benötigt ein Abrechnungskonto in der Google Cloud Console, um Verkehrsdaten zu liefern.');
+              resetBtn();
+              return;
+            }
 
-        lastResults = { from, to, distanceKm, scenarios, departureTime, arrivalTime, chargingTimeMin };
+            const distanceKm = element.distance.value / 1000;
+            const scenarios = getTrafficScenarios(element);
 
-        if (currentMode === 'departure') {
-          displayDepartureResults(scenarios, departureTime, chargingTimeMin);
-        } else {
-          displayArrivalResults(scenarios, arrivalTime, chargingTimeMin);
-        }
+            // Calculate EV charging time
+            let chargingTimeMin = 0;
+            if (document.getElementById('ev-toggle').checked) {
+              chargingTimeMin = getChargingTime(distanceKm);
+            }
 
-        displayMap(from, to);
+            lastResults = { from, to, distanceKm, scenarios, departureTime, arrivalTime, chargingTimeMin };
 
-        if (chargingTimeMin > 0) {
-          displayEVInfo(distanceKm, chargingTimeMin);
-        }
-        document.getElementById('calculate-btn').textContent = 'Berechnen';
-        document.getElementById('calculate-btn').disabled = false;
-        } catch (e) {
-          console.error('DistanceMatrix callback error:', e);
-          showError('Berechnungsfehler: ' + e.message);
-          document.getElementById('calculate-btn').textContent = 'Berechnen';
-          document.getElementById('calculate-btn').disabled = false;
-        }
-      });
+            if (currentMode === 'departure') {
+              displayDepartureResults(scenarios, departureTime, chargingTimeMin);
+            } else {
+              displayArrivalResults(scenarios, arrivalTime, chargingTimeMin);
+            }
+
+            displayMap(from, to);
+
+            if (chargingTimeMin > 0) {
+              displayEVInfo(distanceKm, chargingTimeMin);
+            }
+            resetBtn();
+          } catch (e) {
+            console.error('DistanceMatrix callback error:', e);
+            showBtnError('Berechnungsfehler: ' + e.message);
+            resetBtn();
+          }
+        });
+      } catch (e) {
+        callbackFired = true;
+        console.error('getDistanceMatrix call error:', e);
+        showBtnError('API-Aufruffehler: ' + e.message);
+        resetBtn();
+      }
     }
 
     function getTrafficScenarios(element) {
