@@ -144,6 +144,10 @@
   .summary-text strong { color: var(--text); }
   .summary-tip { font-size: 11px; color: var(--accent2); text-align: right; flex-shrink: 0; }
 
+  .delay-info { background: #fff8f0; border: 1px solid rgba(232,93,47,0.25); border-radius: 12px; padding: 14px 18px; margin-top: 12px; font-size: 12px; color: var(--muted); line-height: 1.6; }
+  .delay-info strong { color: var(--accent); }
+  .delay-info .delay-icon { font-size: 14px; margin-right: 6px; }
+
   /* Arrival */
   .arrival-hero { background: var(--surface); border: 1px solid rgba(232,93,47,0.35); border-radius: 14px; padding: 28px 24px; text-align: center; margin-bottom: 16px; position: relative; overflow: hidden; }
   .arrival-hero::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: var(--accent); }
@@ -244,6 +248,7 @@
       <div class="result-card worst"><div class="result-label">Ungünstig</div><div class="result-time" id="timePessimistic">—</div><div class="result-unit">Fahrtzeit</div><div class="result-dist" id="distPessimistic">—</div><div class="result-arrival" id="arrivalPessimistic"></div></div>
     </div>
     <div class="summary-bar"><div class="summary-text" id="summaryText"></div><div class="summary-tip" id="summaryTip"></div></div>
+    <div class="delay-info" id="delayInfoDep" style="display:none;"></div>
   </div>
 
   <!-- Arrival results -->
@@ -263,6 +268,7 @@
       <div class="arrival-scenario-card"><div class="arrival-scenario-label">Knapp</div><div class="arrival-scenario-dep tag-tight" id="arrDepPess">—</div><div class="arrival-scenario-dur" id="arrDurPess">—</div><div class="arrival-scenario-arr" id="arrArrPess"></div></div>
     </div>
     <div class="summary-bar"><div class="summary-text" id="arrSummaryText"></div><div class="summary-tip" id="arrSummaryTip"></div></div>
+    <div class="delay-info" id="delayInfoArr" style="display:none;"></div>
   </div>
 
   <div class="footer">FAHRTZEIT PWA · HISTORISCHE VERKEHRSPROGNOSE · DE<br><a href="impressum.html">Impressum & Datenschutz</a></div>
@@ -492,6 +498,29 @@ const hm = s => { const h = Math.floor(s/3600), m = Math.round((s%3600)/60); ret
 const tsTime = ts => { const d = new Date(ts*1000); return `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`; };
 const short = s => s.split(',')[0].trim();
 
+function renderDelayInfo(elId, optSec, bestSec, pessSec) {
+  const el = document.getElementById(elId);
+  const delayMin = Math.round((pessSec - optSec) / 60);
+  const bestVsOpt = Math.round((bestSec - optSec) / 60);
+  if (delayMin < 10) {
+    el.style.display = 'none';
+    return;
+  }
+  let level, icon;
+  if (delayMin >= 60) { level = 'hoch'; icon = '🔴'; }
+  else if (delayMin >= 30) { level = 'mittel'; icon = '🟡'; }
+  else { level = 'gering'; icon = '🟢'; }
+
+  let html = `<span class="delay-icon">${icon}</span>`;
+  html += `<strong>Verzögerungsrisiko ${level}:</strong> `;
+  html += `Auf dieser Strecke sind zu dieser Zeit Verzögerungen von bis zu <strong>${delayMin} Min.</strong> möglich (Verkehr, Baustellen, Stau). `;
+  if (bestVsOpt >= 5) {
+    html += `Typisch sind etwa <strong>${bestVsOpt} Min.</strong> Verzögerung gegenüber freier Fahrt.`;
+  }
+  el.innerHTML = html;
+  el.style.display = 'block';
+}
+
 function renderDeparture(origin, dest, wd, h, m, depTs, opt, best, pess) {
   const t = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
   document.getElementById('resultsRoute').innerHTML = `${short(origin)} <span class="arrow">→</span> ${short(dest)}`;
@@ -522,6 +551,8 @@ function renderDeparture(origin, dest, wd, h, m, depTs, opt, best, pess) {
   } else tip = '✓ Wochenende';
   document.getElementById('summaryTip').textContent = tip;
 
+  renderDelayInfo('delayInfoDep', opt.duration, best.duration, pess.duration);
+
   document.getElementById('resultsDeparture').classList.add('visible');
   document.getElementById('resultsDeparture').scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
@@ -534,16 +565,18 @@ function renderArrival(origin, dest, wd, arrH, arrM, arrTs, sc) {
   document.getElementById('arrHeroTime').textContent = tsTime(sc.safe.depTs) + ' Uhr';
   document.getElementById('arrHeroSub').innerHTML = `Späteste sichere Abfahrt — Ankunft ca. <strong>${at} Uhr</strong> auch bei schlechtem Verkehr`;
 
-  document.getElementById('arrDepOpt').textContent = tsTime(sc.relaxed.depTs) + ' Uhr';
-  document.getElementById('arrDurOpt').textContent = hm(sc.relaxed.duration) + ' · günstig';
+  // Entspannt = früh losfahren (pessimistisch), viel Puffer
+  document.getElementById('arrDepOpt').textContent = tsTime(sc.safe.depTs) + ' Uhr';
+  document.getElementById('arrDurOpt').textContent = hm(sc.safe.duration) + ' · ungünstig';
   document.getElementById('arrArrOpt').innerHTML = `Ankunft ca. <strong>${at} Uhr</strong>`;
 
   document.getElementById('arrDepBest').textContent = tsTime(sc.typical.depTs) + ' Uhr';
   document.getElementById('arrDurBest').textContent = hm(sc.typical.duration) + ' · typisch';
   document.getElementById('arrArrBest').innerHTML = `Ankunft ca. <strong>${at} Uhr</strong>`;
 
-  document.getElementById('arrDepPess').textContent = tsTime(sc.safe.depTs) + ' Uhr';
-  document.getElementById('arrDurPess').textContent = hm(sc.safe.duration) + ' · ungünstig';
+  // Knapp = spät losfahren (optimistisch), wenig Puffer
+  document.getElementById('arrDepPess').textContent = tsTime(sc.relaxed.depTs) + ' Uhr';
+  document.getElementById('arrDurPess').textContent = hm(sc.relaxed.duration) + ' · günstig';
   document.getElementById('arrArrPess').innerHTML = `Ankunft ca. <strong>${at} Uhr</strong>`;
 
   const buf = Math.abs(Math.round((sc.relaxed.depTs - sc.safe.depTs) / 60));
@@ -556,6 +589,8 @@ function renderArrival(origin, dest, wd, arrH, arrM, arrTs, sc) {
     else tip = '✓ Entspannte Ankunftszeit';
   } else tip = '✓ Wochenende';
   document.getElementById('arrSummaryTip').textContent = tip;
+
+  renderDelayInfo('delayInfoArr', sc.relaxed.duration, sc.typical.duration, sc.safe.duration);
 
   document.getElementById('resultsArrival').classList.add('visible');
   document.getElementById('resultsArrival').scrollIntoView({ behavior: 'smooth', block: 'start' });
