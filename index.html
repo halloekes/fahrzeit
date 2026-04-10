@@ -351,7 +351,7 @@
     <header>
       <div class="logo">Fahrtzeit</div>
       <div class="subtitle">Reisezeit-Rechner mit Echtzeit-Verkehr</div>
-      <div style="font-size:10px;color:var(--muted);margin-top:4px;" id="version-tag">v11</div>
+      <div style="font-size:10px;color:var(--muted);margin-top:4px;" id="version-tag">v12</div>
     </header>
 
     <div class="form-card">
@@ -652,6 +652,10 @@
         </div>
       </div>
     </div>
+
+    <footer style="text-align:center;padding:24px 0 16px;font-size:12px;color:var(--muted);">
+      <a href="impressum.html" style="color:var(--muted);text-decoration:none;">Impressum & Datenschutz</a>
+    </footer>
   </div>
 
   <script>
@@ -1278,14 +1282,14 @@
       }, (results, status) => {
         if (status === google.maps.places.PlacesServiceStatus.OK && results && results.length > 0) {
           // Pick the closest result
-          // Sort by distance, pick closest
+          // Sort by distance, pick closest (simple lat/lng diff)
           let best = results[0];
           let bestDist = Infinity;
+          const pLat = position.lat(), pLng = position.lng();
           results.forEach(r => {
-            const d = google.maps.geometry.spherical.computeDistanceBetween(
-              new google.maps.LatLng(position.lat(), position.lng()),
-              r.geometry.location
-            );
+            const dLat = r.geometry.location.lat() - pLat;
+            const dLng = r.geometry.location.lng() - pLng;
+            const d = dLat * dLat + dLng * dLng;
             if (d < bestDist) { bestDist = d; best = r; }
           });
 
@@ -1405,18 +1409,22 @@
       showError('Initialisierungsfehler: ' + e.message);
     }
 
-    // Force-unregister ALL old service workers, then register fresh
+    // SW management: register new SW, auto-reload when it takes over
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.getRegistrations().then(function(regs) {
-        regs.forEach(function(r) { r.unregister(); });
-      }).then(function() {
-        navigator.serviceWorker.register('./sw.js').catch(function() {});
+      // Auto-reload when a new SW activates and claims this page
+      var refreshing = false;
+      navigator.serviceWorker.addEventListener('controllerchange', function() {
+        if (!refreshing) {
+          refreshing = true;
+          location.reload();
+        }
       });
+      navigator.serviceWorker.register('./sw.js').catch(function() {});
     }
 
     window.initApp = initApp;
   </script>
 
-  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCVxgaDTwgPR8SwgLaB6zHiHNmeQcPPzow&libraries=places,geometry&language=de&region=DE&callback=initApp" async defer></script>
+  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCVxgaDTwgPR8SwgLaB6zHiHNmeQcPPzow&libraries=places&language=de&region=DE&callback=initApp" async defer></script>
 </body>
 </html>
