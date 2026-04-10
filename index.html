@@ -268,8 +268,6 @@
   <div class="footer">FAHRTZEIT PWA · HISTORISCHE VERKEHRSPROGNOSE · DE<br><a href="impressum.html">Impressum & Datenschutz</a></div>
 </div>
 
-<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCVxgaDTwgPR8SwgLaB6zHiHNmeQcPPzow&libraries=places&language=de&region=DE&callback=initApp" async defer></script>
-
 <script>
 // ——— State ———
 let currentMode = 'departure';
@@ -574,5 +572,6 @@ function hideError() { document.getElementById('errorBox').classList.remove('vis
 // ——— Service Worker ———
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(() => {});
 </script>
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCVxgaDTwgPR8SwgLaB6zHiHNmeQcPPzow&libraries=places&language=de&region=DE&callback=initApp" async defer></script>
 </body>
 </html>
