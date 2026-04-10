@@ -2,7 +2,7 @@
 <html lang="de">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <meta name="description" content="Fahrtzeit - Reisezeit-Rechner mit Google Maps API">
   <meta name="theme-color" content="#1a7a5a">
   <title>Fahrtzeit</title>
@@ -48,42 +48,22 @@
       background-attachment: fixed;
     }
 
-    .container {
-      max-width: 520px;
-      margin: 0 auto;
-      padding: 16px;
-    }
+    .container { max-width: 520px; margin: 0 auto; padding: 16px; }
 
-    header {
-      text-align: center;
-      margin-bottom: 28px;
-      padding-top: 16px;
-    }
+    header { text-align: center; margin-bottom: 28px; padding-top: 16px; }
 
     .logo {
-      font-size: 40px;
-      font-weight: 700;
+      font-size: 40px; font-weight: 700;
       background: linear-gradient(135deg, var(--accent) 0%, var(--accent2) 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-      margin-bottom: 6px;
-      letter-spacing: -2px;
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text; margin-bottom: 6px; letter-spacing: -2px;
     }
 
-    .subtitle {
-      font-size: 13px;
-      color: var(--muted);
-      font-weight: 400;
-      letter-spacing: 0.3px;
-    }
+    .subtitle { font-size: 13px; color: var(--muted); font-weight: 400; letter-spacing: 0.3px; }
 
     .form-card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      padding: 20px;
-      margin-bottom: 20px;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 16px; padding: 20px; margin-bottom: 20px;
       box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
     }
 
@@ -91,498 +71,260 @@
     .form-group:last-child { margin-bottom: 0; }
 
     label {
-      display: block;
-      font-size: 12px;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      color: var(--muted);
-      margin-bottom: 6px;
+      display: block; font-size: 12px; font-weight: 600;
+      text-transform: uppercase; letter-spacing: 0.5px;
+      color: var(--muted); margin-bottom: 6px;
     }
 
     .input-wrapper { position: relative; }
 
-    input[type="text"],
-    input[type="number"],
-    select {
-      width: 100%;
-      padding: 12px 14px;
-      border: 1.5px solid var(--border);
-      border-radius: 10px;
-      background: var(--surface2);
-      color: var(--text);
-      font-family: 'Syne', sans-serif;
-      font-size: 15px;
-      transition: all 0.2s ease;
-      -webkit-appearance: none;
+    input[type="text"], input[type="number"], select {
+      width: 100%; padding: 12px 14px;
+      border: 1.5px solid var(--border); border-radius: 10px;
+      background: var(--surface2); color: var(--text);
+      font-family: 'Syne', sans-serif; font-size: 15px;
+      transition: all 0.2s ease; -webkit-appearance: none;
     }
 
-    input[type="text"]:focus,
-    input[type="number"]:focus,
-    select:focus {
-      outline: none;
-      border-color: var(--accent);
-      background: var(--surface);
+    input[type="text"]:focus, input[type="number"]:focus, select:focus {
+      outline: none; border-color: var(--accent); background: var(--surface);
       box-shadow: 0 0 0 3px rgba(26, 122, 90, 0.12);
     }
 
     .dropdown {
-      position: absolute;
-      top: 100%;
-      left: 0;
-      right: 0;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-top: none;
-      border-radius: 0 0 10px 10px;
-      max-height: 260px;
-      overflow-y: auto;
-      z-index: 1000;
-      display: none;
-      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+      position: absolute; top: 100%; left: 0; right: 0;
+      background: var(--surface); border: 1px solid var(--border);
+      border-top: none; border-radius: 0 0 10px 10px;
+      max-height: 260px; overflow-y: auto; z-index: 1000;
+      display: none; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
     }
-
     .dropdown.active { display: block; }
 
     .dropdown-item {
-      padding: 12px 14px;
-      cursor: pointer;
+      padding: 12px 14px; cursor: pointer;
       transition: background 0.15s ease;
-      border-bottom: 1px solid var(--surface2);
-      font-size: 14px;
+      border-bottom: 1px solid var(--surface2); font-size: 14px;
     }
     .dropdown-item:last-child { border-bottom: none; }
     .dropdown-item:hover { background: var(--accent-light); }
-
     .dropdown-item-primary { font-weight: 500; color: var(--text); }
     .dropdown-item-secondary { font-size: 12px; color: var(--muted); margin-top: 2px; }
 
     .mode-toggle {
-      display: flex;
-      background: var(--surface2);
-      border-radius: 10px;
-      padding: 4px;
-      gap: 4px;
-      margin-bottom: 20px;
+      display: flex; background: var(--surface2);
+      border-radius: 10px; padding: 4px; gap: 4px; margin-bottom: 20px;
     }
 
     .toggle-btn {
-      flex: 1;
-      padding: 11px 10px;
-      border: none;
-      background: transparent;
-      color: var(--muted);
-      font-family: 'Syne', sans-serif;
-      font-size: 13px;
-      font-weight: 600;
-      cursor: pointer;
-      border-radius: 8px;
-      transition: all 0.2s ease;
-      white-space: nowrap;
+      flex: 1; padding: 11px 10px; border: none;
+      background: transparent; color: var(--muted);
+      font-family: 'Syne', sans-serif; font-size: 13px;
+      font-weight: 600; cursor: pointer; border-radius: 8px;
+      transition: all 0.2s ease; white-space: nowrap;
     }
-
     .toggle-btn.active {
-      background: var(--surface);
-      color: var(--accent);
+      background: var(--surface); color: var(--accent);
       box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
     }
 
-    .form-row {
-      display: flex;
-      flex-direction: column;
-      gap: 0;
+    /* Weekday selector */
+    .weekday-selector {
+      display: flex; gap: 6px; margin-bottom: 16px;
+    }
+    .weekday-btn {
+      flex: 1; padding: 10px 0; border: 1.5px solid var(--border);
+      background: var(--surface2); color: var(--muted);
+      font-family: 'Syne', sans-serif; font-size: 12px;
+      font-weight: 600; cursor: pointer; border-radius: 8px;
+      transition: all 0.2s ease; text-align: center;
+    }
+    .weekday-btn.active {
+      background: var(--accent); color: white;
+      border-color: var(--accent);
+      box-shadow: 0 2px 8px rgba(26, 122, 90, 0.3);
     }
 
-    .checkbox-wrapper {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      cursor: pointer;
+    /* iOS-style scroll wheel picker */
+    .wheel-picker-container {
+      display: flex; align-items: center; justify-content: center;
+      gap: 4px; user-select: none;
+    }
+    .wheel-picker {
+      position: relative; width: 72px; height: 150px;
+      overflow: hidden; border-radius: 12px;
+      background: var(--surface2); border: 1.5px solid var(--border);
+    }
+    .wheel-picker-highlight {
+      position: absolute; top: 50%; left: 4px; right: 4px;
+      height: 42px; transform: translateY(-50%);
+      background: var(--accent-light);
+      border-radius: 8px; border: 1.5px solid rgba(26, 122, 90, 0.2);
+      pointer-events: none; z-index: 2;
+    }
+    .wheel-picker-scroll {
+      position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+      overflow-y: scroll; -webkit-overflow-scrolling: touch;
+      scroll-snap-type: y mandatory;
+      -ms-overflow-style: none; scrollbar-width: none;
+    }
+    .wheel-picker-scroll::-webkit-scrollbar { display: none; }
+    .wheel-picker-item {
+      height: 42px; display: flex; align-items: center;
+      justify-content: center; font-family: 'DM Mono', monospace;
+      font-size: 20px; font-weight: 500; color: var(--muted);
+      scroll-snap-align: center; transition: color 0.15s, opacity 0.15s;
+      opacity: 0.4;
+    }
+    .wheel-picker-item.selected {
+      color: var(--text); font-weight: 600; opacity: 1;
+    }
+    .wheel-picker-separator {
+      font-size: 24px; font-weight: 700; color: var(--text);
+      font-family: 'DM Mono', monospace; padding: 0 2px;
+    }
+    .wheel-picker-label {
+      font-size: 11px; font-weight: 600; text-transform: uppercase;
+      color: var(--muted); letter-spacing: 0.5px; text-align: center;
+      margin-bottom: 6px;
     }
 
-    input[type="checkbox"] {
-      width: 20px;
-      height: 20px;
-      cursor: pointer;
-      accent-color: var(--accent);
-    }
+    .checkbox-wrapper { display: flex; align-items: center; gap: 10px; cursor: pointer; }
+
+    input[type="checkbox"] { width: 20px; height: 20px; cursor: pointer; accent-color: var(--accent); }
 
     .checkbox-label {
-      font-size: 14px;
-      font-weight: 500;
-      margin: 0;
-      cursor: pointer;
-      color: var(--text);
-      text-transform: none;
-      letter-spacing: 0;
+      font-size: 14px; font-weight: 500; margin: 0;
+      cursor: pointer; color: var(--text);
+      text-transform: none; letter-spacing: 0;
     }
 
     .ev-section {
       background: linear-gradient(135deg, rgba(37, 99, 176, 0.06) 0%, rgba(37, 99, 176, 0.02) 100%);
       border: 1.5px solid rgba(37, 99, 176, 0.2);
-      border-radius: 12px;
-      padding: 16px;
-      margin-top: 16px;
-      display: none;
+      border-radius: 12px; padding: 16px; margin-top: 16px; display: none;
     }
     .ev-section.visible { display: block; }
 
     .ev-section-title {
-      font-size: 12px;
-      font-weight: 700;
-      text-transform: uppercase;
-      color: var(--ev-blue);
-      letter-spacing: 0.5px;
-      margin-bottom: 14px;
+      font-size: 12px; font-weight: 700; text-transform: uppercase;
+      color: var(--ev-blue); letter-spacing: 0.5px; margin-bottom: 14px;
     }
 
-    .ev-grid {
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-    }
+    .ev-grid { display: flex; flex-direction: column; gap: 12px; }
 
-    /* Range slider with high contrast */
     input[type="range"] {
-      width: 100%;
-      height: 8px;
-      border-radius: 4px;
+      width: 100%; height: 8px; border-radius: 4px;
       background: linear-gradient(to right, var(--accent), var(--accent2));
-      outline: none;
-      -webkit-appearance: none;
-      appearance: none;
-      opacity: 0.7;
+      outline: none; -webkit-appearance: none; appearance: none; opacity: 0.7;
     }
-
     input[type="range"]::-webkit-slider-thumb {
-      -webkit-appearance: none;
-      appearance: none;
-      width: 24px;
-      height: 24px;
-      border-radius: 50%;
-      background: var(--accent);
-      cursor: pointer;
-      border: 3px solid white;
+      -webkit-appearance: none; width: 24px; height: 24px;
+      border-radius: 50%; background: var(--accent);
+      cursor: pointer; border: 3px solid white;
       box-shadow: 0 2px 8px rgba(26, 122, 90, 0.4);
-      transition: all 0.2s ease;
     }
-    input[type="range"]::-webkit-slider-thumb:hover {
-      transform: scale(1.15);
-      box-shadow: 0 3px 12px rgba(26, 122, 90, 0.5);
-    }
-
     input[type="range"]::-moz-range-thumb {
-      width: 24px;
-      height: 24px;
-      border-radius: 50%;
-      background: var(--accent);
-      cursor: pointer;
+      width: 24px; height: 24px; border-radius: 50%;
+      background: var(--accent); cursor: pointer;
       border: 3px solid white;
       box-shadow: 0 2px 8px rgba(26, 122, 90, 0.4);
-      transition: all 0.2s ease;
-    }
-    input[type="range"]::-moz-range-thumb:hover {
-      transform: scale(1.15);
     }
 
     .slider-value {
-      font-size: 14px;
-      color: var(--text);
-      margin-top: 6px;
-      text-align: center;
-      font-family: 'DM Mono', monospace;
-      font-weight: 500;
+      font-size: 14px; color: var(--text); margin-top: 6px;
+      text-align: center; font-family: 'DM Mono', monospace; font-weight: 500;
     }
 
     .calculate-btn {
       background: linear-gradient(135deg, var(--accent) 0%, #147050 100%);
-      color: white;
-      border: none;
-      padding: 14px 28px;
-      border-radius: 10px;
-      font-family: 'Syne', sans-serif;
-      font-size: 15px;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      width: 100%;
+      color: white; border: none; padding: 14px 28px;
+      border-radius: 10px; font-family: 'Syne', sans-serif;
+      font-size: 15px; font-weight: 600; text-transform: uppercase;
+      letter-spacing: 0.5px; cursor: pointer;
+      transition: all 0.3s ease; width: 100%;
       box-shadow: 0 4px 14px rgba(26, 122, 90, 0.3);
     }
-    .calculate-btn:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 6px 20px rgba(26, 122, 90, 0.4);
-    }
-    .calculate-btn:active {
-      transform: translateY(0);
-      box-shadow: 0 2px 8px rgba(26, 122, 90, 0.3);
-    }
+    .calculate-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(26, 122, 90, 0.4); }
+    .calculate-btn:active { transform: translateY(0); }
 
     .results-section { display: none; }
     .results-section.visible { display: block; }
 
     .hero-card {
       background: linear-gradient(135deg, var(--accent) 0%, var(--accent2) 100%);
-      color: white;
-      border-radius: 16px;
-      padding: 28px 20px;
-      margin-bottom: 20px;
-      box-shadow: 0 8px 24px rgba(26, 122, 90, 0.25);
+      color: white; border-radius: 16px; padding: 28px 20px;
+      margin-bottom: 20px; box-shadow: 0 8px 24px rgba(26, 122, 90, 0.25);
       text-align: center;
     }
+    .hero-time { font-size: 52px; font-weight: 700; margin-bottom: 8px; letter-spacing: -2px; }
+    .hero-label { font-size: 14px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; opacity: 0.95; margin-bottom: 12px; }
+    .hero-meta { font-size: 12px; opacity: 0.85; line-height: 1.6; }
 
-    .hero-time {
-      font-size: 52px;
-      font-weight: 700;
-      margin-bottom: 8px;
-      letter-spacing: -2px;
-    }
+    .info-box { background: var(--surface); border: 1.5px solid var(--border); border-radius: 12px; padding: 14px; margin-bottom: 16px; font-size: 14px; line-height: 1.6; }
+    .info-box.ev { background: rgba(37, 99, 176, 0.08); border-color: rgba(37, 99, 176, 0.25); color: var(--ev-blue); }
 
-    .hero-label {
-      font-size: 14px;
-      font-weight: 500;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      opacity: 0.95;
-      margin-bottom: 12px;
-    }
-
-    .hero-meta {
-      font-size: 12px;
-      opacity: 0.85;
-      line-height: 1.6;
-    }
-
-    .info-box {
-      background: var(--surface);
-      border: 1.5px solid var(--border);
-      border-radius: 12px;
-      padding: 14px;
-      margin-bottom: 16px;
-      font-size: 14px;
-      line-height: 1.6;
-    }
-
-    .info-box.ev {
-      background: rgba(37, 99, 176, 0.08);
-      border-color: rgba(37, 99, 176, 0.25);
-      color: var(--ev-blue);
-    }
-
-    .time-cards {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      margin-bottom: 20px;
-    }
+    .time-cards { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; }
 
     .time-card {
-      background: var(--surface);
-      border: 1.5px solid var(--border);
-      border-radius: 12px;
-      padding: 16px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
+      background: var(--surface); border: 1.5px solid var(--border);
+      border-radius: 12px; padding: 16px;
+      display: flex; align-items: center; justify-content: space-between;
       transition: all 0.2s ease;
     }
-    .time-card:hover {
-      border-color: var(--accent);
-      box-shadow: 0 4px 12px rgba(26, 122, 90, 0.08);
-    }
+    .time-card:hover { border-color: var(--accent); box-shadow: 0 4px 12px rgba(26, 122, 90, 0.08); }
 
-    .time-card-time {
-      font-size: 28px;
-      font-weight: 700;
-      color: var(--accent);
-      letter-spacing: -1px;
-      font-family: 'DM Mono', monospace;
-    }
-
+    .time-card-time { font-size: 28px; font-weight: 700; color: var(--accent); letter-spacing: -1px; font-family: 'DM Mono', monospace; }
     .time-card-info { text-align: right; }
+    .time-card-label { font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 2px; }
+    .time-card-desc { font-size: 12px; color: var(--muted); }
 
-    .time-card-label {
-      font-size: 13px;
-      font-weight: 600;
-      color: var(--text);
-      margin-bottom: 2px;
-    }
-
-    .time-card-desc {
-      font-size: 12px;
-      color: var(--muted);
-    }
-
-    .arrival-cards {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      margin-bottom: 20px;
-    }
+    .arrival-cards { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; }
 
     .arrival-card {
-      background: var(--surface);
-      border: 1.5px solid var(--border);
-      border-radius: 12px;
-      padding: 16px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
+      background: var(--surface); border: 1.5px solid var(--border);
+      border-radius: 12px; padding: 16px;
+      display: flex; align-items: center; justify-content: space-between;
       position: relative;
     }
+    .arrival-card.safe { background: linear-gradient(135deg, rgba(26,122,90,0.06), rgba(26,122,90,0.02)); border-color: rgba(26,122,90,0.25); }
+    .arrival-card.bestguess { background: linear-gradient(135deg, rgba(37,99,176,0.06), rgba(37,99,176,0.02)); border-color: rgba(37,99,176,0.25); }
+    .arrival-card.relaxed { background: linear-gradient(135deg, rgba(212,150,10,0.06), rgba(212,150,10,0.02)); border-color: rgba(212,150,10,0.25); }
 
-    .arrival-card.safe {
-      background: linear-gradient(135deg, rgba(26, 122, 90, 0.06), rgba(26, 122, 90, 0.02));
-      border-color: rgba(26, 122, 90, 0.25);
-    }
-    .arrival-card.bestguess {
-      background: linear-gradient(135deg, rgba(37, 99, 176, 0.06), rgba(37, 99, 176, 0.02));
-      border-color: rgba(37, 99, 176, 0.25);
-    }
-    .arrival-card.relaxed {
-      background: linear-gradient(135deg, rgba(212, 150, 10, 0.06), rgba(212, 150, 10, 0.02));
-      border-color: rgba(212, 150, 10, 0.25);
-    }
-
-    .arrival-time {
-      font-size: 28px;
-      font-weight: 700;
-      letter-spacing: -1px;
-      font-family: 'DM Mono', monospace;
-    }
-
+    .arrival-time { font-size: 28px; font-weight: 700; letter-spacing: -1px; font-family: 'DM Mono', monospace; }
     .arrival-card.safe .arrival-time { color: var(--success); }
     .arrival-card.bestguess .arrival-time { color: var(--accent2); }
     .arrival-card.relaxed .arrival-time { color: var(--warning); }
 
     .arrival-info { text-align: right; }
-
-    .arrival-label {
-      font-size: 13px;
-      font-weight: 600;
-      margin-bottom: 2px;
-    }
+    .arrival-label { font-size: 13px; font-weight: 600; margin-bottom: 2px; }
     .arrival-card.safe .arrival-label { color: var(--success); }
     .arrival-card.bestguess .arrival-label { color: var(--accent2); }
     .arrival-card.relaxed .arrival-label { color: var(--warning); }
+    .arrival-desc { font-size: 12px; color: var(--muted); }
 
-    .arrival-desc {
-      font-size: 12px;
-      color: var(--muted);
-    }
-
-    .risk-dot {
-      width: 10px;
-      height: 10px;
-      border-radius: 50%;
-      flex-shrink: 0;
-      margin-right: 12px;
-    }
+    .risk-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; margin-right: 12px; }
     .arrival-card.safe .risk-dot { background: var(--success); }
     .arrival-card.bestguess .risk-dot { background: var(--accent2); }
     .arrival-card.relaxed .risk-dot { background: var(--warning); }
 
-    .delay-info {
-      background: var(--surface);
-      border: 1.5px solid var(--border);
-      border-radius: 12px;
-      padding: 16px;
-      margin-bottom: 20px;
-    }
-
-    .delay-top {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      margin-bottom: 12px;
-    }
-
+    .delay-info { background: var(--surface); border: 1.5px solid var(--border); border-radius: 12px; padding: 16px; margin-bottom: 20px; }
+    .delay-top { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
     .delay-icon { font-size: 24px; flex-shrink: 0; }
+    .delay-text-label { font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--muted); letter-spacing: 0.5px; margin-bottom: 2px; }
+    .delay-text-main { font-size: 14px; font-weight: 600; line-height: 1.3; }
+    .delay-bar { width: 100%; height: 6px; background: var(--surface2); border-radius: 3px; overflow: hidden; }
+    .delay-bar-fill { height: 100%; background: var(--success); transition: width 0.3s ease, background-color 0.3s ease; border-radius: 3px; }
 
-    .delay-text-label {
-      font-size: 11px;
-      font-weight: 700;
-      text-transform: uppercase;
-      color: var(--muted);
-      letter-spacing: 0.5px;
-      margin-bottom: 2px;
-    }
-
-    .delay-text-main {
-      font-size: 14px;
-      font-weight: 600;
-      line-height: 1.3;
-    }
-
-    .delay-bar {
-      width: 100%;
-      height: 6px;
-      background: var(--surface2);
-      border-radius: 3px;
-      overflow: hidden;
-    }
-
-    .delay-bar-fill {
-      height: 100%;
-      background: var(--success);
-      transition: width 0.3s ease, background-color 0.3s ease;
-      border-radius: 3px;
-    }
-
-    .map-container {
-      background: var(--surface);
-      border: 1.5px solid var(--border);
-      border-radius: 16px;
-      overflow: hidden;
-      margin-bottom: 20px;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
-      display: none;
-    }
+    .map-container { background: var(--surface); border: 1.5px solid var(--border); border-radius: 16px; overflow: hidden; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); display: none; }
     .map-container.visible { display: block; }
+    #map { width: 100%; height: 280px; }
 
-    #map {
-      width: 100%;
-      height: 280px;
-    }
-
-    .route-info {
-      padding: 14px;
-      border-top: 1px solid var(--border);
-      display: flex;
-      justify-content: space-around;
-      gap: 8px;
-      font-size: 13px;
-    }
-
+    .route-info { padding: 14px; border-top: 1px solid var(--border); display: flex; justify-content: space-around; gap: 8px; font-size: 13px; }
     .route-info-item { text-align: center; }
+    .route-info-label { font-size: 10px; font-weight: 700; text-transform: uppercase; color: var(--muted); letter-spacing: 0.5px; margin-bottom: 4px; }
+    .route-info-value { font-size: 15px; font-weight: 600; color: var(--text); font-family: 'DM Mono', monospace; }
 
-    .route-info-label {
-      font-size: 10px;
-      font-weight: 700;
-      text-transform: uppercase;
-      color: var(--muted);
-      letter-spacing: 0.5px;
-      margin-bottom: 4px;
-    }
-
-    .route-info-value {
-      font-size: 15px;
-      font-weight: 600;
-      color: var(--text);
-      font-family: 'DM Mono', monospace;
-    }
-
-    .error-message {
-      background: rgba(197, 48, 48, 0.08);
-      border: 1.5px solid rgba(197, 48, 48, 0.25);
-      color: #c53030;
-      padding: 14px;
-      border-radius: 10px;
-      margin-bottom: 16px;
-      font-size: 14px;
-      line-height: 1.6;
-    }
+    .error-message { background: rgba(197,48,48,0.08); border: 1.5px solid rgba(197,48,48,0.25); color: #c53030; padding: 14px; border-radius: 10px; margin-bottom: 16px; font-size: 14px; line-height: 1.6; }
 
     @media (min-width: 600px) {
       .container { max-width: 560px; }
@@ -618,17 +360,61 @@
         </div>
       </div>
 
-      <div id="departure-mode">
-        <div class="form-group">
-          <label for="departure-time">Abfahrtszeit</label>
-          <input type="text" id="departure-time" placeholder="z.B. 09:00">
+      <!-- Weekday selector -->
+      <div class="form-group">
+        <label>Wochentag</label>
+        <div class="weekday-selector" id="weekday-selector">
+          <button type="button" class="weekday-btn" data-day="1">Mo</button>
+          <button type="button" class="weekday-btn" data-day="2">Di</button>
+          <button type="button" class="weekday-btn" data-day="3">Mi</button>
+          <button type="button" class="weekday-btn" data-day="4">Do</button>
+          <button type="button" class="weekday-btn" data-day="5">Fr</button>
+          <button type="button" class="weekday-btn" data-day="6">Sa</button>
+          <button type="button" class="weekday-btn" data-day="0">So</button>
         </div>
       </div>
 
+      <!-- Time picker: departure mode -->
+      <div id="departure-mode">
+        <div class="form-group">
+          <label>Abfahrtszeit</label>
+          <div class="wheel-picker-container" id="departure-picker">
+            <div>
+              <div class="wheel-picker" id="dep-hour-picker">
+                <div class="wheel-picker-highlight"></div>
+                <div class="wheel-picker-scroll" id="dep-hour-scroll"></div>
+              </div>
+            </div>
+            <div class="wheel-picker-separator">:</div>
+            <div>
+              <div class="wheel-picker" id="dep-min-picker">
+                <div class="wheel-picker-highlight"></div>
+                <div class="wheel-picker-scroll" id="dep-min-scroll"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Time picker: arrival mode -->
       <div id="arrival-mode" style="display: none;">
         <div class="form-group">
-          <label for="arrival-time">Gewünschte Ankunftszeit</label>
-          <input type="text" id="arrival-time" placeholder="z.B. 14:00">
+          <label>Gewünschte Ankunftszeit</label>
+          <div class="wheel-picker-container" id="arrival-picker">
+            <div>
+              <div class="wheel-picker" id="arr-hour-picker">
+                <div class="wheel-picker-highlight"></div>
+                <div class="wheel-picker-scroll" id="arr-hour-scroll"></div>
+              </div>
+            </div>
+            <div class="wheel-picker-separator">:</div>
+            <div>
+              <div class="wheel-picker" id="arr-min-picker">
+                <div class="wheel-picker-highlight"></div>
+                <div class="wheel-picker-scroll" id="arr-min-scroll"></div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -736,13 +522,11 @@
               </optgroup>
             </select>
           </div>
-
           <div class="form-group">
             <label for="ev-start-battery">Startladung</label>
             <input type="range" id="ev-start-battery" min="10" max="100" value="80">
             <div class="slider-value"><span id="ev-start-battery-value">80</span>%</div>
           </div>
-
           <div class="form-group">
             <label for="ev-end-battery">Zielladung (mindestens)</label>
             <input type="range" id="ev-end-battery" min="10" max="50" value="10">
@@ -760,8 +544,8 @@
       <div id="error-container"></div>
 
       <div id="hero-card" class="hero-card" style="display: none;">
-        <div class="hero-time" id="hero-time">14:30</div>
-        <div class="hero-label" id="hero-label">Sichere Abfahrtszeit</div>
+        <div class="hero-time" id="hero-time">--:--</div>
+        <div class="hero-label" id="hero-label"></div>
         <div class="hero-meta" id="hero-meta"></div>
       </div>
 
@@ -770,11 +554,11 @@
           <div class="delay-icon" id="delay-icon">⚠️</div>
           <div>
             <div class="delay-text-label">Verzögerungsrisiko</div>
-            <div class="delay-text-main" id="delay-text">Verkehr unvorhersehbar</div>
+            <div class="delay-text-main" id="delay-text"></div>
           </div>
         </div>
         <div class="delay-bar">
-          <div class="delay-bar-fill" id="delay-bar-fill" style="width: 50%;"></div>
+          <div class="delay-bar-fill" id="delay-bar-fill"></div>
         </div>
       </div>
 
@@ -858,62 +642,142 @@
     let currentMode = 'departure';
     let lastResults = null;
     let currentMap = null;
+    let selectedWeekday = new Date().getDay(); // 0=So, 1=Mo, ...
 
     const EV_DATABASE = {
-      'tesla-model-3-lr': { name: 'Tesla Model 3 LR', wltp: 629 },
-      'tesla-model-3-sr': { name: 'Tesla Model 3 SR', wltp: 513 },
-      'tesla-model-y-lr': { name: 'Tesla Model Y LR', wltp: 533 },
-      'tesla-model-y-sr': { name: 'Tesla Model Y SR', wltp: 430 },
-      'tesla-model-s': { name: 'Tesla Model S', wltp: 634 },
-      'tesla-model-x': { name: 'Tesla Model X', wltp: 576 },
-      'vw-id3-pro-s': { name: 'VW ID.3 Pro S', wltp: 551 },
-      'vw-id3-pro': { name: 'VW ID.3 Pro', wltp: 426 },
-      'vw-id4-pro': { name: 'VW ID.4 Pro', wltp: 520 },
-      'vw-id4-gtx': { name: 'VW ID.4 GTX', wltp: 480 },
-      'vw-id5-gtx': { name: 'VW ID.5 GTX', wltp: 490 },
-      'vw-id7-pro-s': { name: 'VW ID.7 Pro S', wltp: 615 },
-      'bmw-i4-edrive40': { name: 'BMW i4 eDrive40', wltp: 590 },
-      'bmw-ix1-xdrive30': { name: 'BMW iX1 xDrive30', wltp: 440 },
-      'bmw-ix3': { name: 'BMW iX3', wltp: 461 },
-      'bmw-ix-xdrive50': { name: 'BMW iX xDrive50', wltp: 630 },
-      'bmw-i5-edrive40': { name: 'BMW i5 eDrive40', wltp: 582 },
-      'mercedes-eqa-250': { name: 'Mercedes EQA 250+', wltp: 528 },
-      'mercedes-eqb-250': { name: 'Mercedes EQB 250+', wltp: 474 },
-      'mercedes-eqe-300': { name: 'Mercedes EQE 300', wltp: 639 },
-      'mercedes-eqs-450': { name: 'Mercedes EQS 450+', wltp: 770 },
-      'audi-q4-etron-45': { name: 'Audi Q4 e-tron 45', wltp: 520 },
-      'audi-q6-etron': { name: 'Audi Q6 e-tron', wltp: 625 },
-      'audi-q8-etron-55': { name: 'Audi Q8 e-tron 55', wltp: 582 },
-      'audi-etron-gt': { name: 'Audi e-tron GT', wltp: 488 },
-      'hyundai-ioniq5-lr': { name: 'Hyundai Ioniq 5 LR', wltp: 507 },
-      'hyundai-ioniq6-lr': { name: 'Hyundai Ioniq 6 LR', wltp: 614 },
-      'kia-ev6-lr': { name: 'Kia EV6 LR', wltp: 528 },
-      'kia-ev9-lr': { name: 'Kia EV9 LR', wltp: 541 },
-      'porsche-taycan': { name: 'Porsche Taycan', wltp: 484 },
-      'porsche-taycan-4s': { name: 'Porsche Taycan 4S', wltp: 464 },
-      'skoda-enyaq-85': { name: 'Skoda Enyaq 85', wltp: 557 },
-      'skoda-enyaq-coupe-85': { name: 'Skoda Enyaq Coupé 85', wltp: 560 },
-      'cupra-born-77': { name: 'Cupra Born 77', wltp: 548 },
-      'opel-mokka-e': { name: 'Opel Mokka-e', wltp: 338 },
-      'opel-corsa-e': { name: 'Opel Corsa-e', wltp: 357 },
-      'renault-megane-ev60': { name: 'Renault Megane E-Tech EV60', wltp: 450 },
-      'renault-scenic-etech': { name: 'Renault Scenic E-Tech', wltp: 620 },
-      'peugeot-e3008': { name: 'Peugeot e-3008', wltp: 527 },
-      'peugeot-e208': { name: 'Peugeot e-208', wltp: 400 },
-      'fiat-500e': { name: 'Fiat 500e', wltp: 321 },
-      'mini-cooper-se': { name: 'Mini Cooper SE', wltp: 305 },
-      'volvo-ex30-lr': { name: 'Volvo EX30 LR', wltp: 476 },
-      'volvo-ex40': { name: 'Volvo EX40', wltp: 573 },
-      'volvo-c40': { name: 'Volvo C40', wltp: 550 },
-      'polestar-2-lr': { name: 'Polestar 2 LR', wltp: 592 },
-      'byd-atto-3': { name: 'BYD Atto 3', wltp: 420 },
-      'byd-seal': { name: 'BYD Seal', wltp: 570 },
-      'smart-1-pro': { name: 'Smart #1 Pro+', wltp: 440 },
-      'smart-3-pro': { name: 'Smart #3 Pro+', wltp: 455 },
+      'tesla-model-3-lr': { wltp: 629 }, 'tesla-model-3-sr': { wltp: 513 },
+      'tesla-model-y-lr': { wltp: 533 }, 'tesla-model-y-sr': { wltp: 430 },
+      'tesla-model-s': { wltp: 634 }, 'tesla-model-x': { wltp: 576 },
+      'vw-id3-pro-s': { wltp: 551 }, 'vw-id3-pro': { wltp: 426 },
+      'vw-id4-pro': { wltp: 520 }, 'vw-id4-gtx': { wltp: 480 },
+      'vw-id5-gtx': { wltp: 490 }, 'vw-id7-pro-s': { wltp: 615 },
+      'bmw-i4-edrive40': { wltp: 590 }, 'bmw-ix1-xdrive30': { wltp: 440 },
+      'bmw-ix3': { wltp: 461 }, 'bmw-ix-xdrive50': { wltp: 630 },
+      'bmw-i5-edrive40': { wltp: 582 },
+      'mercedes-eqa-250': { wltp: 528 }, 'mercedes-eqb-250': { wltp: 474 },
+      'mercedes-eqe-300': { wltp: 639 }, 'mercedes-eqs-450': { wltp: 770 },
+      'audi-q4-etron-45': { wltp: 520 }, 'audi-q6-etron': { wltp: 625 },
+      'audi-q8-etron-55': { wltp: 582 }, 'audi-etron-gt': { wltp: 488 },
+      'hyundai-ioniq5-lr': { wltp: 507 }, 'hyundai-ioniq6-lr': { wltp: 614 },
+      'kia-ev6-lr': { wltp: 528 }, 'kia-ev9-lr': { wltp: 541 },
+      'porsche-taycan': { wltp: 484 }, 'porsche-taycan-4s': { wltp: 464 },
+      'skoda-enyaq-85': { wltp: 557 }, 'skoda-enyaq-coupe-85': { wltp: 560 },
+      'cupra-born-77': { wltp: 548 },
+      'opel-mokka-e': { wltp: 338 }, 'opel-corsa-e': { wltp: 357 },
+      'renault-megane-ev60': { wltp: 450 }, 'renault-scenic-etech': { wltp: 620 },
+      'peugeot-e3008': { wltp: 527 }, 'peugeot-e208': { wltp: 400 },
+      'fiat-500e': { wltp: 321 }, 'mini-cooper-se': { wltp: 305 },
+      'volvo-ex30-lr': { wltp: 476 }, 'volvo-ex40': { wltp: 573 }, 'volvo-c40': { wltp: 550 },
+      'polestar-2-lr': { wltp: 592 },
+      'byd-atto-3': { wltp: 420 }, 'byd-seal': { wltp: 570 },
+      'smart-1-pro': { wltp: 440 }, 'smart-3-pro': { wltp: 455 },
     };
 
     const REAL_WORLD_RANGE_FACTOR = 0.78;
 
+    /* ── Wheel Picker ── */
+    function initWheelPicker(scrollId, values, defaultIndex) {
+      const scroll = document.getElementById(scrollId);
+      scroll.innerHTML = '';
+
+      // Padding items top and bottom so center item can be scrolled to
+      const padCount = 1; // 1 padding item above + below = 3 visible items total
+      for (let i = 0; i < padCount; i++) {
+        const pad = document.createElement('div');
+        pad.className = 'wheel-picker-item';
+        pad.textContent = '';
+        scroll.appendChild(pad);
+      }
+      values.forEach((v, i) => {
+        const item = document.createElement('div');
+        item.className = 'wheel-picker-item';
+        item.dataset.index = i;
+        item.dataset.value = v.value !== undefined ? v.value : v;
+        item.textContent = v.label !== undefined ? v.label : v;
+        scroll.appendChild(item);
+      });
+      for (let i = 0; i < padCount; i++) {
+        const pad = document.createElement('div');
+        pad.className = 'wheel-picker-item';
+        pad.textContent = '';
+        scroll.appendChild(pad);
+      }
+
+      // Scroll to default
+      const itemH = 42;
+      scroll.scrollTop = defaultIndex * itemH;
+
+      // Update selected state
+      function updateSelected() {
+        const idx = Math.round(scroll.scrollTop / itemH);
+        const items = scroll.querySelectorAll('.wheel-picker-item[data-index]');
+        items.forEach(it => {
+          it.classList.toggle('selected', parseInt(it.dataset.index) === idx);
+        });
+      }
+
+      let scrollTimer;
+      scroll.addEventListener('scroll', () => {
+        clearTimeout(scrollTimer);
+        scrollTimer = setTimeout(() => {
+          // Snap
+          const idx = Math.round(scroll.scrollTop / itemH);
+          scroll.scrollTo({ top: idx * itemH, behavior: 'smooth' });
+          updateSelected();
+        }, 80);
+      });
+
+      // Allow click to select
+      scroll.addEventListener('click', (e) => {
+        const item = e.target.closest('.wheel-picker-item[data-index]');
+        if (item) {
+          const idx = parseInt(item.dataset.index);
+          scroll.scrollTo({ top: idx * itemH, behavior: 'smooth' });
+          setTimeout(updateSelected, 200);
+        }
+      });
+
+      // Initial update
+      setTimeout(updateSelected, 50);
+    }
+
+    function getWheelValue(scrollId) {
+      const scroll = document.getElementById(scrollId);
+      const idx = Math.round(scroll.scrollTop / 42);
+      const items = scroll.querySelectorAll('.wheel-picker-item[data-index]');
+      if (idx >= 0 && idx < items.length) {
+        return parseInt(items[idx].dataset.value);
+      }
+      return 0;
+    }
+
+    function initAllPickers() {
+      const hours = [];
+      for (let h = 0; h < 24; h++) {
+        hours.push({ value: h, label: String(h).padStart(2, '0') });
+      }
+      const mins = [
+        { value: 0, label: '00' },
+        { value: 15, label: '15' },
+        { value: 30, label: '30' },
+        { value: 45, label: '45' },
+      ];
+
+      // Default: next full 15-min block
+      const now = new Date();
+      const curH = now.getHours();
+      const curM = now.getMinutes();
+      const nextMinIdx = Math.min(3, Math.ceil(curM / 15));
+      const defaultH = nextMinIdx > 3 ? curH + 1 : curH;
+      const defaultMIdx = nextMinIdx > 3 ? 0 : nextMinIdx;
+
+      initWheelPicker('dep-hour-scroll', hours, Math.min(23, defaultH));
+      initWheelPicker('dep-min-scroll', mins, defaultMIdx);
+      initWheelPicker('arr-hour-scroll', hours, Math.min(23, defaultH + 1));
+      initWheelPicker('arr-min-scroll', mins, 0);
+    }
+
+    /* ── App Init ── */
     function initApp() {
       distanceService = new google.maps.DistanceMatrixService();
       autocompleteService = new google.maps.places.AutocompleteService();
@@ -923,15 +787,13 @@
       const mapElement = document.getElementById('map');
       if (mapElement) {
         currentMap = new google.maps.Map(mapElement, {
-          center: { lat: 51.1657, lng: 10.4515 },
-          zoom: 6,
+          center: { lat: 51.1657, lng: 10.4515 }, zoom: 6,
           styles: [
             { elementType: 'geometry', stylers: [{ color: '#f0f5f3' }] },
             { elementType: 'labels.text.stroke', stylers: [{ color: '#f0f5f3' }] },
             { elementType: 'labels.text.fill', stylers: [{ color: '#1a2e28' }] },
             { featureType: 'administrative.locality', elementType: 'labels.text.fill', stylers: [{ color: '#6b8a7e' }] },
             { featureType: 'road', elementType: 'geometry', stylers: [{ color: '#ffffff' }] },
-            { featureType: 'road.arterial', elementType: 'geometry', stylers: [{ color: '#f5f9f7' }] },
             { featureType: 'water', elementType: 'geometry.fill', stylers: [{ color: '#b8d4e8' }] },
           ],
         });
@@ -942,7 +804,17 @@
         });
       }
 
+      initAllPickers();
       setupEventListeners();
+      selectTodayWeekday();
+    }
+
+    function selectTodayWeekday() {
+      const today = new Date().getDay();
+      selectedWeekday = today;
+      document.querySelectorAll('.weekday-btn').forEach(btn => {
+        btn.classList.toggle('active', parseInt(btn.dataset.day) === today);
+      });
     }
 
     function setupEventListeners() {
@@ -955,13 +827,20 @@
         });
       });
 
+      document.querySelectorAll('.weekday-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          document.querySelectorAll('.weekday-btn').forEach(b => b.classList.remove('active'));
+          e.target.classList.add('active');
+          selectedWeekday = parseInt(e.target.dataset.day);
+        });
+      });
+
       setupAutocomplete('from', 'from-dropdown');
       setupAutocomplete('to', 'to-dropdown');
 
       document.getElementById('ev-toggle').addEventListener('change', (e) => {
         document.getElementById('ev-section').classList.toggle('visible', e.target.checked);
       });
-
       document.getElementById('ev-start-battery').addEventListener('input', (e) => {
         document.getElementById('ev-start-battery-value').textContent = e.target.value;
       });
@@ -984,10 +863,7 @@
 
       input.addEventListener('input', (e) => {
         const query = e.target.value;
-        if (!query || query.length < 2) {
-          hideDropdown(dropdown);
-          return;
-        }
+        if (!query || query.length < 2) { hideDropdown(dropdown); return; }
 
         autocompleteService.getPlacePredictions({
           input: query,
@@ -995,17 +871,14 @@
           sessionToken: sessionToken,
         }, (predictions, status) => {
           if (status !== google.maps.places.PlacesServiceStatus.OK || !predictions) {
-            hideDropdown(dropdown);
-            return;
+            hideDropdown(dropdown); return;
           }
           renderDropdown(predictions, dropdown, input);
         });
       });
 
       input.addEventListener('focus', (e) => {
-        if (e.target.value.length >= 2) {
-          dropdown.classList.add('active');
-        }
+        if (e.target.value.length >= 2) dropdown.classList.add('active');
       });
     }
 
@@ -1028,13 +901,30 @@
       dropdown.classList.add('active');
     }
 
-    function hideDropdown(dropdown) {
-      dropdown.classList.remove('active');
-    }
+    function hideDropdown(d) { d.classList.remove('active'); }
 
     function toggleModeUI() {
       document.getElementById('departure-mode').style.display = currentMode === 'departure' ? 'block' : 'none';
       document.getElementById('arrival-mode').style.display = currentMode === 'arrival' ? 'block' : 'none';
+    }
+
+    /* ── Build target date from weekday + time picker ── */
+    function buildTargetDate(hourScrollId, minScrollId) {
+      const h = getWheelValue(hourScrollId);
+      const m = getWheelValue(minScrollId);
+
+      const now = new Date();
+      const target = new Date(now);
+      target.setHours(h, m, 0, 0);
+
+      // Find next occurrence of selectedWeekday
+      const currentDay = now.getDay();
+      let daysAhead = selectedWeekday - currentDay;
+      if (daysAhead < 0) daysAhead += 7;
+      if (daysAhead === 0 && target <= now) daysAhead = 7;
+      target.setDate(target.getDate() + daysAhead);
+
+      return target;
     }
 
     function handleCalculate() {
@@ -1044,12 +934,6 @@
 
       if (!from || !to) { showError('Bitte beide Orte eingeben.'); return; }
 
-      const timeInput = currentMode === 'departure'
-        ? document.getElementById('departure-time').value.trim()
-        : document.getElementById('arrival-time').value.trim();
-
-      if (!timeInput) { showError('Bitte Zeit eingeben.'); return; }
-
       document.getElementById('results').classList.add('visible');
       document.getElementById('time-cards').style.display = 'none';
       document.getElementById('arrival-cards').style.display = 'none';
@@ -1058,23 +942,16 @@
       document.getElementById('ev-info-box').style.display = 'none';
       document.getElementById('map-container').classList.remove('visible');
 
-      calculateRoute(from, to, timeInput);
+      if (currentMode === 'departure') {
+        const departureTime = buildTargetDate('dep-hour-scroll', 'dep-min-scroll');
+        calculateRoute(from, to, departureTime, null);
+      } else {
+        const arrivalTime = buildTargetDate('arr-hour-scroll', 'arr-min-scroll');
+        calculateRoute(from, to, null, arrivalTime);
+      }
     }
 
-    function calculateRoute(from, to, timeInput) {
-      const now = new Date();
-      let departureTime;
-
-      if (currentMode === 'departure') {
-        departureTime = parseTimeToDate(timeInput, now);
-        if (!departureTime || departureTime < now) {
-          showError('Bitte eine zukünftige Abfahrtszeit eingeben.');
-          return;
-        }
-      } else {
-        departureTime = new Date(now);
-      }
-
+    function calculateRoute(from, to, departureTime, arrivalTime) {
       const request = {
         origins: [from],
         destinations: [to],
@@ -1083,70 +960,114 @@
         unitSystem: google.maps.UnitSystem.METRIC,
       };
 
-      if (currentMode === 'departure') {
+      // For traffic predictions we need a departure time
+      if (departureTime) {
         request.departureTime = departureTime;
+      } else {
+        // For arrival mode, estimate a departure to get traffic data
+        request.departureTime = new Date(arrivalTime.getTime() - 4 * 3600 * 1000);
       }
 
       distanceService.getDistanceMatrix(request, (response, status) => {
-        if (status !== google.maps.DistanceMatrixStatus.OK || !response.rows[0].elements[0].duration_in_traffic) {
-          showError('Fehler bei der Routenberechnung. Bitte versuche es später erneut.');
-          return;
+        if (status !== google.maps.DistanceMatrixStatus.OK) {
+          showError('Fehler bei der Routenberechnung.'); return;
         }
 
         const element = response.rows[0].elements[0];
+        if (element.status !== 'OK' || !element.duration_in_traffic) {
+          showError('Route konnte nicht berechnet werden. Bitte Adressen prüfen.'); return;
+        }
+
         const distanceKm = element.distance.value / 1000;
         const scenarios = getTrafficScenarios(element);
 
-        lastResults = { from, to, distanceKm, scenarios, departureTime };
+        // Calculate EV charging time
+        let chargingTimeMin = 0;
+        if (document.getElementById('ev-toggle').checked) {
+          chargingTimeMin = getChargingTime(distanceKm);
+        }
+
+        lastResults = { from, to, distanceKm, scenarios, departureTime, arrivalTime, chargingTimeMin };
 
         if (currentMode === 'departure') {
-          displayDepartureResults(scenarios, departureTime);
+          displayDepartureResults(scenarios, departureTime, chargingTimeMin);
         } else {
-          const targetTime = parseTimeToDate(document.getElementById('arrival-time').value.trim(), now);
-          displayArrivalResults(scenarios, targetTime);
+          displayArrivalResults(scenarios, arrivalTime, chargingTimeMin);
         }
 
         displayMap(from, to);
 
-        if (document.getElementById('ev-toggle').checked) {
-          calculateEVNeeds(distanceKm, scenarios);
+        if (chargingTimeMin > 0) {
+          displayEVInfo(distanceKm, chargingTimeMin);
         }
       });
     }
 
     function getTrafficScenarios(element) {
-      const bestGuessDuration = element.duration_in_traffic.value;
+      const bg = element.duration_in_traffic.value;
       return {
-        optimistic: { durationSeconds: Math.ceil(bestGuessDuration * 0.85), label: 'Günstig' },
-        bestGuess: { durationSeconds: bestGuessDuration, label: 'Typisch' },
-        pessimistic: { durationSeconds: Math.ceil(bestGuessDuration * 1.25), label: 'Ungünstig' },
+        optimistic: { durationSeconds: Math.ceil(bg * 0.85) },
+        bestGuess: { durationSeconds: bg },
+        pessimistic: { durationSeconds: Math.ceil(bg * 1.25) },
       };
     }
 
-    function displayDepartureResults(scenarios, departureTime) {
-      const safeArrival = new Date(departureTime.getTime() + scenarios.pessimistic.durationSeconds * 1000);
+    /* ── Calculate EV charging time (returns minutes) ── */
+    function getChargingTime(distanceKm) {
+      const modelId = document.getElementById('ev-model').value;
+      if (!modelId) return 0;
 
-      document.getElementById('hero-time').textContent = formatTime(safeArrival);
-      document.getElementById('hero-label').textContent = 'Ankunft (pessimistisch)';
-      document.getElementById('hero-meta').innerHTML =
-        '<div>Abfahrt: ' + formatTime(departureTime) + ' · Dauer: ' + formatDuration(Math.round(scenarios.pessimistic.durationSeconds / 60)) + '</div>';
+      const startBattery = parseInt(document.getElementById('ev-start-battery').value);
+      const endBattery = parseInt(document.getElementById('ev-end-battery').value);
+      const evData = EV_DATABASE[modelId];
+      if (!evData) return 0;
+
+      const usableRange = evData.wltp * REAL_WORLD_RANGE_FACTOR * (startBattery - endBattery) / 100;
+      if (distanceKm <= usableRange) return 0;
+
+      const chargableRange = evData.wltp * REAL_WORLD_RANGE_FACTOR * (80 - endBattery) / 100;
+      const stopsNeeded = Math.ceil((distanceKm - usableRange) / chargableRange);
+      return stopsNeeded * 25; // 25 min per stop
+    }
+
+    function displayEVInfo(distanceKm, chargingTimeMin) {
+      const stops = Math.ceil(chargingTimeMin / 25);
+      const box = document.getElementById('ev-info-box');
+      box.innerHTML = '<div id="ev-info-text">⚡ ' + stops + ' Ladestopp(s) empfohlen, ca. ' + chargingTimeMin + ' Min. Ladezeit (in Zeiten eingerechnet)</div>';
+      box.style.display = 'block';
+    }
+
+    function displayDepartureResults(scenarios, departureTime, chargingTimeMin) {
+      const chargingSec = chargingTimeMin * 60;
+
+      const arrPessimistic = new Date(departureTime.getTime() + (scenarios.pessimistic.durationSeconds + chargingSec) * 1000);
+      const arrBestGuess = new Date(departureTime.getTime() + (scenarios.bestGuess.durationSeconds + chargingSec) * 1000);
+      const arrOptimistic = new Date(departureTime.getTime() + (scenarios.optimistic.durationSeconds + chargingSec) * 1000);
+
+      document.getElementById('hero-time').textContent = formatTime(arrBestGuess);
+      document.getElementById('hero-label').textContent = 'Voraussichtliche Ankunft';
+      let meta = '<div>Abfahrt: ' + formatTime(departureTime) + ' · Dauer: ' + formatDuration(Math.round(scenarios.bestGuess.durationSeconds / 60)) + '</div>';
+      if (chargingTimeMin > 0) meta += '<div>+ ' + chargingTimeMin + ' Min. Ladezeit</div>';
+      document.getElementById('hero-meta').innerHTML = meta;
       document.getElementById('hero-card').style.display = 'block';
 
-      document.getElementById('time-optimistic').textContent = formatTime(new Date(departureTime.getTime() + scenarios.optimistic.durationSeconds * 1000));
-      document.getElementById('time-best-guess').textContent = formatTime(new Date(departureTime.getTime() + scenarios.bestGuess.durationSeconds * 1000));
-      document.getElementById('time-pessimistic').textContent = formatTime(new Date(departureTime.getTime() + scenarios.pessimistic.durationSeconds * 1000));
+      document.getElementById('time-optimistic').textContent = formatTime(arrOptimistic);
+      document.getElementById('time-best-guess').textContent = formatTime(arrBestGuess);
+      document.getElementById('time-pessimistic').textContent = formatTime(arrPessimistic);
       document.getElementById('time-cards').style.display = 'flex';
 
       const diffMinutes = Math.round((scenarios.pessimistic.durationSeconds - scenarios.optimistic.durationSeconds) / 60);
       displayDelayInfo(diffMinutes, diffMinutes < 10 ? 'low' : diffMinutes < 30 ? 'medium' : 'high');
     }
 
-    function displayArrivalResults(scenarios, targetTime) {
-      // Entspannt = pessimistic duration (leave earliest, most buffer)
-      const safeDeparture = new Date(targetTime.getTime() - scenarios.pessimistic.durationSeconds * 1000);
-      const bestDeparture = new Date(targetTime.getTime() - scenarios.bestGuess.durationSeconds * 1000);
-      // Knapp = optimistic duration (leave latest, least buffer)
-      const relaxedDeparture = new Date(targetTime.getTime() - scenarios.optimistic.durationSeconds * 1000);
+    function displayArrivalResults(scenarios, targetTime, chargingTimeMin) {
+      const chargingSec = chargingTimeMin * 60;
+
+      // Entspannt = pessimistic + charging (leave earliest, most buffer)
+      const safeDeparture = new Date(targetTime.getTime() - (scenarios.pessimistic.durationSeconds + chargingSec) * 1000);
+      const bestDeparture = new Date(targetTime.getTime() - (scenarios.bestGuess.durationSeconds + chargingSec) * 1000);
+      // Knapp = optimistic + charging (leave latest, least buffer)
+      const relaxedDeparture = new Date(targetTime.getTime() - (scenarios.optimistic.durationSeconds + chargingSec) * 1000);
 
       document.getElementById('arrival-safe').textContent = formatTime(safeDeparture);
       document.getElementById('arrival-bestguess').textContent = formatTime(bestDeparture);
@@ -1154,8 +1075,9 @@
 
       document.getElementById('hero-time').textContent = formatTime(safeDeparture);
       document.getElementById('hero-label').textContent = 'Empfohlene Abfahrtszeit';
-      document.getElementById('hero-meta').innerHTML =
-        '<div>Ankunft: ' + formatTime(targetTime) + ' (mit Puffer für Verzögerungen)</div>';
+      let meta = '<div>Ankunft: ' + formatTime(targetTime) + ' (mit Puffer für Verzögerungen)</div>';
+      if (chargingTimeMin > 0) meta += '<div>inkl. ' + chargingTimeMin + ' Min. Ladezeit</div>';
+      document.getElementById('hero-meta').innerHTML = meta;
       document.getElementById('hero-card').style.display = 'block';
 
       document.getElementById('arrival-cards').style.display = 'flex';
@@ -1165,13 +1087,7 @@
     }
 
     function displayDelayInfo(diffMinutes, riskLevel) {
-      const delayInfo = document.getElementById('delay-info');
-      const delayIcon = document.getElementById('delay-icon');
-      const delayText = document.getElementById('delay-text');
-      const delayBarFill = document.getElementById('delay-bar-fill');
-
       let icon, text, fillPercent, fillColor;
-
       if (riskLevel === 'low') {
         icon = '✅'; text = 'Zeitpuffer: ' + diffMinutes + ' Min. – Verkehr sehr zuverlässig';
         fillPercent = 20; fillColor = '#1a7a5a';
@@ -1182,20 +1098,17 @@
         icon = '🚨'; text = 'Zeitpuffer: ' + diffMinutes + ' Min. – Verkehr sehr variabel';
         fillPercent = 100; fillColor = '#c53030';
       }
-
-      delayIcon.textContent = icon;
-      delayText.textContent = text;
-      delayBarFill.style.width = fillPercent + '%';
-      delayBarFill.style.backgroundColor = fillColor;
-      delayInfo.style.display = 'block';
+      document.getElementById('delay-icon').textContent = icon;
+      document.getElementById('delay-text').textContent = text;
+      document.getElementById('delay-bar-fill').style.width = fillPercent + '%';
+      document.getElementById('delay-bar-fill').style.backgroundColor = fillColor;
+      document.getElementById('delay-info').style.display = 'block';
     }
 
     function displayMap(from, to) {
       directionsService.route({
-        origin: from,
-        destination: to,
-        travelMode: google.maps.TravelMode.DRIVING,
-        language: 'de',
+        origin: from, destination: to,
+        travelMode: google.maps.TravelMode.DRIVING, language: 'de',
       }, (result, status) => {
         if (status === google.maps.DirectionsStatus.OK) {
           directionsRenderer.setDirections(result);
@@ -1210,43 +1123,16 @@
           document.getElementById('map-container').classList.add('visible');
 
           if (document.getElementById('ev-toggle').checked && lastResults) {
-            addChargingMarkers(result.routes[0], lastResults.distanceKm);
+            addChargingMarkers(result.routes[0]);
           }
         }
       });
     }
 
-    function calculateEVNeeds(distanceKm, scenarios) {
-      const modelId = document.getElementById('ev-model').value;
-      if (!modelId) { showError('Bitte ein E-Auto-Modell auswählen.'); return; }
-
-      const startBattery = parseInt(document.getElementById('ev-start-battery').value);
-      const endBattery = parseInt(document.getElementById('ev-end-battery').value);
-      const evData = EV_DATABASE[modelId];
-      const usableRange = evData.wltp * REAL_WORLD_RANGE_FACTOR * (startBattery - endBattery) / 100;
-
-      if (distanceKm <= usableRange) {
-        document.getElementById('ev-info-box').style.display = 'none';
-        return;
-      }
-
-      const chargableRange = evData.wltp * REAL_WORLD_RANGE_FACTOR * (80 - endBattery) / 100;
-      const stopsNeeded = Math.ceil((distanceKm - usableRange) / chargableRange);
-      const totalChargingTime = stopsNeeded * 25;
-
-      const evInfoBox = document.getElementById('ev-info-box');
-      evInfoBox.innerHTML = '<div id="ev-info-text">⚡ ' + stopsNeeded + ' Ladestopp(s) empfohlen, ca. ' + totalChargingTime + ' Min. Ladezeit</div>';
-      evInfoBox.style.display = 'block';
-
-      if (currentMode === 'departure' && lastResults) {
-        const heroMeta = document.getElementById('hero-meta');
-        heroMeta.innerHTML += '<div>+ ' + totalChargingTime + ' Min. Ladezeit (' + stopsNeeded + ' Stopp)</div>';
-      }
-    }
-
-    function addChargingMarkers(route, totalDistance) {
+    function addChargingMarkers(route) {
       const leg = route.legs[0];
       const modelId = document.getElementById('ev-model').value;
+      if (!modelId) return;
       const startBattery = parseInt(document.getElementById('ev-start-battery').value);
       const evData = EV_DATABASE[modelId];
       const fullRange = evData.wltp * REAL_WORLD_RANGE_FACTOR;
@@ -1257,30 +1143,16 @@
 
       for (let i = 0; i < steps.length; i++) {
         const step = steps[i];
-        const stepKm = step.distance.value / 1000;
-        currentSoC -= stepKm / kmPerPercent;
-
+        currentSoC -= (step.distance.value / 1000) / kmPerPercent;
         if (currentSoC <= 15) {
           new google.maps.Marker({
-            position: step.end_location,
-            map: currentMap,
+            position: step.end_location, map: currentMap,
             title: 'Ladestopp (Akku ~' + Math.max(0, Math.round(currentSoC)) + '% → 80%)',
             icon: 'https://maps.google.com/mapfiles/ms/icons/blue-dot.png',
           });
           currentSoC = 80;
         }
       }
-    }
-
-    function parseTimeToDate(timeStr, baseDate) {
-      const match = timeStr.match(/^(\d{1,2}):(\d{2})$/);
-      if (!match) return null;
-      const hours = parseInt(match[1], 10);
-      const minutes = parseInt(match[2], 10);
-      if (hours < 0 || hours > 23 || minutes < 0 || minutes > 59) return null;
-      const result = new Date(baseDate);
-      result.setHours(hours, minutes, 0, 0);
-      return result;
     }
 
     function formatTime(date) {
