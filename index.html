@@ -352,7 +352,7 @@
     <header>
       <div class="logo">Fahrtzeit</div>
       <div class="subtitle">Reisezeit-Rechner mit Echtzeit-Verkehr</div>
-      <div style="font-size:10px;color:var(--muted);margin-top:4px;" id="version-tag">v17</div>
+      <div style="font-size:10px;color:var(--muted);margin-top:4px;" id="version-tag">v18</div>
     </header>
 
     <div class="form-card">
@@ -570,13 +570,14 @@
         <div class="delay-top">
           <div class="delay-icon" id="delay-icon">⚠️</div>
           <div>
-            <div class="delay-text-label">Verzögerungsrisiko</div>
+            <div class="delay-text-label" id="delay-label">Verzögerungsrisiko</div>
             <div class="delay-text-main" id="delay-text"></div>
           </div>
         </div>
         <div class="delay-bar">
           <div class="delay-bar-fill" id="delay-bar-fill"></div>
         </div>
+        <div id="delay-detail" style="margin-top:10px;font-size:13px;color:var(--text);line-height:1.5;"></div>
       </div>
 
       <div class="time-cards" id="time-cards" style="display: none;">
@@ -1097,10 +1098,11 @@
               displayEVInfo(distanceKm, chargingTimeMin);
             }
 
-            // Show delay info
-            var diffSec = scenarios.pessimistic.durationSeconds - scenarios.optimistic.durationSeconds;
-            var diffMin = Math.round(diffSec / 60);
-            displayDelayInfo(diffMin, diffMin < 10 ? 'low' : diffMin < 30 ? 'medium' : 'high');
+            // Show traffic info for this day/time
+            var trafficDelayMin = Math.round((trafficSec - baseSec) / 60);
+            var hasTrafficData = !!leg.duration_in_traffic;
+            var depTime = departureTime || new Date(arrivalTime.getTime() - trafficSec * 1000);
+            displayDelayInfo(trafficDelayMin, baseSec, trafficSec, hasTrafficData, depTime, distanceKm);
 
             resetBtn();
           } catch (e) {
@@ -1160,9 +1162,6 @@
       document.getElementById('time-best-guess').textContent = formatTime(arrBestGuess);
       document.getElementById('time-pessimistic').textContent = formatTime(arrPessimistic);
       document.getElementById('time-cards').style.display = 'flex';
-
-      const diffMinutes = Math.round((scenarios.pessimistic.durationSeconds - scenarios.optimistic.durationSeconds) / 60);
-      displayDelayInfo(diffMinutes, diffMinutes < 10 ? 'low' : diffMinutes < 30 ? 'medium' : 'high');
     }
 
     function displayArrivalResults(scenarios, targetTime, chargingTimeMin) {
@@ -1186,27 +1185,92 @@
       document.getElementById('hero-card').style.display = 'block';
 
       document.getElementById('arrival-cards').style.display = 'flex';
-
-      const diffMinutes = Math.round((scenarios.pessimistic.durationSeconds - scenarios.optimistic.durationSeconds) / 60);
-      displayDelayInfo(diffMinutes, diffMinutes < 10 ? 'low' : diffMinutes < 30 ? 'medium' : 'high');
     }
 
-    function displayDelayInfo(diffMinutes, riskLevel) {
-      let icon, text, fillPercent, fillColor;
-      if (riskLevel === 'low') {
-        icon = '✅'; text = 'Zeitpuffer: ' + diffMinutes + ' Min. – Verkehr sehr zuverlässig';
-        fillPercent = 20; fillColor = '#1a7a5a';
-      } else if (riskLevel === 'medium') {
-        icon = '⚠️'; text = 'Zeitpuffer: ' + diffMinutes + ' Min. – Verkehr moderat variabel';
-        fillPercent = 60; fillColor = '#d4960a';
+    function displayDelayInfo(trafficDelayMin, baseSec, trafficSec, hasTrafficData, depTime, distanceKm) {
+      var dayNames = ['Sonntag', 'Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag'];
+      var dayName = dayNames[depTime.getDay()];
+      var timeStr = String(depTime.getHours()).padStart(2, '0') + ':' + String(depTime.getMinutes()).padStart(2, '0');
+      var baseMin = Math.round(baseSec / 60);
+
+      // Determine traffic level based on ratio traffic/base
+      var ratio = trafficSec / baseSec;
+      var icon, label, text, fillPercent, fillColor, detail;
+
+      if (!hasTrafficData || ratio < 1.05) {
+        icon = '✅';
+        label = 'Verkehrsprognose ' + dayName + ' ' + timeStr;
+        text = 'Kaum Verkehr – nahezu freie Fahrt erwartet';
+        fillPercent = 10; fillColor = '#1a7a5a';
+      } else if (ratio < 1.15) {
+        icon = '🟢';
+        label = 'Verkehrsprognose ' + dayName + ' ' + timeStr;
+        text = '+' + trafficDelayMin + ' Min. leichte Verzögerung durch Verkehr';
+        fillPercent = 25; fillColor = '#1a7a5a';
+      } else if (ratio < 1.30) {
+        icon = '🟡';
+        label = 'Verkehrsprognose ' + dayName + ' ' + timeStr;
+        text = '+' + trafficDelayMin + ' Min. mäßiger Verkehr erwartet';
+        fillPercent = 50; fillColor = '#d4960a';
+      } else if (ratio < 1.50) {
+        icon = '🟠';
+        label = 'Verkehrsprognose ' + dayName + ' ' + timeStr;
+        text = '+' + trafficDelayMin + ' Min. erhöhtes Verkehrsaufkommen';
+        fillPercent = 75; fillColor = '#e87a1e';
       } else {
-        icon = '🚨'; text = 'Zeitpuffer: ' + diffMinutes + ' Min. – Verkehr sehr variabel';
+        icon = '🔴';
+        label = 'Verkehrsprognose ' + dayName + ' ' + timeStr;
+        text = '+' + trafficDelayMin + ' Min. starker Verkehr / Staugefahr';
         fillPercent = 100; fillColor = '#c53030';
       }
+
+      // Build contextual detail text based on day and time
+      var hour = depTime.getHours();
+      var day = depTime.getDay(); // 0=So
+      var details = [];
+
+      // Typical traffic patterns for Germany
+      if (day >= 1 && day <= 5) { // Mo-Fr
+        if (hour >= 6 && hour <= 9) {
+          details.push('Berufsverkehr: Auf dieser Strecke ist ' + dayName + 'morgen typischerweise mit erhöhtem Pendleraufkommen zu rechnen.');
+        } else if (hour >= 15 && hour <= 18) {
+          details.push('Feierabendverkehr: ' + dayName + 'nachmittag ist auf Autobahnen mit dichtem Verkehr und Staus in Ballungsräumen zu rechnen.');
+        } else if (hour >= 21 || hour <= 5) {
+          details.push('Nachtfahrt: Zu dieser Uhrzeit ist die Strecke typischerweise frei. Wenig Verkehr erwartet.');
+        } else {
+          details.push('Außerhalb der Stoßzeiten: Verkehrsaufkommen ' + dayName + ' um ' + timeStr + ' ist auf dieser Strecke typischerweise moderat.');
+        }
+      } else { // Sa/So
+        if (day === 6 && hour >= 9 && hour <= 14) {
+          details.push('Samstag-Reiseverkehr: Vormittags kann es auf Autobahnen in Richtung Ausflugs- und Urlaubsgebiete voller werden.');
+        } else if (day === 0 && hour >= 15 && hour <= 20) {
+          details.push('Sonntag-Rückreiseverkehr: Nachmittags/abends kann es auf Fernstrecken zu Rückstaus durch Wochenendheimkehrer kommen.');
+        } else {
+          details.push('Wochenende: Verkehrsaufkommen am ' + dayName + ' um ' + timeStr + ' ist typischerweise gering.');
+        }
+      }
+
+      // Friday afternoon special case
+      if (day === 5 && hour >= 13 && hour <= 19) {
+        details = ['Freitag-Reiseverkehr: Auf Fernstrecken ist Freitagnachmittag traditionell der stärkste Reisetag. Besonders auf A-Autobahnen Richtung Osten und Küste ist mit deutlichen Verzögerungen zu rechnen.'];
+      }
+
+      // Distance-based context
+      if (distanceKm > 400) {
+        details.push('Langstrecke (' + Math.round(distanceKm) + ' km): Mehrere Ballungsräume auf der Route können zu kumulierten Verzögerungen führen.');
+      }
+
+      // Show base vs traffic comparison
+      if (hasTrafficData && trafficDelayMin > 0) {
+        details.push('Fahrzeit ohne Verkehr: ' + formatDuration(baseMin) + ' · Mit Verkehr: ' + formatDuration(Math.round(trafficSec / 60)));
+      }
+
       document.getElementById('delay-icon').textContent = icon;
+      document.getElementById('delay-label').textContent = label;
       document.getElementById('delay-text').textContent = text;
       document.getElementById('delay-bar-fill').style.width = fillPercent + '%';
       document.getElementById('delay-bar-fill').style.backgroundColor = fillColor;
+      document.getElementById('delay-detail').innerHTML = details.join('<br>');
       document.getElementById('delay-info').style.display = 'block';
     }
 
@@ -1429,7 +1493,7 @@
     try { initAllPickers(); } catch (e) { console.error('initAllPickers error:', e); }
     try { setupEventListeners(); } catch (e) { console.error('setupEventListeners error:', e); }
     try { selectTodayWeekday(); } catch (e) { console.error('selectTodayWeekday error:', e); }
-    console.log('[Fahrtzeit v16] UI initialized OK');
+    console.log('[Fahrtzeit v18] UI initialized OK');
 
     // Timeout: if Maps hasn't loaded after 8 seconds, show clear error
     setTimeout(function() {
