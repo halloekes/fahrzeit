@@ -38,13 +38,13 @@
     overflow-x: hidden;
   }
 
-  /* Subtle warm dot pattern */
   body::before {
     content: '';
     position: fixed;
     inset: 0;
     background-image: radial-gradient(circle, rgba(232,93,47,0.08) 1px, transparent 1px);
-    background-size: 28px 28px;    pointer-events: none;
+    background-size: 28px 28px;
+    pointer-events: none;
     z-index: 0;
   }
 
@@ -56,7 +56,6 @@
     padding: 32px 20px 60px;
   }
 
-  /* Header */
   .header {
     margin-bottom: 48px;
     animation: fadeUp 0.6s ease both;
@@ -79,9 +78,7 @@
     letter-spacing: -0.03em;
   }
 
-  .header h1 span {
-    color: var(--accent);
-  }
+  .header h1 span { color: var(--accent); }
 
   .header p {
     margin-top: 12px;
@@ -90,91 +87,6 @@
     line-height: 1.6;
   }
 
-  /* API Key setup */
-  .api-setup {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 16px;
-    padding: 24px;
-    margin-bottom: 28px;
-    animation: fadeUp 0.6s 0.1s ease both;
-  }
-
-  .api-setup-header {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin-bottom: 16px;
-  }
-
-  .api-dot {
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    background: var(--accent3);
-    flex-shrink: 0;
-  }
-
-  .api-dot.active {
-    background: var(--success);
-    box-shadow: 0 0 8px rgba(42,157,111,0.5);
-  }
-
-  .api-setup-header span {
-    font-size: 12px;
-    letter-spacing: 0.1em;
-    color: var(--muted);
-    text-transform: uppercase;
-  }
-
-  .api-row {
-    display: flex;
-    gap: 10px;
-  }
-
-  .api-input {
-    flex: 1;
-    background: var(--bg);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 12px 16px;
-    color: var(--text);
-    font-family: 'DM Mono', monospace;
-    font-size: 12px;
-    letter-spacing: 0.05em;
-    outline: none;
-    transition: border-color 0.2s;
-  }
-
-  .api-input:focus { border-color: var(--accent); }
-
-  .btn-save {
-    background: var(--accent);
-    color: #ffffff;
-    border: none;
-    border-radius: 10px;
-    padding: 12px 20px;
-    font-family: 'Syne', sans-serif;
-    font-weight: 700;
-    font-size: 13px;
-    cursor: pointer;
-    transition: all 0.15s;
-    white-space: nowrap;
-  }
-
-  .btn-save:hover { transform: translateY(-1px); box-shadow: 0 4px 20px rgba(232,93,47,0.3); }
-
-  .api-info {
-    margin-top: 12px;
-    font-size: 11px;
-    color: var(--muted);
-    line-height: 1.6;
-  }
-
-  .api-info a { color: var(--accent2); text-decoration: none; }
-  .api-info a:hover { text-decoration: underline; }
-
-  /* Form */
   .form-card {
     background: var(--surface);
     border: 1px solid var(--border);
@@ -199,9 +111,7 @@
     margin-bottom: 24px;
   }
 
-  .input-group {
-    position: relative;
-  }
+  .input-group { position: relative; }
 
   .input-prefix {
     position: absolute;
@@ -221,7 +131,7 @@
     background: var(--bg);
     border: 1px solid var(--border);
     border-radius: 10px;
-    padding: 14px 16px 14px 52px;
+    padding: 14px 16px 14px 60px;
     color: var(--text);
     font-family: 'Syne', sans-serif;
     font-size: 15px;
@@ -237,55 +147,6 @@
 
   .route-input::placeholder { color: var(--muted); font-weight: 400; }
 
-  /* Autocomplete dropdown */
-  .autocomplete-container {
-    position: relative;
-  }
-
-  .autocomplete-dropdown {
-    position: absolute;
-    top: calc(100% + 4px);
-    left: 0;
-    right: 0;
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    z-index: 100;
-    overflow: hidden;
-    display: none;
-  }
-
-  .autocomplete-dropdown.visible { display: block; }
-
-  .autocomplete-item {
-    padding: 12px 16px;
-    font-size: 13px;
-    cursor: pointer;
-    transition: background 0.15s;
-    border-bottom: 1px solid var(--border);
-    line-height: 1.4;
-  }
-
-  .autocomplete-item:last-child { border-bottom: none; }
-
-  .autocomplete-item:hover, .autocomplete-item.selected {
-    background: var(--border);
-  }
-
-  .autocomplete-main {
-    color: var(--text);
-    font-family: 'Syne', sans-serif;
-    font-weight: 600;
-    font-size: 14px;
-  }
-
-  .autocomplete-sub {
-    color: var(--muted);
-    font-size: 11px;
-    margin-top: 2px;
-  }
-
-  /* Arrow between inputs */
   .route-arrow {
     display: flex;
     align-items: center;
@@ -295,231 +156,25 @@
     height: 20px;
   }
 
-  /* Time picker */
-  .time-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 12px;
+  /* Google Places Autocomplete styling */
+  .pac-container {
+    border-radius: 10px !important;
+    border: 1px solid var(--border) !important;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1) !important;
+    font-family: 'Syne', sans-serif !important;
+    margin-top: 4px !important;
   }
-
-  .time-group label {
-    display: block;
-    font-size: 10px;
-    letter-spacing: 0.15em;
-    color: var(--muted);
-    text-transform: uppercase;
-    margin-bottom: 8px;
+  .pac-item {
+    padding: 10px 14px !important;
+    font-size: 14px !important;
+    border-top: 1px solid #f0ebe5 !important;
+    cursor: pointer !important;
   }
-
-  .time-select {
-    width: 100%;
-    background: var(--bg);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 12px 16px;
-    color: var(--text);
-    font-family: 'DM Mono', monospace;
-    font-size: 14px;
-    outline: none;
-    cursor: pointer;
-    transition: border-color 0.2s;
-    appearance: none;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%236a6a88' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
-    background-repeat: no-repeat;
-    background-position: right 14px center;
-    padding-right: 36px;
-  }
-
-  .time-select:focus { border-color: var(--accent); }
-
-  /* Submit button */
-  .btn-analyze {
-    width: 100%;
-    margin-top: 24px;
-    background: var(--accent);
-    color: #ffffff;
-    border: none;
-    border-radius: 12px;
-    padding: 18px;
-    font-family: 'Syne', sans-serif;
-    font-weight: 800;
-    font-size: 16px;
-    letter-spacing: 0.02em;
-    cursor: pointer;
-    transition: all 0.15s;
-    position: relative;
-    overflow: hidden;
-  }
-
-  .btn-analyze:hover:not(:disabled) {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 30px rgba(232,93,47,0.35);
-  }
-
-  .btn-analyze:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-  }
-
-  .btn-analyze .btn-inner {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-  }
-
-  /* Loading state */
-  .spinner {
-    width: 16px;
-    height: 16px;
-    border: 2px solid rgba(255,255,255,0.3);
-    border-top-color: #ffffff;
-    border-radius: 50%;
-    animation: spin 0.7s linear infinite;
-    display: none;
-  }
-
-  .btn-analyze.loading .spinner { display: block; }
-
-  /* Results */
-  .results {
-    animation: fadeUp 0.5s ease both;
-    display: none;
-  }
-
-  .results.visible { display: block; }
-
-  .results-header {
-    margin-bottom: 20px;
-  }
-
-  .results-route {
-    font-family: 'Syne', sans-serif;
-    font-size: 20px;
-    font-weight: 800;
-    line-height: 1.2;
-    margin-bottom: 4px;
-  }
-
-  .results-route .arrow { color: var(--accent); margin: 0 8px; }
-
-  .results-meta {
-    font-size: 11px;
-    color: var(--muted);
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-  }
-
-  .results-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 12px;
-    margin-bottom: 20px;
-  }
-
-  @media (max-width: 480px) {
-    .results-grid { grid-template-columns: 1fr; }
-  }
-
-  .result-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 14px;
-    padding: 20px 16px;
-    text-align: center;
-    position: relative;
-    overflow: hidden;
-    transition: transform 0.2s;
-  }
-
-  .result-card:hover { transform: translateY(-2px); }
-
-  .result-card.best { border-color: rgba(42,157,111,0.35); }
-  .result-card.typical { border-color: rgba(232,93,47,0.35); }
-  .result-card.worst { border-color: rgba(180,60,30,0.25); }
-
-  .result-card::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 2px;
-  }
-
-  .result-card.best::before { background: var(--success); }
-  .result-card.typical::before { background: var(--accent); }
-  .result-card.worst::before { background: var(--accent3); }
-
-  .result-label {
-    font-size: 10px;
-    letter-spacing: 0.2em;
-    text-transform: uppercase;
-    margin-bottom: 12px;
-  }
-
-  .result-card.best .result-label { color: var(--success); }
-  .result-card.typical .result-label { color: var(--accent); }
-  .result-card.worst .result-label { color: var(--accent3); }
-
-  .result-time {
-    font-family: 'Syne', sans-serif;
-    font-size: 32px;
-    font-weight: 800;
-    line-height: 1;
-    margin-bottom: 4px;
-  }
-
-  .result-unit {
-    font-size: 11px;
-    color: var(--muted);
-    margin-bottom: 10px;
-  }
-
-  .result-dist {
-    font-size: 11px;
-    color: var(--muted);
-    padding-top: 10px;
-    border-top: 1px solid var(--border);
-  }
-
-  .result-arrival {
-    font-size: 12px;
-    color: var(--muted);
-    margin-top: 6px;
-  }
-
-  .result-arrival strong {
-    color: var(--text);
-    font-family: 'Syne', sans-serif;
-  }
-
-  /* Summary bar */
-  .summary-bar {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 16px 20px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 16px;
-  }
-
-  .summary-text {
-    font-size: 12px;
-    color: var(--muted);
-    line-height: 1.5;
-  }
-
-  .summary-text strong { color: var(--text); }
-
-  .summary-tip {
-    font-size: 11px;
-    color: var(--accent2);
-    text-align: right;
-    flex-shrink: 0;
-  }
+  .pac-item:first-child { border-top: none !important; }
+  .pac-item:hover { background: var(--surface2) !important; }
+  .pac-item-query { font-weight: 600 !important; color: var(--text) !important; }
+  .pac-matched { font-weight: 700 !important; }
+  .pac-icon { display: none !important; }
 
   /* Mode toggle */
   .mode-toggle {
@@ -556,7 +211,195 @@
 
   .mode-icon { font-size: 14px; }
 
-  /* Arrival results */
+  /* Time */
+  .time-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+
+  .time-group label {
+    display: block;
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    color: var(--muted);
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+
+  .time-select {
+    width: 100%;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 16px;
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    font-size: 14px;
+    outline: none;
+    cursor: pointer;
+    transition: border-color 0.2s;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%239a8878' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 14px center;
+    padding-right: 36px;
+  }
+
+  .time-select:focus { border-color: var(--accent); }
+
+  /* Button */
+  .btn-analyze {
+    width: 100%;
+    margin-top: 24px;
+    background: var(--accent);
+    color: #ffffff;
+    border: none;
+    border-radius: 12px;
+    padding: 18px;
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 16px;
+    letter-spacing: 0.02em;
+    cursor: pointer;
+    transition: all 0.15s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .btn-analyze:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 30px rgba(232,93,47,0.35);
+  }
+
+  .btn-analyze:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  .btn-analyze .btn-inner {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+
+  .spinner {
+    width: 16px;
+    height: 16px;
+    border: 2px solid rgba(255,255,255,0.3);
+    border-top-color: #ffffff;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    display: none;
+  }
+
+  .btn-analyze.loading .spinner { display: block; }
+
+  /* Results: Departure */
+  .results { animation: fadeUp 0.5s ease both; display: none; }
+  .results.visible { display: block; }
+
+  .results-header { margin-bottom: 20px; }
+
+  .results-route {
+    font-family: 'Syne', sans-serif;
+    font-size: 20px;
+    font-weight: 800;
+    line-height: 1.2;
+    margin-bottom: 4px;
+  }
+
+  .results-route .arrow { color: var(--accent); margin: 0 8px; }
+
+  .results-meta {
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  .results-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+
+  @media (max-width: 480px) { .results-grid { grid-template-columns: 1fr; } }
+
+  .result-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 20px 16px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.2s;
+  }
+
+  .result-card:hover { transform: translateY(-2px); }
+  .result-card.best { border-color: rgba(42,157,111,0.35); }
+  .result-card.typical { border-color: rgba(232,93,47,0.35); }
+  .result-card.worst { border-color: rgba(180,60,30,0.25); }
+
+  .result-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+  }
+
+  .result-card.best::before { background: var(--success); }
+  .result-card.typical::before { background: var(--accent); }
+  .result-card.worst::before { background: var(--accent3); }
+
+  .result-label {
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+  }
+
+  .result-card.best .result-label { color: var(--success); }
+  .result-card.typical .result-label { color: var(--accent); }
+  .result-card.worst .result-label { color: var(--accent3); }
+
+  .result-time {
+    font-family: 'Syne', sans-serif;
+    font-size: 32px;
+    font-weight: 800;
+    line-height: 1;
+    margin-bottom: 4px;
+  }
+
+  .result-unit { font-size: 11px; color: var(--muted); margin-bottom: 10px; }
+
+  .result-dist {
+    font-size: 11px;
+    color: var(--muted);
+    padding-top: 10px;
+    border-top: 1px solid var(--border);
+  }
+
+  .result-arrival { font-size: 12px; color: var(--muted); margin-top: 6px; }
+  .result-arrival strong { color: var(--text); font-family: 'Syne', sans-serif; }
+
+  /* Summary bar */
+  .summary-bar {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+  }
+
+  .summary-text { font-size: 12px; color: var(--muted); line-height: 1.5; }
+  .summary-text strong { color: var(--text); }
+  .summary-tip { font-size: 11px; color: var(--accent2); text-align: right; flex-shrink: 0; }
+
+  /* Arrival hero */
   .arrival-hero {
     background: var(--surface);
     border: 1px solid rgba(232,93,47,0.35);
@@ -593,11 +436,7 @@
     margin-bottom: 6px;
   }
 
-  .arrival-hero-sub {
-    font-size: 13px;
-    color: var(--muted);
-  }
-
+  .arrival-hero-sub { font-size: 13px; color: var(--muted); }
   .arrival-hero-sub strong { color: var(--text); }
 
   .arrival-scenarios {
@@ -607,9 +446,7 @@
     margin-bottom: 16px;
   }
 
-  @media (max-width: 480px) {
-    .arrival-scenarios { grid-template-columns: 1fr; }
-  }
+  @media (max-width: 480px) { .arrival-scenarios { grid-template-columns: 1fr; } }
 
   .arrival-scenario-card {
     background: var(--surface);
@@ -634,11 +471,7 @@
     margin-bottom: 2px;
   }
 
-  .arrival-scenario-dur {
-    font-size: 11px;
-    color: var(--muted);
-    margin-bottom: 6px;
-  }
+  .arrival-scenario-dur { font-size: 11px; color: var(--muted); margin-bottom: 6px; }
 
   .arrival-scenario-arr {
     font-size: 11px;
@@ -648,10 +481,8 @@
   }
 
   .arrival-scenario-arr strong { color: var(--text); }
-
   .tag-safe { color: var(--success); }
   .tag-tight { color: var(--accent3); }
-
 
   .error-box {
     background: rgba(232,93,47,0.08);
@@ -666,17 +497,13 @@
 
   .error-box.visible { display: block; }
 
-  /* Animations */
   @keyframes fadeUp {
     from { opacity: 0; transform: translateY(20px); }
     to { opacity: 1; transform: translateY(0); }
   }
 
-  @keyframes spin {
-    to { transform: rotate(360deg); }
-  }
+  @keyframes spin { to { transform: rotate(360deg); } }
 
-  /* Footer */
   .footer {
     margin-top: 48px;
     text-align: center;
@@ -685,6 +512,8 @@
     letter-spacing: 0.1em;
     opacity: 0.5;
   }
+
+  .footer a { color: var(--muted); text-decoration: none; border-bottom: 1px solid var(--border); }
 </style>
 </head>
 <body>
@@ -694,22 +523,7 @@
   <div class="header">
     <div class="header-label">// Reisezeit-Prognose</div>
     <h1>Fahr<span>zeit</span></h1>
-    <p>Historisch basierte Fahrzeitprognose für Deutschland — powered by Google Routes API.</p>
-  </div>
-
-  <!-- API Key -->
-  <div class="api-setup" id="apiSetup" style="display:none">
-    <div class="api-setup-header">
-      <div class="api-dot" id="apiDot"></div>
-      <span id="apiStatus">Kein API Key gesetzt</span>
-    </div>
-    <div class="api-row">
-      <input type="password" class="api-input" id="apiKeyInput" placeholder="Google Maps API Key eingeben...">
-      <button class="btn-save" onclick="saveApiKey()">Speichern</button>
-    </div>
-    <div class="api-info">
-      API Key anlegen: <a href="https://console.cloud.google.com/apis/library/distance-matrix-backend.googleapis.com" target="_blank">Google Cloud Console</a> → Distance Matrix API aktivieren. Wird nur lokal gespeichert.
-    </div>
+    <p>Historisch basierte Fahrzeitprognose für Deutschland — powered by Google Maps Platform.</p>
   </div>
 
   <!-- Form -->
@@ -717,22 +531,16 @@
     <div class="form-section-label">// Route</div>
 
     <div class="route-inputs">
-      <div class="autocomplete-container" id="originContainer">
-        <div class="input-group">
-          <span class="input-prefix">Von</span>
-          <input type="text" class="route-input" id="originInput" placeholder="Stadt oder Adresse..." autocomplete="off">
-        </div>
-        <div class="autocomplete-dropdown" id="originDropdown"></div>
+      <div class="input-group">
+        <span class="input-prefix">Von</span>
+        <input type="text" class="route-input" id="originInput" placeholder="Adresse, Straße oder Stadt..." autocomplete="off">
       </div>
 
       <div class="route-arrow">↓</div>
 
-      <div class="autocomplete-container" id="destContainer">
-        <div class="input-group">
-          <span class="input-prefix">Nach</span>
-          <input type="text" class="route-input" id="destInput" placeholder="Stadt oder Adresse..." autocomplete="off">
-        </div>
-        <div class="autocomplete-dropdown" id="destDropdown"></div>
+      <div class="input-group">
+        <span class="input-prefix">Nach</span>
+        <input type="text" class="route-input" id="destInput" placeholder="Adresse, Straße oder Stadt..." autocomplete="off">
       </div>
     </div>
 
@@ -740,11 +548,11 @@
 
     <div class="mode-toggle">
       <button class="mode-btn active" id="modeDeparture" onclick="setMode('departure')">
-        <span class="mode-icon">🚗</span>
+        <span class="mode-icon">&#x1F697;</span>
         <span>Abfahrt planen</span>
       </button>
       <button class="mode-btn" id="modeArrival" onclick="setMode('arrival')">
-        <span class="mode-icon">🎯</span>
+        <span class="mode-icon">&#x1F3AF;</span>
         <span>Ankunft planen</span>
       </button>
     </div>
@@ -773,7 +581,7 @@
     <button class="btn-analyze" id="analyzeBtn" onclick="analyze()">
       <div class="btn-inner">
         <div class="spinner" id="spinner"></div>
-      <span id="btnText">Fahrtzeit berechnen</span>
+        <span id="btnText">Fahrtzeit berechnen</span>
       </div>
     </button>
   </div>
@@ -787,7 +595,6 @@
       <div class="results-route" id="resultsRoute"></div>
       <div class="results-meta" id="resultsMeta"></div>
     </div>
-
     <div class="results-grid">
       <div class="result-card best">
         <div class="result-label">Günstig</div>
@@ -811,7 +618,6 @@
         <div class="result-arrival" id="arrivalPessimistic"></div>
       </div>
     </div>
-
     <div class="summary-bar">
       <div class="summary-text" id="summaryText"></div>
       <div class="summary-tip" id="summaryTip"></div>
@@ -824,15 +630,11 @@
       <div class="results-route" id="arrRouteLabel"></div>
       <div class="results-meta" id="arrMetaLabel"></div>
     </div>
-
-    <!-- Recommended departure -->
     <div class="arrival-hero">
       <div class="arrival-hero-label">// Empfohlene Abfahrt</div>
       <div class="arrival-hero-time" id="arrHeroTime">—</div>
       <div class="arrival-hero-sub" id="arrHeroSub"></div>
     </div>
-
-    <!-- 3 scenarios -->
     <div class="arrival-scenarios">
       <div class="arrival-scenario-card">
         <div class="arrival-scenario-label">Entspannt</div>
@@ -853,7 +655,6 @@
         <div class="arrival-scenario-arr" id="arrArrPess"></div>
       </div>
     </div>
-
     <div class="summary-bar">
       <div class="summary-text" id="arrSummaryText"></div>
       <div class="summary-tip" id="arrSummaryTip"></div>
@@ -862,18 +663,26 @@
 
   <div class="footer">
     FAHRTZEIT PWA · HISTORISCHE VERKEHRSPROGNOSE · DE<br>
-    <a href="impressum.html" style="color: var(--muted); text-decoration: none; border-bottom: 1px solid var(--border);">Impressum & Datenschutz</a>
+    <a href="impressum.html">Impressum & Datenschutz</a>
   </div>
 </div>
 
+<!-- Google Maps JavaScript SDK -->
+<script>
+(g=>{var h,a,k,p="The Google Maps JavaScript API",c="google",l="importLibrary",q="__ib__",m=document,b=window;b=b[c]||(b[c]={});var d=b.maps||(b.maps={}),r=new Set,e=new URLSearchParams,u=()=>h||(h=new Promise(async(f,n)=>{await (a=m.createElement("script"));e.set("libraries",[...r]+"");for(k in g)e.set(k.replace(/[A-Z]/g,t=>"_"+t[0].toLowerCase()),g[k]);e.set("callback",c+".maps."+q);a.src=`https://maps.googleapis.com/maps/api/js?`+e;d[q]=f;a.onerror=()=>h=n(Error(p+" could not load."));a.nonce=m.querySelector("script[nonce]")?.nonce||"";m.head.append(a)}));d[l]?console.warn(p+" only loads once. Ignoring:",g):d[l]=(f,...n)=>r.add(f)&&u().then(()=>d[l](f,...n))})({
+  key: "AIzaSyCVxgaDTwgPR8SwgLaB6zHiHNmeQcPPzow",
+  v: "weekly",
+  language: "de",
+  region: "DE"
+});
+</script>
+
 <script>
 // ——— State ———
-let apiKey = 'AIzaSyCVxgaDTwgPR8SwgLaB6zHiHNmeQcPPzow';
-let originPlace = null;
-let destPlace = null;
-let autocompleteSession = null;
-let debounceTimer = null;
-let currentMode = 'departure'; // 'departure' | 'arrival'
+let currentMode = 'departure';
+let distanceService = null;
+let originAutocomplete = null;
+let destAutocomplete = null;
 
 function setMode(mode) {
   currentMode = mode;
@@ -881,39 +690,36 @@ function setMode(mode) {
   document.getElementById('modeArrival').classList.toggle('active', mode === 'arrival');
   document.getElementById('timeLabel').textContent = mode === 'departure' ? '// Abfahrtszeit' : '// Gewünschte Ankunftszeit';
   document.getElementById('timeSelectLabel').textContent = mode === 'departure' ? 'Abfahrt um' : 'Ankommen um';
+  document.getElementById('btnText').textContent = mode === 'departure' ? 'Fahrtzeit berechnen' : 'Abfahrtszeit berechnen';
   document.getElementById('resultsDeparture').classList.remove('visible');
   document.getElementById('resultsArrival').classList.remove('visible');
   hideError();
 }
 
 // ——— Init ———
-window.addEventListener('DOMContentLoaded', () => {
-  initApiKeyUI();
+async function initApp() {
+  const { Autocomplete } = await google.maps.importLibrary("places");
+  const { DistanceMatrixService } = await google.maps.importLibrary("routes");
+
+  distanceService = new DistanceMatrixService();
+
+  // Autocomplete for origin
+  originAutocomplete = new Autocomplete(document.getElementById('originInput'), {
+    componentRestrictions: { country: 'de' },
+    fields: ['formatted_address', 'geometry', 'name'],
+  });
+
+  // Autocomplete for destination
+  destAutocomplete = new Autocomplete(document.getElementById('destInput'), {
+    componentRestrictions: { country: 'de' },
+    fields: ['formatted_address', 'geometry', 'name'],
+  });
+
   populateTimeSelect();
   setDefaultWeekday();
-  setupAutocomplete('originInput', 'originDropdown', (p) => { originPlace = p; });
-  setupAutocomplete('destInput', 'destDropdown', (p) => { destPlace = p; });
-});
-
-function initApiKeyUI() {
-  const dot = document.getElementById('apiDot');
-  const status = document.getElementById('apiStatus');
-  const input = document.getElementById('apiKeyInput');
-  if (apiKey) {
-    dot.classList.add('active');
-    status.textContent = 'API Key gesetzt ✓';
-    input.placeholder = '••••••••••••••••••••••••••••••••••••••••';
-  }
 }
 
-function saveApiKey() {
-  const val = document.getElementById('apiKeyInput').value.trim();
-  if (!val) return;
-  apiKey = val;
-  localStorage.setItem('gmaps_api_key', val);
-  document.getElementById('apiKeyInput').value = '';
-  initApiKeyUI();
-}
+initApp();
 
 function populateTimeSelect() {
   const sel = document.getElementById('timeOfDay');
@@ -930,128 +736,59 @@ function populateTimeSelect() {
 }
 
 function setDefaultWeekday() {
-  const today = new Date().getDay(); // 0=Sun
+  const today = new Date().getDay();
   document.getElementById('weekday').value = today === 0 ? '0' : String(today);
 }
 
-// ——— Autocomplete ———
-function setupAutocomplete(inputId, dropdownId, onSelect) {
-  const input = document.getElementById(inputId);
-  const dropdown = document.getElementById(dropdownId);
-  let selectedIndex = -1;
-  let suggestions = [];
-
-  input.addEventListener('input', () => {
-    clearTimeout(debounceTimer);
-    const q = input.value.trim();
-    if (q.length < 2) { hideDropdown(dropdown); return; }
-    debounceTimer = setTimeout(() => fetchSuggestions(q, dropdown, input, onSelect, (s) => { suggestions = s; selectedIndex = -1; }), 250);
-  });
-
-  input.addEventListener('keydown', (e) => {
-    if (!dropdown.classList.contains('visible')) return;
-    const items = dropdown.querySelectorAll('.autocomplete-item');
-    if (e.key === 'ArrowDown') {
-      e.preventDefault();
-      selectedIndex = Math.min(selectedIndex + 1, items.length - 1);
-      items.forEach((el, i) => el.classList.toggle('selected', i === selectedIndex));
-    } else if (e.key === 'ArrowUp') {
-      e.preventDefault();
-      selectedIndex = Math.max(selectedIndex - 1, 0);
-      items.forEach((el, i) => el.classList.toggle('selected', i === selectedIndex));
-    } else if (e.key === 'Enter' && selectedIndex >= 0) {
-      e.preventDefault();
-      items[selectedIndex].click();
-    } else if (e.key === 'Escape') {
-      hideDropdown(dropdown);
-    }
-  });
-
-  document.addEventListener('click', (e) => {
-    if (!input.contains(e.target) && !dropdown.contains(e.target)) hideDropdown(dropdown);
-  });
-}
-
-async function fetchSuggestions(query, dropdown, input, onSelect, setSuggestions) {
-  if (!apiKey) {
-    // Fallback: basic German city suggestions without API
-    showFallbackSuggestions(query, dropdown, input, onSelect);
-    return;
+// ——— Timestamp helper ———
+function getNextWeekdayTimestamp(targetDay, hour, minute) {
+  const now = new Date();
+  const nowDay = now.getDay();
+  let daysAhead = (targetDay - nowDay + 7) % 7;
+  if (daysAhead === 0) {
+    const todayTarget = new Date(now);
+    todayTarget.setHours(hour, minute, 0, 0);
+    if (todayTarget <= now) daysAhead = 7;
   }
-  try {
-    const url = `https://maps.googleapis.com/maps/api/place/autocomplete/json?input=${encodeURIComponent(query)}&components=country:de&types=(cities)&language=de&key=${apiKey}`;
-    // Use a CORS proxy approach via our own fetch
-    const resp = await fetch(`https://maps.googleapis.com/maps/api/place/autocomplete/json?input=${encodeURIComponent(query)}&components=country:de&language=de&key=${apiKey}`);
-    const data = await resp.json();
-    if (data.predictions) {
-      renderSuggestions(data.predictions.slice(0, 5), dropdown, input, onSelect, setSuggestions);
-    }
-  } catch(e) {
-    showFallbackSuggestions(query, dropdown, input, onSelect);
-  }
+  const target = new Date(now);
+  target.setDate(now.getDate() + daysAhead);
+  target.setHours(hour, minute, 0, 0);
+  return target;
 }
 
-// German cities fallback when no API key yet
-const GERMAN_CITIES = [
-  'Berlin','Hamburg','München','Köln','Frankfurt am Main','Stuttgart','Düsseldorf',
-  'Leipzig','Dortmund','Essen','Bremen','Dresden','Hannover','Nürnberg','Duisburg',
-  'Bochum','Wuppertal','Bielefeld','Bonn','Münster','Karlsruhe','Mannheim',
-  'Augsburg','Wiesbaden','Gelsenkirchen','Mönchengladbach','Braunschweig','Chemnitz',
-  'Kiel','Aachen','Halle','Magdeburg','Freiburg','Krefeld','Lübeck','Oberhausen',
-  'Erfurt','Mainz','Rostock','Kassel','Hagen','Hamm','Saarbrücken','Mülheim',
-  'Potsdam','Ludwigshafen','Oldenburg','Leverkusen','Osnabrück','Heidelberg',
-  'Darmstadt','Regensburg','Ingolstadt','Würzburg','Ulm','Göttingen','Wolfsburg',
-  'Heilbronn','Pforzheim','Offenbach','Bremerhaven','Fürth','Reutlingen','Koblenz',
-  'Moers','Bergisch Gladbach','Erfurt','Jena','Gera','Zwickau','Eisenach',
-  'Dessau-Roßlau','Halle (Saale)','Frankfurt (Oder)','Cottbus','Brandenburg an der Havel'
-];
-
-function showFallbackSuggestions(query, dropdown, input, onSelect) {
-  const q = query.toLowerCase();
-  const matches = GERMAN_CITIES.filter(c => c.toLowerCase().startsWith(q)).slice(0, 5);
-  if (matches.length === 0) { hideDropdown(dropdown); return; }
-
-  dropdown.innerHTML = '';
-  matches.forEach(city => {
-    const item = document.createElement('div');
-    item.className = 'autocomplete-item';
-    item.innerHTML = `<div class="autocomplete-main">${city}</div><div class="autocomplete-sub">Deutschland</div>`;
-    item.addEventListener('click', () => {
-      input.value = city;
-      onSelect({ description: city, place_id: null });
-      hideDropdown(dropdown);
+// ——— Distance Matrix via JS SDK ———
+function queryDistanceMatrix(origin, destination, departureTime, trafficModel) {
+  return new Promise((resolve, reject) => {
+    distanceService.getDistanceMatrix({
+      origins: [origin],
+      destinations: [destination],
+      travelMode: google.maps.TravelMode.DRIVING,
+      drivingOptions: {
+        departureTime: departureTime,
+        trafficModel: trafficModel // 'bestguess' | 'optimistic' | 'pessimistic'
+      },
+      unitSystem: google.maps.UnitSystem.METRIC,
+    }, (response, status) => {
+      if (status !== 'OK') {
+        reject(new Error(`Distance Matrix API Fehler: ${status}`));
+        return;
+      }
+      const element = response.rows[0]?.elements[0];
+      if (!element || element.status !== 'OK') {
+        reject(new Error(`Route nicht gefunden: ${element?.status || 'unbekannt'}`));
+        return;
+      }
+      resolve({
+        duration: element.duration_in_traffic?.value || element.duration.value,
+        durationText: element.duration_in_traffic?.text || element.duration.text,
+        distance: element.distance.value,
+        distanceText: element.distance.text,
+      });
     });
-    dropdown.appendChild(item);
   });
-  dropdown.classList.add('visible');
 }
 
-function renderSuggestions(predictions, dropdown, input, onSelect, setSuggestions) {
-  dropdown.innerHTML = '';
-  if (predictions.length === 0) { hideDropdown(dropdown); return; }
-
-  setSuggestions(predictions);
-  predictions.forEach(pred => {
-    const item = document.createElement('div');
-    item.className = 'autocomplete-item';
-    const main = pred.structured_formatting?.main_text || pred.description;
-    const sub = pred.structured_formatting?.secondary_text || '';
-    item.innerHTML = `<div class="autocomplete-main">${main}</div>${sub ? `<div class="autocomplete-sub">${sub}</div>` : ''}`;
-    item.addEventListener('click', () => {
-      input.value = pred.description;
-      onSelect(pred);
-      hideDropdown(dropdown);
-    });
-    dropdown.appendChild(item);
-  });
-  dropdown.classList.add('visible');
-}
-
-function hideDropdown(dropdown) {
-  dropdown.classList.remove('visible');
-}
-
-// ——— Core: Calculate ———
+// ——— Core: Analyze ———
 async function analyze() {
   if (currentMode === 'arrival') { await analyzeArrival(); return; }
 
@@ -1066,30 +803,30 @@ async function analyze() {
   document.getElementById('resultsDeparture').classList.remove('visible');
   document.getElementById('resultsArrival').classList.remove('visible');
 
-  if (!apiKey) { showError('Bitte zuerst einen Google Maps API Key eingeben.'); return; }
   if (!originVal) { showError('Bitte Startort eingeben.'); return; }
   if (!destVal) { showError('Bitte Zielort eingeben.'); return; }
 
   setLoading(true);
 
-  const departureTimestamp = getNextWeekdayTimestamp(weekday, hour, minute);
+  const departureDate = getNextWeekdayTimestamp(weekday, hour, minute);
 
   try {
     const [optimistic, bestGuess, pessimistic] = await Promise.all([
-      fetchDuration(originVal, destVal, departureTimestamp, 'optimistic'),
-      fetchDuration(originVal, destVal, departureTimestamp, 'best_guess'),
-      fetchDuration(originVal, destVal, departureTimestamp, 'pessimistic'),
+      queryDistanceMatrix(originVal, destVal, departureDate, 'optimistic'),
+      queryDistanceMatrix(originVal, destVal, departureDate, 'bestguess'),
+      queryDistanceMatrix(originVal, destVal, departureDate, 'pessimistic'),
     ]);
 
-    renderResults(originVal, destVal, weekday, hour, minute, departureTimestamp, optimistic, bestGuess, pessimistic);
+    const departureTs = Math.floor(departureDate.getTime() / 1000);
+    renderResults(originVal, destVal, weekday, hour, minute, departureTs, optimistic, bestGuess, pessimistic);
   } catch(err) {
-    showError(err.message || 'Fehler bei der API-Anfrage. Bitte API Key und Route prüfen.');
+    showError(err.message || 'Fehler bei der API-Anfrage. Bitte Route prüfen.');
   } finally {
     setLoading(false);
   }
 }
 
-// ——— Arrival mode: probe multiple departure times ———
+// ——— Arrival mode ———
 async function analyzeArrival() {
   const originVal = document.getElementById('originInput').value.trim();
   const destVal = document.getElementById('destInput').value.trim();
@@ -1102,41 +839,29 @@ async function analyzeArrival() {
   document.getElementById('resultsDeparture').classList.remove('visible');
   document.getElementById('resultsArrival').classList.remove('visible');
 
-  if (!apiKey) { showError('Bitte zuerst einen Google Maps API Key eingeben.'); return; }
   if (!originVal) { showError('Bitte Startort eingeben.'); return; }
   if (!destVal) { showError('Bitte Zielort eingeben.'); return; }
 
   setLoading(true);
 
-  // Target arrival timestamp
-  const arrivalTs = getNextWeekdayTimestamp(weekday, arrHour, arrMinute);
+  const arrivalDate = getNextWeekdayTimestamp(weekday, arrHour, arrMinute);
+  const arrivalTs = Math.floor(arrivalDate.getTime() / 1000);
 
   try {
-    // Step 1: Get a rough duration estimate using a midpoint departure guess
-    // Probe with departure = arrival - 3h as initial guess
-    const roughDepTs = arrivalTs - 3 * 3600;
-    const rough = await fetchDuration(originVal, destVal, roughDepTs, 'best_guess');
-    const roughDurSec = rough.duration;
+    // Step 1: rough estimate
+    const roughDepDate = new Date(arrivalDate.getTime() - 3 * 3600 * 1000);
+    const rough = await queryDistanceMatrix(originVal, destVal, roughDepDate, 'bestguess');
+    const roughDurMs = rough.duration * 1000;
 
-    // Step 2: Now probe 3 departure times:
-    // - Optimistic scenario: depart later (use optimistic travel time to arrive on time)
-    // - Best guess scenario: depart using best_guess duration
-    // - Safe scenario: depart earlier (use pessimistic duration to arrive on time)
-    // We work backwards: depTime = arrivalTs - expectedDuration
-
-    // For each model, we compute the "backwards" departure time, then verify with a forward query
+    // Step 2: probe 3 scenarios
     const [opt, best, pess] = await Promise.all([
-      fetchDuration(originVal, destVal, arrivalTs - roughDurSec - 1800, 'optimistic'),  // depart early, measure optimistic
-      fetchDuration(originVal, destVal, arrivalTs - roughDurSec, 'best_guess'),
-      fetchDuration(originVal, destVal, arrivalTs - roughDurSec - 3600, 'pessimistic'), // depart very early, measure pessimistic
+      queryDistanceMatrix(originVal, destVal, new Date(arrivalDate.getTime() - roughDurMs - 1800000), 'optimistic'),
+      queryDistanceMatrix(originVal, destVal, new Date(arrivalDate.getTime() - roughDurMs), 'bestguess'),
+      queryDistanceMatrix(originVal, destVal, new Date(arrivalDate.getTime() - roughDurMs - 3600000), 'pessimistic'),
     ]);
 
-    // Compute actual recommended departure times so that arrival <= target
-    // Safe (pessimistic): depart so that even in worst case you arrive on time
     const depSafe = arrivalTs - pess.duration;
-    // Typical (best_guess): depart using typical duration
     const depTypical = arrivalTs - best.duration;
-    // Relaxed (optimistic): depart using optimistic duration
     const depRelaxed = arrivalTs - opt.duration;
 
     renderArrivalResults(originVal, destVal, weekday, arrHour, arrMinute, arrivalTs, {
@@ -1145,10 +870,60 @@ async function analyzeArrival() {
       relaxed: { depTs: depRelaxed, duration: opt.duration, distanceText: opt.distanceText },
     });
   } catch(err) {
-    showError(err.message || 'Fehler bei der API-Anfrage. Bitte API Key und Route prüfen.');
+    showError(err.message || 'Fehler bei der API-Anfrage. Bitte Route prüfen.');
   } finally {
     setLoading(false);
   }
+}
+
+// ——— Render functions ———
+function renderResults(origin, dest, weekday, hour, minute, departureTs, opt, best, pess) {
+  const weekdays = ['Sonntag','Montag','Dienstag','Mittwoch','Donnerstag','Freitag','Samstag'];
+  const timeStr = `${String(hour).padStart(2,'0')}:${String(minute).padStart(2,'0')}`;
+  const originShort = origin.split(',')[0].trim();
+  const destShort = dest.split(',')[0].trim();
+
+  document.getElementById('resultsRoute').innerHTML = `${originShort} <span class="arrow">→</span> ${destShort}`;
+  document.getElementById('resultsMeta').textContent = `${weekdays[weekday]}, ${timeStr} Uhr Abfahrt · Historische Prognose`;
+
+  const toHourMin = (s) => {
+    const h = Math.floor(s / 3600);
+    const m = Math.round((s % 3600) / 60);
+    return h > 0 ? `${h}h ${m}m` : `${m}m`;
+  };
+  const arrival = (depTs, durSec) => {
+    const arr = new Date((depTs + durSec) * 1000);
+    return `${String(arr.getHours()).padStart(2,'0')}:${String(arr.getMinutes()).padStart(2,'0')} Uhr`;
+  };
+
+  document.getElementById('timeOptimistic').textContent = toHourMin(opt.duration);
+  document.getElementById('distOptimistic').textContent = opt.distanceText;
+  document.getElementById('arrivalOptimistic').innerHTML = `Ankunft ca. <strong>${arrival(departureTs, opt.duration)}</strong>`;
+
+  document.getElementById('timeBest').textContent = toHourMin(best.duration);
+  document.getElementById('distBest').textContent = best.distanceText;
+  document.getElementById('arrivalBest').innerHTML = `Ankunft ca. <strong>${arrival(departureTs, best.duration)}</strong>`;
+
+  document.getElementById('timePessimistic').textContent = toHourMin(pess.duration);
+  document.getElementById('distPessimistic').textContent = pess.distanceText;
+  document.getElementById('arrivalPessimistic').innerHTML = `Ankunft ca. <strong>${arrival(departureTs, pess.duration)}</strong>`;
+
+  const toMin = (s) => Math.round(s / 60);
+  const diffMin = toMin(pess.duration) - toMin(opt.duration);
+  document.getElementById('summaryText').innerHTML = `Puffer einplanen: <strong>${diffMin} Min.</strong> zwischen günstigem und ungünstigem Szenario.`;
+
+  let tip = '';
+  if (weekday >= 1 && weekday <= 5) {
+    if (hour >= 7 && hour <= 9) tip = '⚠ Morgenspitze';
+    else if (hour >= 16 && hour <= 18) tip = '⚠ Abendspitze';
+    else if (hour >= 10 && hour <= 15) tip = '✓ Ruhige Zeit';
+  } else {
+    tip = '✓ Wochenende';
+  }
+  document.getElementById('summaryTip').textContent = tip;
+
+  document.getElementById('resultsDeparture').classList.add('visible');
+  document.getElementById('resultsDeparture').scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
 function renderArrivalResults(origin, dest, weekday, arrHour, arrMinute, arrivalTs, scenarios) {
@@ -1157,10 +932,8 @@ function renderArrivalResults(origin, dest, weekday, arrHour, arrMinute, arrival
   const destShort = dest.split(',')[0].trim();
   const arrTimeStr = `${String(arrHour).padStart(2,'0')}:${String(arrMinute).padStart(2,'0')}`;
 
-  document.getElementById('arrRouteLabel').innerHTML =
-    `${originShort} <span class="arrow">→</span> ${destShort}`;
-  document.getElementById('arrMetaLabel').textContent =
-    `Ankunft bis ${weekdays[weekday]}, ${arrTimeStr} Uhr · Historische Prognose`;
+  document.getElementById('arrRouteLabel').innerHTML = `${originShort} <span class="arrow">→</span> ${destShort}`;
+  document.getElementById('arrMetaLabel').textContent = `Ankunft bis ${weekdays[weekday]}, ${arrTimeStr} Uhr · Historische Prognose`;
 
   const tsToTimeStr = (ts) => {
     const d = new Date(ts * 1000);
@@ -1172,34 +945,26 @@ function renderArrivalResults(origin, dest, weekday, arrHour, arrMinute, arrival
     return h > 0 ? `${h}h ${m}m` : `${m}m`;
   };
 
-  // Hero: recommended = safe departure (pessimistic), ensures on-time even in worst case
   document.getElementById('arrHeroTime').textContent = tsToTimeStr(scenarios.safe.depTs) + ' Uhr';
-  document.getElementById('arrHeroSub').innerHTML =
-    `Späteste sichere Abfahrt — Ankunft ca. <strong>${arrTimeStr} Uhr</strong> auch bei schlechtem Verkehr`;
+  document.getElementById('arrHeroSub').innerHTML = `Späteste sichere Abfahrt — Ankunft ca. <strong>${arrTimeStr} Uhr</strong> auch bei schlechtem Verkehr`;
 
-  // Entspannt (relaxed = optimistic duration, depart latest)
   document.getElementById('arrDepOpt').textContent = tsToTimeStr(scenarios.relaxed.depTs) + ' Uhr';
   document.getElementById('arrDurOpt').textContent = toHourMin(scenarios.relaxed.duration) + ' · günstig';
   document.getElementById('arrArrOpt').innerHTML = `Ankunft ca. <strong>${arrTimeStr} Uhr</strong>`;
 
-  // Typisch
   document.getElementById('arrDepBest').textContent = tsToTimeStr(scenarios.typical.depTs) + ' Uhr';
   document.getElementById('arrDurBest').textContent = toHourMin(scenarios.typical.duration) + ' · typisch';
   document.getElementById('arrArrBest').innerHTML = `Ankunft ca. <strong>${arrTimeStr} Uhr</strong>`;
 
-  // Knapp (safe = pessimistic, depart earliest)
   document.getElementById('arrDepPess').textContent = tsToTimeStr(scenarios.safe.depTs) + ' Uhr';
   document.getElementById('arrDurPess').textContent = toHourMin(scenarios.safe.duration) + ' · ungünstig';
   document.getElementById('arrArrPess').innerHTML = `Ankunft ca. <strong>${arrTimeStr} Uhr</strong>`;
 
-  // Summary
   const bufferMin = Math.round((scenarios.relaxed.depTs - scenarios.safe.depTs) / 60);
-  document.getElementById('arrSummaryText').innerHTML =
-    `Zwischen frühester und spätester Abfahrt liegen <strong>${Math.abs(bufferMin)} Min.</strong> Puffer.`;
+  document.getElementById('arrSummaryText').innerHTML = `Zwischen frühester und spätester Abfahrt liegen <strong>${Math.abs(bufferMin)} Min.</strong> Puffer.`;
 
-  const weekdayNum = weekday;
   let tip = '';
-  if (weekdayNum >= 1 && weekdayNum <= 5) {
+  if (weekday >= 1 && weekday <= 5) {
     if (arrHour >= 8 && arrHour <= 10) tip = '⚠ Morgenspitze als Ziel';
     else if (arrHour >= 17 && arrHour <= 19) tip = '⚠ Abendspitze als Ziel';
     else tip = '✓ Entspannte Ankunftszeit';
@@ -1212,110 +977,7 @@ function renderArrivalResults(origin, dest, weekday, arrHour, arrMinute, arrival
   document.getElementById('resultsArrival').scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
-async function fetchDuration(origin, dest, departureTimestamp, model) {
-  const params = new URLSearchParams({
-    origins: origin + ', Deutschland',
-    destinations: dest + ', Deutschland',
-    mode: 'driving',
-    departure_time: departureTimestamp,
-    traffic_model: model,
-    language: 'de',
-    key: apiKey,
-  });
-
-  const url = `https://maps.googleapis.com/maps/api/distancematrix/json?${params}`;
-  const resp = await fetch(url);
-  if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-  const data = await resp.json();
-
-  if (data.status !== 'OK') throw new Error(`API Fehler: ${data.status} — ${data.error_message || ''}`);
-
-  const element = data.rows?.[0]?.elements?.[0];
-  if (!element || element.status !== 'OK') throw new Error(`Route nicht gefunden: ${element?.status}`);
-
-  return {
-    duration: element.duration_in_traffic?.value || element.duration?.value, // seconds
-    durationText: element.duration_in_traffic?.text || element.duration?.text,
-    distance: element.distance?.value, // meters
-    distanceText: element.distance?.text,
-  };
-}
-
-function getNextWeekdayTimestamp(targetDay, hour, minute) {
-  const now = new Date();
-  const nowDay = now.getDay();
-  let daysAhead = (targetDay - nowDay + 7) % 7;
-  if (daysAhead === 0) {
-    // Same weekday: if time already passed today, use next week
-    const todayTarget = new Date(now);
-    todayTarget.setHours(hour, minute, 0, 0);
-    if (todayTarget <= now) daysAhead = 7;
-  }
-  const target = new Date(now);
-  target.setDate(now.getDate() + daysAhead);
-  target.setHours(hour, minute, 0, 0);
-  return Math.floor(target.getTime() / 1000);
-}
-
-function renderResults(origin, dest, weekday, hour, minute, departureTs, opt, best, pess) {
-  const weekdays = ['Sonntag','Montag','Dienstag','Mittwoch','Donnerstag','Freitag','Samstag'];
-  const timeStr = `${String(hour).padStart(2,'0')}:${String(minute).padStart(2,'0')}`;
-
-  // Shorten city names for display
-  const originShort = origin.split(',')[0].trim();
-  const destShort = dest.split(',')[0].trim();
-
-  document.getElementById('resultsRoute').innerHTML =
-    `${originShort} <span class="arrow">→</span> ${destShort}`;
-  document.getElementById('resultsMeta').textContent =
-    `${weekdays[weekday]}, ${timeStr} Uhr Abfahrt · Historische Prognose`;
-
-  const toMin = (s) => Math.round(s / 60);
-  const toHourMin = (s) => {
-    const h = Math.floor(s / 3600);
-    const m = Math.round((s % 3600) / 60);
-    return h > 0 ? `${h}h ${m}m` : `${m}m`;
-  };
-  const arrival = (depTs, durSec) => {
-    const arr = new Date((depTs + durSec) * 1000);
-    return `${String(arr.getHours()).padStart(2,'0')}:${String(arr.getMinutes()).padStart(2,'0')} Uhr`;
-  };
-
-  // Günstig
-  document.getElementById('timeOptimistic').textContent = toHourMin(opt.duration);
-  document.getElementById('distOptimistic').textContent = opt.distanceText;
-  document.getElementById('arrivalOptimistic').innerHTML = `Ankunft ca. <strong>${arrival(departureTs, opt.duration)}</strong>`;
-
-  // Typisch
-  document.getElementById('timeBest').textContent = toHourMin(best.duration);
-  document.getElementById('distBest').textContent = best.distanceText;
-  document.getElementById('arrivalBest').innerHTML = `Ankunft ca. <strong>${arrival(departureTs, best.duration)}</strong>`;
-
-  // Ungünstig
-  document.getElementById('timePessimistic').textContent = toHourMin(pess.duration);
-  document.getElementById('distPessimistic').textContent = pess.distanceText;
-  document.getElementById('arrivalPessimistic').innerHTML = `Ankunft ca. <strong>${arrival(departureTs, pess.duration)}</strong>`;
-
-  // Summary
-  const diffMin = toMin(pess.duration) - toMin(opt.duration);
-  document.getElementById('summaryText').innerHTML =
-    `Puffer einplanen: <strong>${diffMin} Min.</strong> zwischen günstigem und ungünstigem Szenario.`;
-
-  const tipHour = hour;
-  let tip = '';
-  if (weekday >= 1 && weekday <= 5) {
-    if (tipHour >= 7 && tipHour <= 9) tip = '⚠ Morgenspitze';
-    else if (tipHour >= 16 && tipHour <= 18) tip = '⚠ Abendspitze';
-    else if (tipHour >= 10 && tipHour <= 15) tip = '✓ Ruhige Zeit';
-  } else {
-    tip = '✓ Wochenende';
-  }
-  document.getElementById('summaryTip').textContent = tip;
-
-  document.getElementById('resultsDeparture').classList.add('visible');
-  document.getElementById('resultsDeparture').scrollIntoView({ behavior: 'smooth', block: 'start' });
-}
-
+// ——— UI helpers ———
 function setLoading(on) {
   const btn = document.getElementById('analyzeBtn');
   const spinner = document.getElementById('spinner');
