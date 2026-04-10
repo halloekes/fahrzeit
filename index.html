@@ -659,6 +659,8 @@
     let lastResults = null;
     let currentMap = null;
     let selectedWeekday = new Date().getDay(); // 0=So, 1=Mo, ...
+    let chargingMarkers = [];
+    let placesService = null;
 
     const EV_DATABASE = {
       'tesla-model-3-lr': { wltp: 629 }, 'tesla-model-3-sr': { wltp: 513 },
@@ -1148,9 +1150,6 @@
         }
       });
     }
-
-    let chargingMarkers = [];
-    let placesService = null;
 
     function getPlacesService() {
       if (!placesService && currentMap) {
