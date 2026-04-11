@@ -721,7 +721,7 @@
   <div class="desktop-topbar">
     <div class="desktop-topbar-inner">
       <span class="desktop-logo">FAHRCAST</span>
-      <span class="desktop-version">v42</span>
+      <span class="desktop-version">v43</span>
       <span class="desktop-subtitle" id="desktop-subtitle-text"></span>
     </div>
     <div class="lang-toggle desktop-lang">
@@ -737,7 +737,7 @@
       </div>
       <div class="logo">FAHRCAST</div>
       <div class="subtitle" id="subtitle"></div>
-      <div style="font-size:10px;color:var(--muted);margin-top:4px;" id="version-tag">v42</div>
+      <div style="font-size:10px;color:var(--muted);margin-top:4px;" id="version-tag">v43</div>
     </header>
 
     <div class="form-card">
@@ -2496,17 +2496,27 @@
     function findNearbyChargingProvider(position, idx) {
       if (!currentMap) return;
       var service = new google.maps.places.PlacesService(currentMap);
+      // Use textSearch — more reliable than nearbySearch for EV chargers
       var request = {
+        query: 'Ladestation Elektroauto',
         location: position,
-        radius: 5000, // 5 km radius
-        type: 'electric_vehicle_charging_station'
+        radius: 10000
       };
-      service.nearbySearch(request, function(results, status) {
-        if (status !== google.maps.places.PlacesServiceStatus.OK || !results || !results.length) return;
-        // Find the closest result
-        var closest = results[0];
-        var providerName = extractProvider(closest.name);
-        if (!providerName) return;
+      service.textSearch(request, function(results, status) {
+        if (status !== google.maps.places.PlacesServiceStatus.OK || !results || !results.length) {
+          console.log('[Fahrcast] No charging stations found near stop ' + (idx + 1), status);
+          return;
+        }
+        // Try all results to find a known provider
+        var providerName = null;
+        for (var i = 0; i < Math.min(results.length, 5); i++) {
+          providerName = extractProvider(results[i].name);
+          if (providerName) break;
+        }
+        if (!providerName) {
+          console.log('[Fahrcast] No known provider in results for stop ' + (idx + 1), results.slice(0, 3).map(function(r) { return r.name; }));
+          return;
+        }
         var nameEl = document.getElementById('cs-name-' + idx);
         if (!nameEl) return;
         // Store provider, update label if locality already set
@@ -2521,19 +2531,27 @@
 
     function extractProvider(placeName) {
       // Known charging network names
-      var networks = ['IONITY', 'Ionity', 'EnBW', 'E.ON', 'EON', 'Allego', 'Fastned', 'Aral', 'Shell Recharge', 'Shell', 'Tesla', 'ENBW', 'Mer', 'EWE', 'Vattenfall', 'Lidl', 'ALDI', 'Kaufland', 'REWE'];
+      // Match longest network names first to avoid partial matches (e.g. "Shell Recharge" before "Shell")
+      var networks = [
+        ['shell recharge', 'Shell Recharge'], ['aral pulse', 'Aral pulse'],
+        ['ewe go', 'EWE Go'], ['e.on', 'E.ON'], ['e on', 'E.ON'],
+        ['ionity', 'IONITY'], ['enbw', 'EnBW'], ['eon drive', 'E.ON'],
+        ['eon', 'E.ON'], ['allego', 'Allego'], ['fastned', 'Fastned'],
+        ['aral', 'Aral pulse'], ['shell', 'Shell Recharge'],
+        ['tesla', 'Tesla'], ['mer ', 'Mer'], ['ewe', 'EWE Go'],
+        ['vattenfall', 'Vattenfall'], ['lidl', 'Lidl'], ['aldi', 'ALDI'],
+        ['kaufland', 'Kaufland'], ['rewe', 'REWE'], ['total', 'TotalEnergies'],
+        ['totalenergies', 'TotalEnergies'], ['chargepoint', 'ChargePoint'],
+        ['evbox', 'EVBox'], ['innogy', 'innogy'], ['pfalzwerke', 'Pfalzwerke'],
+        ['stadtwerke', 'Stadtwerke'], ['maingau', 'Maingau'],
+        ['süwag', 'Süwag'], ['suwag', 'Süwag'], ['clever', 'Clever'],
+        ['has·to·be', 'has·to·be'], ['compleo', 'Compleo'],
+        ['plug\'n charge', 'Plug\'n Charge'], ['gp joule', 'GP Joule']
+      ];
+      var lower = placeName.toLowerCase();
       for (var i = 0; i < networks.length; i++) {
-        if (placeName.toLowerCase().indexOf(networks[i].toLowerCase()) !== -1) {
-          // Return canonical casing
-          var canonical = {
-            'ionity': 'IONITY', 'enbw': 'EnBW', 'e.on': 'E.ON', 'eon': 'E.ON',
-            'allego': 'Allego', 'fastned': 'Fastned', 'aral': 'Aral pulse',
-            'shell recharge': 'Shell Recharge', 'shell': 'Shell Recharge',
-            'tesla': 'Tesla', 'mer': 'Mer', 'ewe': 'EWE Go',
-            'vattenfall': 'Vattenfall', 'lidl': 'Lidl', 'aldi': 'ALDI',
-            'kaufland': 'Kaufland', 'rewe': 'REWE'
-          };
-          return canonical[networks[i].toLowerCase()] || networks[i];
+        if (lower.indexOf(networks[i][0]) !== -1) {
+          return networks[i][1];
         }
       }
       // No known network found — return null so we keep the generic "Ladestation" label
@@ -2596,7 +2614,7 @@
       });
     });
 
-    console.log('[Fahrcast v42] UI initialized OK, lang=' + currentLang);
+    console.log('[Fahrcast v43] UI initialized OK, lang=' + currentLang);
 
     // Timeout: if Maps hasn't loaded after 8 seconds, show clear error
     setTimeout(function() {
