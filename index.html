@@ -396,7 +396,7 @@
       </div>
       <div class="logo">FAHRCAST</div>
       <div class="subtitle" id="subtitle"></div>
-      <div style="font-size:10px;color:var(--muted);margin-top:4px;" id="version-tag">v22</div>
+      <div style="font-size:10px;color:var(--muted);margin-top:4px;" id="version-tag">v23</div>
     </header>
 
     <div class="form-card">
@@ -1627,19 +1627,22 @@
 
       const tesla = isTesla(modelId);
 
-      // Search for charging stations at each needed point
-      let completed = 0;
-      const stopsData = new Array(chargingNeededAt.length);
+      // Search for charging stations SEQUENTIALLY to avoid Places API rate limiting
+      const stopsData = [];
 
-      chargingNeededAt.forEach((stop, idx) => {
+      function searchNextStop(idx) {
+        if (idx >= chargingNeededAt.length) {
+          renderChargingStops(stopsData);
+          return;
+        }
+        const stop = chargingNeededAt[idx];
         findChargingStation(stop.position, tesla, stop.cumulativeKm, stop.socAtArrival, idx, (result) => {
-          stopsData[idx] = result;
-          completed++;
-          if (completed === chargingNeededAt.length) {
-            renderChargingStops(stopsData);
-          }
+          stopsData.push(result);
+          // Small delay between requests to avoid OVER_QUERY_LIMIT
+          setTimeout(() => searchNextStop(idx + 1), 300);
         });
-      });
+      }
+      searchNextStop(0);
     }
 
     function findChargingStation(position, tesla, cumulativeKm, socAtArrival, idx, callback) {
@@ -1825,7 +1828,7 @@
       });
     });
 
-    console.log('[Fahrcast v22] UI initialized OK, lang=' + currentLang);
+    console.log('[Fahrcast v23] UI initialized OK, lang=' + currentLang);
 
     // Timeout: if Maps hasn't loaded after 8 seconds, show clear error
     setTimeout(function() {
