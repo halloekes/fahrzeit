@@ -399,13 +399,236 @@
 
     .error-message { background: rgba(197,48,48,0.08); border: 1.5px solid rgba(197,48,48,0.25); color: #c53030; padding: 14px; border-radius: 10px; margin-bottom: 16px; font-size: 14px; line-height: 1.6; }
 
-    @media (min-width: 600px) {
+    @media (min-width: 600px) and (max-width: 1023px) {
       .container { max-width: 560px; }
       .hero-time { font-size: 60px; }
+    }
+
+    /* ════════════════════════════════════════
+       DESKTOP LAYOUT (>= 1024px)
+       ════════════════════════════════════════ */
+
+    .desktop-topbar { display: none; }
+
+    @media (min-width: 1024px) {
+
+      .desktop-topbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        height: 52px;
+        background: rgba(240,245,243,0.97);
+        border-bottom: 1px solid var(--border);
+        padding: 0 36px;
+        position: sticky;
+        top: 0;
+        z-index: 100;
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+      }
+      .desktop-topbar-inner {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+      .desktop-logo {
+        font-family: 'Syne', sans-serif;
+        font-size: 20px;
+        font-weight: 700;
+        color: var(--accent);
+        letter-spacing: -1.5px;
+      }
+      .desktop-version {
+        font-family: 'DM Mono', monospace;
+        font-size: 10px;
+        color: var(--muted);
+        background: var(--surface2);
+        border: 1px solid var(--border);
+        border-radius: 4px;
+        padding: 2px 6px;
+      }
+      .desktop-subtitle {
+        font-size: 12px;
+        color: var(--muted);
+        font-weight: 400;
+        letter-spacing: 0.3px;
+      }
+      .desktop-lang {
+        margin-bottom: 0 !important;
+      }
+
+      html, body {
+        height: auto;
+        min-height: 100vh;
+      }
+
+      .container {
+        max-width: 100%;
+        width: 100%;
+        margin: 0;
+        padding: 0;
+        display: grid;
+        grid-template-columns: 360px 1fr;
+        grid-template-rows: 1fr auto;
+        min-height: calc(100vh - 52px);
+      }
+
+      header {
+        display: none;
+      }
+
+      .form-card {
+        grid-column: 1;
+        grid-row: 1;
+        border-radius: 0;
+        border-top: none;
+        border-left: none;
+        border-bottom: none;
+        border-right: 1px solid var(--border);
+        box-shadow: none;
+        margin-bottom: 0;
+        padding: 24px 22px 32px;
+        position: sticky;
+        top: 52px;
+        height: calc(100vh - 52px);
+        overflow-y: auto;
+        align-self: start;
+      }
+
+      .results-column {
+        grid-column: 2;
+        grid-row: 1;
+        padding: 28px 32px 48px;
+        overflow-y: auto;
+        height: calc(100vh - 52px);
+      }
+
+      .results-section {
+        margin-bottom: 0;
+      }
+
+      /* Hero-Card: horizontal */
+      #hero-card[style*="display: block"],
+      #hero-card[style*="display:block"] {
+        display: flex !important;
+        align-items: center;
+        justify-content: space-between;
+        text-align: left;
+        padding: 24px 28px;
+        border-radius: 16px;
+        margin-bottom: 16px;
+      }
+      .hero-time {
+        font-size: 64px;
+        margin-bottom: 0;
+        letter-spacing: -3px;
+        flex-shrink: 0;
+      }
+      .hero-right {
+        text-align: right;
+        flex: 1;
+        padding-left: 24px;
+      }
+      .hero-label {
+        margin-bottom: 6px;
+      }
+
+      /* Time-Cards: 3-spaltig */
+      .time-cards {
+        display: grid !important;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 10px;
+        flex-direction: unset;
+      }
+      .time-card {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 6px;
+        padding: 16px 14px;
+      }
+      .time-card-info {
+        text-align: left;
+      }
+
+      /* Arrival-Cards: 3-spaltig */
+      .arrival-cards {
+        display: grid !important;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 10px;
+        flex-direction: unset;
+      }
+      .arrival-card {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 6px;
+      }
+      .arrival-info {
+        text-align: left;
+      }
+
+      /* Map */
+      #map {
+        height: 300px !important;
+      }
+      .map-container {
+        border-radius: 16px;
+        margin-bottom: 20px;
+      }
+
+      /* Charging Stops: 2-spaltig */
+      .charging-stops-list {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+      }
+
+      .delay-info {
+        margin-bottom: 16px;
+      }
+
+      /* Footer: spans full width */
+      footer {
+        grid-column: 1 / -1;
+        grid-row: 2;
+      }
+    }
+
+    /* results-column: auf Mobil transparent */
+    @media (max-width: 1023px) {
+      .results-column {
+        display: contents;
+      }
+      .hero-right {
+        /* kein extra Layout auf Mobil */
+      }
+    }
+
+    /* Mode-Toggle Icons */
+    .toggle-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+    }
+    .toggle-icon {
+      font-size: 15px;
+      flex-shrink: 0;
+      line-height: 1;
     }
   </style>
 </head>
 <body>
+  <div class="desktop-topbar">
+    <div class="desktop-topbar-inner">
+      <span class="desktop-logo">FAHRCAST</span>
+      <span class="desktop-version">v32</span>
+      <span class="desktop-subtitle" id="desktop-subtitle-text"></span>
+    </div>
+    <div class="lang-toggle desktop-lang">
+      <button type="button" class="lang-btn active" data-lang="de">DE</button>
+      <button type="button" class="lang-btn" data-lang="en">EN</button>
+    </div>
+  </div>
   <div class="container">
     <header>
       <div class="lang-toggle" id="lang-toggle">
@@ -414,13 +637,13 @@
       </div>
       <div class="logo">FAHRCAST</div>
       <div class="subtitle" id="subtitle"></div>
-      <div style="font-size:10px;color:var(--muted);margin-top:4px;" id="version-tag">v31</div>
+      <div style="font-size:10px;color:var(--muted);margin-top:4px;" id="version-tag">v32</div>
     </header>
 
     <div class="form-card">
       <div class="mode-toggle">
-        <button type="button" class="toggle-btn active" data-mode="departure" id="btn-departure"></button>
-        <button type="button" class="toggle-btn" data-mode="arrival" id="btn-arrival"></button>
+        <button type="button" class="toggle-btn active" data-mode="departure" id="btn-departure"><span class="toggle-icon" aria-hidden="true">🚗</span><span class="toggle-text"></span></button>
+        <button type="button" class="toggle-btn" data-mode="arrival" id="btn-arrival"><span class="toggle-icon" aria-hidden="true">🎯</span><span class="toggle-text"></span></button>
       </div>
 
       <div class="form-group">
@@ -622,13 +845,16 @@
       </div>
     </div>
 
+    <div class="results-column">
     <div class="results-section" id="results">
       <div id="error-container"></div>
 
       <div id="hero-card" class="hero-card" style="display: none;">
         <div class="hero-time" id="hero-time">--:--</div>
-        <div class="hero-label" id="hero-label"></div>
-        <div class="hero-meta" id="hero-meta"></div>
+        <div class="hero-right">
+          <div class="hero-label" id="hero-label"></div>
+          <div class="hero-meta" id="hero-meta"></div>
+        </div>
       </div>
 
       <div class="delay-info" id="delay-info" style="display: none;">
@@ -720,6 +946,7 @@
         </div>
       </div>
     </div>
+    </div><!-- /results-column -->
 
     <footer style="text-align:center;padding:24px 0 16px;font-size:12px;color:var(--muted);">
       <a href="impressum.html" style="color:var(--muted);text-decoration:none;" data-i18n="imprint_link"></a>
@@ -914,9 +1141,11 @@
       document.getElementById('html-root').lang = currentLang;
       // Subtitle
       document.getElementById('subtitle').textContent = t('subtitle');
+      var dst = document.getElementById('desktop-subtitle-text');
+      if (dst) dst.textContent = t('subtitle');
       // Toggle buttons (innerHTML for <br>)
-      document.getElementById('btn-departure').innerHTML = t('btn_departure');
-      document.getElementById('btn-arrival').innerHTML = t('btn_arrival');
+      document.getElementById('btn-departure').querySelector('.toggle-text').innerHTML = t('btn_departure');
+      document.getElementById('btn-arrival').querySelector('.toggle-text').innerHTML = t('btn_arrival');
       // data-i18n text
       document.querySelectorAll('[data-i18n]').forEach(function(el) {
         el.textContent = t(el.getAttribute('data-i18n'));
@@ -1979,7 +2208,7 @@
       });
     });
 
-    console.log('[Fahrcast v31] UI initialized OK, lang=' + currentLang);
+    console.log('[Fahrcast v32] UI initialized OK, lang=' + currentLang);
 
     // Timeout: if Maps hasn't loaded after 8 seconds, show clear error
     setTimeout(function() {
