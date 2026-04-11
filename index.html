@@ -615,13 +615,103 @@
       flex-shrink: 0;
       line-height: 1;
     }
+
+    /* ── Route teilen ── */
+    .share-card {
+      background: var(--surface);
+      border: 1.5px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 20px;
+      display: none;
+    }
+    .share-card.visible { display: block; }
+    .share-title {
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--muted);
+      margin-bottom: 12px;
+    }
+    .share-row {
+      display: flex;
+      gap: 10px;
+      align-items: stretch;
+    }
+    .share-qr {
+      flex-shrink: 0;
+      width: 88px;
+      height: 88px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+    .share-qr canvas,
+    .share-qr img {
+      width: 80px;
+      height: 80px;
+    }
+    .share-actions {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      justify-content: center;
+    }
+    .share-btn-maps {
+      background: linear-gradient(135deg, #0B3041 0%, #164260 100%);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-family: 'Syne', sans-serif;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      text-align: left;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: opacity 0.15s;
+    }
+    .share-btn-maps:hover { opacity: 0.9; }
+    .share-btn-maps-icon { font-size: 16px; }
+    .share-btn-copy {
+      background: var(--surface2);
+      color: var(--text);
+      border: 1.5px solid var(--border);
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-family: 'Syne', sans-serif;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      text-align: left;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.15s;
+    }
+    .share-btn-copy:hover { border-color: var(--accent); background: var(--accent-light); }
+    .share-btn-copy.copied { color: var(--success); border-color: var(--success); }
+    .share-hint {
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 8px;
+      line-height: 1.5;
+    }
   </style>
 </head>
 <body>
   <div class="desktop-topbar">
     <div class="desktop-topbar-inner">
       <span class="desktop-logo">FAHRCAST</span>
-      <span class="desktop-version">v32</span>
+      <span class="desktop-version">v33</span>
       <span class="desktop-subtitle" id="desktop-subtitle-text"></span>
     </div>
     <div class="lang-toggle desktop-lang">
@@ -637,7 +727,7 @@
       </div>
       <div class="logo">FAHRCAST</div>
       <div class="subtitle" id="subtitle"></div>
-      <div style="font-size:10px;color:var(--muted);margin-top:4px;" id="version-tag">v32</div>
+      <div style="font-size:10px;color:var(--muted);margin-top:4px;" id="version-tag">v33</div>
     </header>
 
     <div class="form-card">
@@ -849,6 +939,24 @@
     <div class="results-section" id="results">
       <div id="error-container"></div>
 
+      <div class="share-card" id="share-card">
+        <div class="share-title" id="share-title">Route teilen</div>
+        <div class="share-row">
+          <div class="share-qr" id="share-qr"></div>
+          <div class="share-actions">
+            <button class="share-btn-maps" id="share-btn-maps" onclick="openInMaps()">
+              <span class="share-btn-maps-icon">🗺</span>
+              <span id="share-btn-maps-label">In Google Maps öffnen</span>
+            </button>
+            <button class="share-btn-copy" id="share-btn-copy" onclick="copyMapsLink()">
+              <span>📋</span>
+              <span id="share-btn-copy-label">Link kopieren</span>
+            </button>
+          </div>
+        </div>
+        <div class="share-hint" id="share-hint">QR-Code mit dem Smartphone scannen, um die Route in Google Maps zu öffnen.</div>
+      </div>
+
       <div id="hero-card" class="hero-card" style="display: none;">
         <div class="hero-time" id="hero-time">--:--</div>
         <div class="hero-right">
@@ -1003,6 +1111,7 @@
         drive_time_label: 'Fahrzeit',
         imprint_link: 'Impressum & Datenschutz',
         ev_stops_info: '⚡ {stops} Ladestopp(s) empfohlen, ca. {min} Min. Ladezeit (in Zeiten eingerechnet)',
+        ev_no_model_hint: '⚡ Bitte wähle ein Fahrzeugmodell aus, damit genaue Ladestopps in der Route angezeigt werden.',
         err_no_address: 'Bitte Start- und Zielort eingeben.',
         err_maps_not_loaded: 'Google Maps konnte nicht geladen werden. Mögliche Ursachen: API-Key ungültig, keine Abrechnung aktiviert, oder Referrer-Einschränkung falsch.',
         err_maps_timeout: 'Google Maps konnte nicht geladen werden. Bitte prüfe in der Google Cloud Console: (1) Abrechnung aktiviert? (2) Maps JavaScript API, Places API und Directions API aktiviert? (3) API-Key-Einschränkung korrekt?',
@@ -1087,6 +1196,7 @@
         drive_time_label: 'Drive time',
         imprint_link: 'Legal & Privacy',
         ev_stops_info: '⚡ {stops} charging stop(s) recommended, ~{min} min charging time (included in times)',
+        ev_no_model_hint: '⚡ Please select a vehicle model so charging stops can be shown on your route.',
         err_no_address: 'Please enter origin and destination.',
         err_maps_not_loaded: 'Google Maps could not be loaded. Possible causes: invalid API key, billing not enabled, or referrer restriction.',
         err_maps_timeout: 'Google Maps could not be loaded. Please check your Google Cloud Console: (1) Billing enabled? (2) Maps JavaScript API, Places API & Directions API enabled? (3) API key restriction correct?',
@@ -1191,11 +1301,22 @@
       document.querySelectorAll('.waypoint-row label').forEach(function(lbl, i) {
         lbl.textContent = t('waypoint_label', {idx: i + 1});
       });
+      // Share-Card Labels aktualisieren wenn sichtbar
+      if (lastMapsUrl && document.getElementById('share-card').classList.contains('visible')) {
+        var isDE = currentLang === 'de';
+        document.getElementById('share-title').textContent = isDE ? 'Route teilen' : 'Share route';
+        document.getElementById('share-btn-maps-label').textContent = isDE ? 'In Google Maps öffnen' : 'Open in Google Maps';
+        document.getElementById('share-btn-copy-label').textContent = isDE ? 'Link kopieren' : 'Copy link';
+        document.getElementById('share-hint').textContent = isDE
+          ? 'QR-Code mit dem Smartphone scannen, um die Route in Google Maps zu öffnen.'
+          : 'Scan the QR code with your phone to open the route in Google Maps.';
+      }
     }
 
     let autocompleteService, sessionToken, directionsService, directionsRenderer;
     let currentMode = 'departure';
     let lastResults = null;
+    let lastMapsUrl = null;
 
     /* ── Search History (localStorage) ── */
     const HISTORY_KEY = 'fahrcast_search_history';
@@ -1310,6 +1431,91 @@
         }
       }
       return waypoints;
+    }
+
+    function buildMapsUrl(from, to, waypoints) {
+      var base = 'https://www.google.com/maps/dir/?api=1';
+      base += '&origin=' + encodeURIComponent(from);
+      base += '&destination=' + encodeURIComponent(to);
+      if (waypoints && waypoints.length > 0) {
+        var wps = waypoints.map(function(wp) {
+          return encodeURIComponent(wp.location || wp);
+        }).join('|');
+        base += '&waypoints=' + wps;
+      }
+      base += '&travelmode=driving';
+      return base;
+    }
+
+    function showShareCard(url, from, to) {
+      var card = document.getElementById('share-card');
+      var qrEl = document.getElementById('share-qr');
+
+      var isDE = currentLang === 'de';
+      document.getElementById('share-title').textContent = isDE ? 'Route teilen' : 'Share route';
+      document.getElementById('share-btn-maps-label').textContent = isDE ? 'In Google Maps öffnen' : 'Open in Google Maps';
+      document.getElementById('share-btn-copy-label').textContent = isDE ? 'Link kopieren' : 'Copy link';
+      document.getElementById('share-hint').textContent = isDE
+        ? 'QR-Code mit dem Smartphone scannen, um die Route in Google Maps zu öffnen.'
+        : 'Scan the QR code with your phone to open the route in Google Maps.';
+
+      qrEl.innerHTML = '';
+      try {
+        if (typeof QRCode !== 'undefined') {
+          new QRCode(qrEl, {
+            text: url,
+            width: 80,
+            height: 80,
+            colorDark: '#0B3041',
+            colorLight: '#ffffff',
+            correctLevel: QRCode.CorrectLevel.M
+          });
+        } else {
+          qrEl.style.fontSize = '10px';
+          qrEl.style.color = 'var(--muted)';
+          qrEl.style.textAlign = 'center';
+          qrEl.textContent = 'QR n/a';
+        }
+      } catch(e) {
+        console.warn('[Fahrcast] QR generation failed:', e);
+      }
+
+      card.classList.add('visible');
+    }
+
+    function openInMaps() {
+      if (lastMapsUrl) window.open(lastMapsUrl, '_blank');
+    }
+
+    function copyMapsLink() {
+      if (!lastMapsUrl) return;
+      var btn = document.getElementById('share-btn-copy');
+      var label = document.getElementById('share-btn-copy-label');
+      var isDE = currentLang === 'de';
+
+      navigator.clipboard.writeText(lastMapsUrl).then(function() {
+        label.textContent = isDE ? '✓ Kopiert!' : '✓ Copied!';
+        btn.classList.add('copied');
+        setTimeout(function() {
+          label.textContent = isDE ? 'Link kopieren' : 'Copy link';
+          btn.classList.remove('copied');
+        }, 2000);
+      }).catch(function() {
+        var ta = document.createElement('textarea');
+        ta.value = lastMapsUrl;
+        ta.style.position = 'fixed';
+        ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+        label.textContent = isDE ? '✓ Kopiert!' : '✓ Copied!';
+        btn.classList.add('copied');
+        setTimeout(function() {
+          label.textContent = isDE ? 'Link kopieren' : 'Copy link';
+          btn.classList.remove('copied');
+        }, 2000);
+      });
     }
 
     let currentMap = null;
@@ -1686,6 +1892,8 @@
       document.getElementById('delay-info').style.display = 'none';
       document.getElementById('ev-info-box').style.display = 'none';
       document.getElementById('charging-stops-list').style.display = 'none';
+      document.getElementById('share-card').classList.remove('visible');
+      lastMapsUrl = null;
       document.getElementById('map-container').classList.remove('visible');
       // Clear old charging markers
       if (chargingMarkers) chargingMarkers.forEach(m => m.setMap(null));
@@ -1798,8 +2006,15 @@
               console.warn('Map display error:', mapErr);
             }
 
-            if (chargingTimeMin > 0) {
-              displayEVInfo(distanceKm, chargingTimeMin);
+            if (document.getElementById('ev-toggle').checked) {
+              if (chargingTimeMin > 0) {
+                displayEVInfo(distanceKm, chargingTimeMin);
+              } else if (!document.getElementById('ev-model').value) {
+                // EV-Toggle an, aber kein Modell gewählt
+                var box = document.getElementById('ev-info-box');
+                box.innerHTML = '<div id="ev-info-text">' + t('ev_no_model_hint') + '</div>';
+                box.style.display = 'block';
+              }
             }
 
             // Show traffic info for this day/time
@@ -1808,6 +2023,13 @@
             // In arrival mode, include charging time to match displayed departure times
             var depTime = departureTime || new Date(arrivalTime.getTime() - (trafficSec + chargingTimeMin * 60) * 1000);
             displayDelayInfo(trafficDelayMin, baseSec, trafficSec, hasTrafficData, depTime, distanceKm);
+
+            // Share-Card befüllen und anzeigen
+            var shareFrom = document.getElementById('from').value.trim();
+            var shareTo = document.getElementById('to').value.trim();
+            var shareWps = getWaypoints();
+            lastMapsUrl = buildMapsUrl(shareFrom, shareTo, shareWps);
+            showShareCard(lastMapsUrl, shareFrom, shareTo);
 
             resetBtn();
           } catch (e) {
@@ -2208,7 +2430,7 @@
       });
     });
 
-    console.log('[Fahrcast v32] UI initialized OK, lang=' + currentLang);
+    console.log('[Fahrcast v33] UI initialized OK, lang=' + currentLang);
 
     // Timeout: if Maps hasn't loaded after 8 seconds, show clear error
     setTimeout(function() {
@@ -2237,6 +2459,7 @@
     window.initApp = initApp;
   </script>
 
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCVxgaDTwgPR8SwgLaB6zHiHNmeQcPPzow&libraries=places&language=de&region=DE&callback=initApp" async defer></script>
 </body>
 </html>
