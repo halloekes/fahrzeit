@@ -9,7 +9,8 @@
   <link rel="manifest" href="manifest.json">
   <link rel="icon" type="image/png" sizes="32x32" href="favicon.ico">
   <link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch-icon.png">
-  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://maps.googleapis.com; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' https://maps.googleapis.com https://maps.google.com https://maps.gstatic.com data: blob:; connect-src 'self' https://maps.googleapis.com https://routes.googleapis.com;">
+  <link href="fonts/fonts.css" rel="stylesheet">
 
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -109,24 +110,6 @@
     }
 
     .input-wrapper { position: relative; }
-
-    /* Waypoints */
-    .waypoint-row { display: flex; align-items: flex-end; gap: 8px; margin-bottom: 16px; }
-    .waypoint-row .input-wrapper { flex: 1; }
-    .waypoint-row label { margin-bottom: 6px; }
-    .waypoint-remove-btn {
-      width: 40px; height: 42px; border: 1px solid var(--border); border-radius: 10px;
-      background: var(--surface); color: var(--danger); font-size: 16px; cursor: pointer;
-      display: flex; align-items: center; justify-content: center; flex-shrink: 0;
-      transition: background 0.15s, border-color 0.15s;
-    }
-    .waypoint-remove-btn:hover { background: rgba(197, 48, 48, 0.08); border-color: var(--danger); }
-    .add-waypoint-btn {
-      width: 100%; padding: 10px; border: 1.5px dashed var(--border); border-radius: 10px;
-      background: transparent; color: var(--muted); font-family: 'Syne', sans-serif;
-      font-size: 13px; font-weight: 500; cursor: pointer; transition: all 0.15s;
-    }
-    .add-waypoint-btn:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-light); }
 
     input[type="text"], input[type="number"], select {
       width: 100%; padding: 12px 14px;
@@ -399,335 +382,13 @@
 
     .error-message { background: rgba(197,48,48,0.08); border: 1.5px solid rgba(197,48,48,0.25); color: #c53030; padding: 14px; border-radius: 10px; margin-bottom: 16px; font-size: 14px; line-height: 1.6; }
 
-    @media (min-width: 600px) and (max-width: 1023px) {
+    @media (min-width: 600px) {
       .container { max-width: 560px; }
       .hero-time { font-size: 60px; }
-    }
-
-    /* ════════════════════════════════════════
-       DESKTOP LAYOUT (>= 1024px)
-       ════════════════════════════════════════ */
-
-    .desktop-topbar { display: none; }
-
-    @media (min-width: 1024px) {
-
-      .desktop-topbar {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        height: 52px;
-        background: rgba(240,245,243,0.97);
-        border-bottom: 1px solid var(--border);
-        padding: 0 36px;
-        position: sticky;
-        top: 0;
-        z-index: 100;
-        backdrop-filter: blur(8px);
-        -webkit-backdrop-filter: blur(8px);
-      }
-      .desktop-topbar-inner {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-      }
-      .desktop-logo {
-        font-family: 'Syne', sans-serif;
-        font-size: 20px;
-        font-weight: 700;
-        color: var(--accent);
-        letter-spacing: -1.5px;
-      }
-      .desktop-version {
-        font-family: 'DM Mono', monospace;
-        font-size: 10px;
-        color: var(--muted);
-        background: var(--surface2);
-        border: 1px solid var(--border);
-        border-radius: 4px;
-        padding: 2px 6px;
-      }
-      .desktop-subtitle {
-        font-size: 12px;
-        color: var(--muted);
-        font-weight: 400;
-        letter-spacing: 0.3px;
-      }
-      .desktop-lang {
-        margin-bottom: 0 !important;
-      }
-
-      html, body {
-        height: auto;
-        min-height: 100vh;
-      }
-
-      .container {
-        max-width: 100%;
-        width: 100%;
-        margin: 0;
-        padding: 0;
-        display: grid;
-        grid-template-columns: 360px 1fr;
-        grid-template-rows: 1fr auto;
-        min-height: calc(100vh - 52px);
-      }
-
-      header {
-        display: none;
-      }
-
-      .form-card {
-        grid-column: 1;
-        grid-row: 1;
-        border-radius: 0;
-        border-top: none;
-        border-left: none;
-        border-bottom: none;
-        border-right: 1px solid var(--border);
-        box-shadow: none;
-        margin-bottom: 0;
-        padding: 24px 22px 32px;
-        position: sticky;
-        top: 52px;
-        height: calc(100vh - 52px);
-        overflow-y: auto;
-        align-self: start;
-      }
-
-      .results-column {
-        grid-column: 2;
-        grid-row: 1;
-        padding: 28px 32px 48px;
-        overflow-y: auto;
-        height: calc(100vh - 52px);
-      }
-
-      .results-section {
-        margin-bottom: 0;
-      }
-
-      /* Hero-Card: horizontal on desktop (when visible) */
-      .hero-card {
-        display: flex !important;
-        align-items: center;
-        justify-content: space-between;
-        text-align: left;
-        padding: 24px 28px;
-        border-radius: 16px;
-        margin-bottom: 16px;
-      }
-      .hero-card[style*="display: none"],
-      .hero-card[style*="display:none"] {
-        display: none !important;
-      }
-      .hero-time {
-        font-size: 64px;
-        margin-bottom: 0;
-        letter-spacing: -3px;
-        flex-shrink: 0;
-      }
-      .hero-right {
-        text-align: right;
-        flex: 1;
-        padding-left: 24px;
-      }
-      .hero-label {
-        margin-bottom: 6px;
-      }
-
-      /* Time-Cards: 3-spaltig on desktop (when visible) */
-      .time-cards {
-        display: grid !important;
-        grid-template-columns: 1fr 1fr 1fr;
-        gap: 10px;
-      }
-      .time-cards[style*="display: none"],
-      .time-cards[style*="display:none"] {
-        display: none !important;
-      }
-      .time-card {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 6px;
-        padding: 16px 14px;
-      }
-      .time-card-info {
-        text-align: left;
-      }
-
-      /* Arrival-Cards: 3-spaltig on desktop (when visible) */
-      .arrival-cards {
-        display: grid !important;
-        grid-template-columns: 1fr 1fr 1fr;
-        gap: 10px;
-      }
-      .arrival-cards[style*="display: none"],
-      .arrival-cards[style*="display:none"] {
-        display: none !important;
-      }
-      .arrival-card {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 6px;
-      }
-      .arrival-info {
-        text-align: left;
-      }
-
-      /* Map */
-      #map {
-        height: 300px !important;
-      }
-      .map-container {
-        border-radius: 16px;
-        margin-bottom: 20px;
-      }
-
-      /* Charging Stops: 2-spaltig */
-      .charging-stops-list {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 10px;
-      }
-
-      .delay-info {
-        margin-bottom: 16px;
-      }
-
-      /* Footer: spans full width */
-      footer {
-        grid-column: 1 / -1;
-        grid-row: 2;
-      }
-    }
-
-    /* results-column: auf Mobil transparent */
-    @media (max-width: 1023px) {
-      .results-column {
-        display: contents;
-      }
-      .hero-right {
-        /* kein extra Layout auf Mobil */
-      }
-    }
-
-    /* Mode-Toggle Icons */
-    .toggle-btn {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 5px;
-    }
-    .toggle-icon {
-      font-size: 15px;
-      flex-shrink: 0;
-      line-height: 1;
-    }
-
-    /* ── Route teilen ── */
-    .share-card {
-      background: var(--surface);
-      border: 1.5px solid var(--border);
-      border-radius: 12px;
-      padding: 16px;
-      margin-bottom: 20px;
-      display: none;
-    }
-    .share-card.visible { display: block; }
-    .share-title {
-      font-size: 12px;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      color: var(--muted);
-      margin-bottom: 12px;
-    }
-    .share-row {
-      display: flex;
-      gap: 10px;
-      align-items: stretch;
-    }
-    .share-qr {
-      flex-shrink: 0;
-      width: 88px;
-      height: 88px;
-      background: var(--surface2);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      overflow: hidden;
-    }
-    .share-qr canvas,
-    .share-qr img {
-      width: 80px;
-      height: 80px;
-    }
-    .share-actions {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      justify-content: center;
-    }
-    .share-btn-maps {
-      background: linear-gradient(135deg, #0B3041 0%, #164260 100%);
-      color: white;
-      border: none;
-      border-radius: 8px;
-      padding: 10px 14px;
-      font-family: 'Syne', sans-serif;
-      font-size: 13px;
-      font-weight: 600;
-      cursor: pointer;
-      text-align: left;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      transition: opacity 0.15s;
-    }
-    .share-btn-maps:hover { opacity: 0.9; }
-    .share-btn-maps-icon { font-size: 16px; }
-    .share-btn-copy {
-      background: var(--surface2);
-      color: var(--text);
-      border: 1.5px solid var(--border);
-      border-radius: 8px;
-      padding: 10px 14px;
-      font-family: 'Syne', sans-serif;
-      font-size: 13px;
-      font-weight: 600;
-      cursor: pointer;
-      text-align: left;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      transition: all 0.15s;
-    }
-    .share-btn-copy:hover { border-color: var(--accent); background: var(--accent-light); }
-    .share-btn-copy.copied { color: var(--success); border-color: var(--success); }
-    .share-hint {
-      font-size: 11px;
-      color: var(--muted);
-      margin-top: 8px;
-      line-height: 1.5;
     }
   </style>
 </head>
 <body>
-  <div class="desktop-topbar">
-    <div class="desktop-topbar-inner">
-      <span class="desktop-logo">FAHRCAST</span>
-      <span class="desktop-version">v34</span>
-      <span class="desktop-subtitle" id="desktop-subtitle-text"></span>
-    </div>
-    <div class="lang-toggle desktop-lang">
-      <button type="button" class="lang-btn active" data-lang="de">DE</button>
-      <button type="button" class="lang-btn" data-lang="en">EN</button>
-    </div>
-  </div>
   <div class="container">
     <header>
       <div class="lang-toggle" id="lang-toggle">
@@ -736,13 +397,13 @@
       </div>
       <div class="logo">FAHRCAST</div>
       <div class="subtitle" id="subtitle"></div>
-      <div style="font-size:10px;color:var(--muted);margin-top:4px;" id="version-tag">v34</div>
+      <div style="font-size:10px;color:var(--muted);margin-top:4px;" id="version-tag">v29</div>
     </header>
 
     <div class="form-card">
       <div class="mode-toggle">
-        <button type="button" class="toggle-btn active" data-mode="departure" id="btn-departure"><span class="toggle-icon" aria-hidden="true">🚗</span><span class="toggle-text"></span></button>
-        <button type="button" class="toggle-btn" data-mode="arrival" id="btn-arrival"><span class="toggle-icon" aria-hidden="true">🎯</span><span class="toggle-text"></span></button>
+        <button type="button" class="toggle-btn active" data-mode="departure" id="btn-departure"></button>
+        <button type="button" class="toggle-btn" data-mode="arrival" id="btn-arrival"></button>
       </div>
 
       <div class="form-group">
@@ -752,13 +413,6 @@
           <div class="dropdown" id="from-dropdown"></div>
         </div>
       </div>
-
-      <!-- Waypoints container -->
-      <div id="waypoints-container"></div>
-      <div class="form-group" id="add-waypoint-group">
-        <button type="button" class="add-waypoint-btn" id="add-waypoint-btn" onclick="addWaypoint()"></button>
-      </div>
-
       <div class="form-group">
         <label for="to" data-i18n="to_label"></label>
         <div class="input-wrapper">
@@ -944,16 +598,13 @@
       </div>
     </div>
 
-    <div class="results-column">
     <div class="results-section" id="results">
       <div id="error-container"></div>
 
       <div id="hero-card" class="hero-card" style="display: none;">
         <div class="hero-time" id="hero-time">--:--</div>
-        <div class="hero-right">
-          <div class="hero-label" id="hero-label"></div>
-          <div class="hero-meta" id="hero-meta"></div>
-        </div>
+        <div class="hero-label" id="hero-label"></div>
+        <div class="hero-meta" id="hero-meta"></div>
       </div>
 
       <div class="delay-info" id="delay-info" style="display: none;">
@@ -1046,26 +697,6 @@
       </div>
     </div>
 
-      <div class="share-card" id="share-card">
-        <div class="share-title" id="share-title">Route teilen</div>
-        <div class="share-row">
-          <div class="share-qr" id="share-qr"></div>
-          <div class="share-actions">
-            <button class="share-btn-maps" id="share-btn-maps" onclick="openInMaps()">
-              <span class="share-btn-maps-icon">🗺</span>
-              <span id="share-btn-maps-label">In Google Maps öffnen</span>
-            </button>
-            <button class="share-btn-copy" id="share-btn-copy" onclick="copyMapsLink()">
-              <span>📋</span>
-              <span id="share-btn-copy-label">Link kopieren</span>
-            </button>
-          </div>
-        </div>
-        <div class="share-hint" id="share-hint">QR-Code mit dem Smartphone scannen, um die Route in Google Maps zu öffnen.</div>
-      </div>
-
-    </div><!-- /results-column -->
-
     <footer style="text-align:center;padding:24px 0 16px;font-size:12px;color:var(--muted);">
       <a href="impressum.html" style="color:var(--muted);text-decoration:none;" data-i18n="imprint_link"></a>
     </footer>
@@ -1081,9 +712,6 @@
         from_label: 'Startort',
         to_label: 'Zielort',
         address_placeholder: 'Adresse eingeben...',
-        waypoint_label: 'Zwischenziel {idx}',
-        add_waypoint: '+ Zwischenziel',
-        remove_waypoint: '✕',
         weekday_label: 'Wochentag',
         weekdays_short: ['So','Mo','Di','Mi','Do','Fr','Sa'],
         weekdays_long: ['Sonntag','Montag','Dienstag','Mittwoch','Donnerstag','Freitag','Samstag'],
@@ -1121,7 +749,6 @@
         drive_time_label: 'Fahrzeit',
         imprint_link: 'Impressum & Datenschutz',
         ev_stops_info: '⚡ {stops} Ladestopp(s) empfohlen, ca. {min} Min. Ladezeit (in Zeiten eingerechnet)',
-        ev_no_model_hint: '⚡ Bitte wähle ein Fahrzeugmodell aus, damit genaue Ladestopps in der Route angezeigt werden.',
         err_no_address: 'Bitte Start- und Zielort eingeben.',
         err_maps_not_loaded: 'Google Maps konnte nicht geladen werden. Mögliche Ursachen: API-Key ungültig, keine Abrechnung aktiviert, oder Referrer-Einschränkung falsch.',
         err_maps_timeout: 'Google Maps konnte nicht geladen werden. Bitte prüfe in der Google Cloud Console: (1) Abrechnung aktiviert? (2) Maps JavaScript API, Places API und Directions API aktiviert? (3) API-Key-Einschränkung korrekt?',
@@ -1166,9 +793,6 @@
         from_label: 'Origin',
         to_label: 'Destination',
         address_placeholder: 'Enter address...',
-        waypoint_label: 'Waypoint {idx}',
-        add_waypoint: '+ Waypoint',
-        remove_waypoint: '✕',
         weekday_label: 'Day of week',
         weekdays_short: ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'],
         weekdays_long: ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'],
@@ -1206,7 +830,6 @@
         drive_time_label: 'Drive time',
         imprint_link: 'Legal & Privacy',
         ev_stops_info: '⚡ {stops} charging stop(s) recommended, ~{min} min charging time (included in times)',
-        ev_no_model_hint: '⚡ Please select a vehicle model so charging stops can be shown on your route.',
         err_no_address: 'Please enter origin and destination.',
         err_maps_not_loaded: 'Google Maps could not be loaded. Possible causes: invalid API key, billing not enabled, or referrer restriction.',
         err_maps_timeout: 'Google Maps could not be loaded. Please check your Google Cloud Console: (1) Billing enabled? (2) Maps JavaScript API, Places API & Directions API enabled? (3) API key restriction correct?',
@@ -1261,11 +884,9 @@
       document.getElementById('html-root').lang = currentLang;
       // Subtitle
       document.getElementById('subtitle').textContent = t('subtitle');
-      var dst = document.getElementById('desktop-subtitle-text');
-      if (dst) dst.textContent = t('subtitle');
       // Toggle buttons (innerHTML for <br>)
-      document.getElementById('btn-departure').querySelector('.toggle-text').innerHTML = t('btn_departure');
-      document.getElementById('btn-arrival').querySelector('.toggle-text').innerHTML = t('btn_arrival');
+      document.getElementById('btn-departure').innerHTML = t('btn_departure');
+      document.getElementById('btn-arrival').innerHTML = t('btn_arrival');
       // data-i18n text
       document.querySelectorAll('[data-i18n]').forEach(function(el) {
         el.textContent = t(el.getAttribute('data-i18n'));
@@ -1305,240 +926,11 @@
       document.querySelectorAll('.lang-btn').forEach(function(b) {
         b.classList.toggle('active', b.dataset.lang === currentLang);
       });
-      // Waypoints button + labels
-      var wpBtn = document.getElementById('add-waypoint-btn');
-      if (wpBtn) wpBtn.textContent = t('add_waypoint');
-      document.querySelectorAll('.waypoint-row label').forEach(function(lbl, i) {
-        lbl.textContent = t('waypoint_label', {idx: i + 1});
-      });
-      // Share-Card Labels aktualisieren wenn sichtbar
-      if (lastMapsUrl && document.getElementById('share-card').classList.contains('visible')) {
-        var isDE = currentLang === 'de';
-        document.getElementById('share-title').textContent = isDE ? 'Route teilen' : 'Share route';
-        document.getElementById('share-btn-maps-label').textContent = isDE ? 'In Google Maps öffnen' : 'Open in Google Maps';
-        document.getElementById('share-btn-copy-label').textContent = isDE ? 'Link kopieren' : 'Copy link';
-        document.getElementById('share-hint').textContent = isDE
-          ? 'QR-Code mit dem Smartphone scannen, um die Route in Google Maps zu öffnen.'
-          : 'Scan the QR code with your phone to open the route in Google Maps.';
-      }
     }
 
     let autocompleteService, sessionToken, directionsService, directionsRenderer;
     let currentMode = 'departure';
     let lastResults = null;
-    let lastMapsUrl = null;
-    let lastChargingStopPositions = [];
-
-    /* ── Search History (localStorage) ── */
-    const HISTORY_KEY = 'fahrcast_search_history';
-    const MAX_HISTORY = 8;
-
-    function getSearchHistory() {
-      try { return JSON.parse(localStorage.getItem(HISTORY_KEY)) || []; }
-      catch(e) { return []; }
-    }
-
-    function saveToHistory(address) {
-      if (!address || address.length < 3) return;
-      var history = getSearchHistory();
-      // Remove duplicate (case-insensitive)
-      history = history.filter(function(h) { return h.toLowerCase() !== address.toLowerCase(); });
-      // Add to front
-      history.unshift(address);
-      // Limit
-      if (history.length > MAX_HISTORY) history = history.slice(0, MAX_HISTORY);
-      try { localStorage.setItem(HISTORY_KEY, JSON.stringify(history)); } catch(e) {}
-    }
-
-    function showHistoryDropdown(dropdown, input) {
-      var history = getSearchHistory();
-      if (history.length === 0) return;
-      dropdown.innerHTML = '';
-      var headerEl = document.createElement('div');
-      headerEl.className = 'dropdown-item-header';
-      headerEl.textContent = currentLang === 'de' ? 'Letzte Eingaben' : 'Recent searches';
-      headerEl.style.cssText = 'padding:6px 12px;font-size:11px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:0.5px;';
-      dropdown.appendChild(headerEl);
-      history.forEach(function(addr) {
-        var item = document.createElement('div');
-        item.className = 'dropdown-item';
-        item.innerHTML = '<div class="dropdown-item-primary" style="display:flex;align-items:center;gap:6px;">'
-          + '<span style="opacity:0.4;font-size:13px;">&#x1f551;</span> ' + addr + '</div>';
-        item.addEventListener('click', function() {
-          input.value = addr;
-          hideDropdown(dropdown);
-        });
-        dropdown.appendChild(item);
-      });
-      dropdown.classList.add('active');
-    }
-    /* ── Waypoints (max 5) ── */
-    const MAX_WAYPOINTS = 5;
-    let waypointCount = 0;
-
-    function addWaypoint() {
-      if (waypointCount >= MAX_WAYPOINTS) return;
-      waypointCount++;
-      var idx = waypointCount;
-      var container = document.getElementById('waypoints-container');
-
-      var row = document.createElement('div');
-      row.className = 'waypoint-row';
-      row.id = 'waypoint-row-' + idx;
-      row.innerHTML = '<div style="flex:1;">'
-        + '<label>' + t('waypoint_label', {idx: idx}) + '</label>'
-        + '<div class="input-wrapper">'
-        + '<input type="text" id="wp-' + idx + '" placeholder="' + t('address_placeholder') + '">'
-        + '<div class="dropdown" id="wp-' + idx + '-dropdown"></div>'
-        + '</div></div>'
-        + '<button type="button" class="waypoint-remove-btn" onclick="removeWaypoint(' + idx + ')" title="' + t('remove_waypoint') + '">' + t('remove_waypoint') + '</button>';
-      container.appendChild(row);
-
-      // Setup autocomplete for new input
-      setupAutocomplete('wp-' + idx, 'wp-' + idx + '-dropdown');
-
-      updateWaypointBtn();
-    }
-
-    function removeWaypoint(idx) {
-      var row = document.getElementById('waypoint-row-' + idx);
-      if (row) row.remove();
-
-      // Re-number remaining waypoints
-      var container = document.getElementById('waypoints-container');
-      var rows = container.querySelectorAll('.waypoint-row');
-      waypointCount = rows.length;
-      rows.forEach(function(r, i) {
-        var n = i + 1;
-        r.id = 'waypoint-row-' + n;
-        r.querySelector('label').textContent = t('waypoint_label', {idx: n});
-        var inp = r.querySelector('input[type="text"]');
-        var dd = r.querySelector('.dropdown');
-        inp.id = 'wp-' + n;
-        dd.id = 'wp-' + n + '-dropdown';
-        r.querySelector('.waypoint-remove-btn').setAttribute('onclick', 'removeWaypoint(' + n + ')');
-      });
-
-      updateWaypointBtn();
-    }
-
-    function updateWaypointBtn() {
-      var btn = document.getElementById('add-waypoint-btn');
-      var group = document.getElementById('add-waypoint-group');
-      if (waypointCount >= MAX_WAYPOINTS) {
-        group.style.display = 'none';
-      } else {
-        group.style.display = 'block';
-        btn.textContent = t('add_waypoint');
-      }
-    }
-
-    function getWaypoints() {
-      var waypoints = [];
-      for (var i = 1; i <= waypointCount; i++) {
-        var inp = document.getElementById('wp-' + i);
-        if (inp && inp.value.trim()) {
-          waypoints.push({ location: inp.value.trim(), stopover: true });
-        }
-      }
-      return waypoints;
-    }
-
-    function buildMapsUrl(from, to, waypoints, chargingPositions) {
-      var base = 'https://www.google.com/maps/dir/?api=1';
-      base += '&origin=' + encodeURIComponent(from);
-      base += '&destination=' + encodeURIComponent(to);
-
-      // Combine user waypoints + charging stop positions
-      var allWps = [];
-      if (waypoints && waypoints.length > 0) {
-        waypoints.forEach(function(wp) {
-          allWps.push(encodeURIComponent(wp.location || wp));
-        });
-      }
-      if (chargingPositions && chargingPositions.length > 0) {
-        chargingPositions.forEach(function(pos) {
-          allWps.push(pos.lat.toFixed(6) + ',' + pos.lng.toFixed(6));
-        });
-      }
-      if (allWps.length > 0) {
-        base += '&waypoints=' + allWps.join('|');
-      }
-      base += '&travelmode=driving';
-      return base;
-    }
-
-    function showShareCard(url, from, to) {
-      var card = document.getElementById('share-card');
-      var qrEl = document.getElementById('share-qr');
-
-      var isDE = currentLang === 'de';
-      document.getElementById('share-title').textContent = isDE ? 'Route teilen' : 'Share route';
-      document.getElementById('share-btn-maps-label').textContent = isDE ? 'In Google Maps öffnen' : 'Open in Google Maps';
-      document.getElementById('share-btn-copy-label').textContent = isDE ? 'Link kopieren' : 'Copy link';
-      document.getElementById('share-hint').textContent = isDE
-        ? 'QR-Code mit dem Smartphone scannen, um die Route in Google Maps zu öffnen.'
-        : 'Scan the QR code with your phone to open the route in Google Maps.';
-
-      qrEl.innerHTML = '';
-      try {
-        if (typeof QRCode !== 'undefined') {
-          new QRCode(qrEl, {
-            text: url,
-            width: 80,
-            height: 80,
-            colorDark: '#0B3041',
-            colorLight: '#ffffff',
-            correctLevel: QRCode.CorrectLevel.M
-          });
-        } else {
-          qrEl.style.fontSize = '10px';
-          qrEl.style.color = 'var(--muted)';
-          qrEl.style.textAlign = 'center';
-          qrEl.textContent = 'QR n/a';
-        }
-      } catch(e) {
-        console.warn('[Fahrcast] QR generation failed:', e);
-      }
-
-      card.classList.add('visible');
-    }
-
-    function openInMaps() {
-      if (lastMapsUrl) window.open(lastMapsUrl, '_blank');
-    }
-
-    function copyMapsLink() {
-      if (!lastMapsUrl) return;
-      var btn = document.getElementById('share-btn-copy');
-      var label = document.getElementById('share-btn-copy-label');
-      var isDE = currentLang === 'de';
-
-      navigator.clipboard.writeText(lastMapsUrl).then(function() {
-        label.textContent = isDE ? '✓ Kopiert!' : '✓ Copied!';
-        btn.classList.add('copied');
-        setTimeout(function() {
-          label.textContent = isDE ? 'Link kopieren' : 'Copy link';
-          btn.classList.remove('copied');
-        }, 2000);
-      }).catch(function() {
-        var ta = document.createElement('textarea');
-        ta.value = lastMapsUrl;
-        ta.style.position = 'fixed';
-        ta.style.opacity = '0';
-        document.body.appendChild(ta);
-        ta.select();
-        document.execCommand('copy');
-        document.body.removeChild(ta);
-        label.textContent = isDE ? '✓ Kopiert!' : '✓ Copied!';
-        btn.classList.add('copied');
-        setTimeout(function() {
-          label.textContent = isDE ? 'Link kopieren' : 'Copy link';
-          btn.classList.remove('copied');
-        }, 2000);
-      });
-    }
-
     let currentMap = null;
     let selectedWeekday = new Date().getDay(); // 0=So, 1=Mo, ...
     let chargingMarkers = [];
@@ -1750,15 +1142,21 @@
 
     function setupEventListeners() {
       document.querySelectorAll('.toggle-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
+        btn.addEventListener('click', (e) => {
           document.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
-          btn.classList.add('active');
-          currentMode = btn.dataset.mode;
+          e.target.classList.add('active');
+          currentMode = e.target.dataset.mode;
           toggleModeUI();
         });
       });
 
-      // Weekday buttons are created+wired in applyI18n() — no duplicate listener needed here
+      document.querySelectorAll('.weekday-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          document.querySelectorAll('.weekday-btn').forEach(b => b.classList.remove('active'));
+          e.target.classList.add('active');
+          selectedWeekday = parseInt(e.target.dataset.day);
+        });
+      });
 
       document.getElementById('ev-toggle').addEventListener('change', (e) => {
         document.getElementById('ev-section').classList.toggle('visible', e.target.checked);
@@ -1803,12 +1201,7 @@
 
       input.addEventListener('input', (e) => {
         const query = e.target.value;
-        if (!query || query.length < 2) {
-          // Show history when field is cleared/short
-          if (query.length === 0) showHistoryDropdown(dropdown, input);
-          else hideDropdown(dropdown);
-          return;
-        }
+        if (!query || query.length < 2) { hideDropdown(dropdown); return; }
 
         autocompleteService.getPlacePredictions({
           input: query,
@@ -1823,12 +1216,7 @@
       });
 
       input.addEventListener('focus', (e) => {
-        if (e.target.value.length >= 2) {
-          dropdown.classList.add('active');
-        } else {
-          // Show history on focus when field is empty
-          showHistoryDropdown(dropdown, input);
-        }
+        if (e.target.value.length >= 2) dropdown.classList.add('active');
       });
     }
 
@@ -1839,11 +1227,16 @@
         item.className = 'dropdown-item';
         const mainText = pred.structured_formatting ? pred.structured_formatting.main_text : pred.description;
         const secondaryText = pred.structured_formatting ? pred.structured_formatting.secondary_text : '';
-        item.innerHTML = '<div class="dropdown-item-primary">' + mainText + '</div>'
-          + '<div class="dropdown-item-secondary">' + (secondaryText || '') + '</div>';
+        var primaryDiv = document.createElement('div');
+        primaryDiv.className = 'dropdown-item-primary';
+        primaryDiv.textContent = mainText;
+        var secondaryDiv = document.createElement('div');
+        secondaryDiv.className = 'dropdown-item-secondary';
+        secondaryDiv.textContent = secondaryText || '';
+        item.appendChild(primaryDiv);
+        item.appendChild(secondaryDiv);
         item.addEventListener('click', () => {
           input.value = pred.description;
-          saveToHistory(pred.description);
           hideDropdown(dropdown);
           sessionToken = new google.maps.places.AutocompleteSessionToken();
         });
@@ -1907,8 +1300,6 @@
       document.getElementById('delay-info').style.display = 'none';
       document.getElementById('ev-info-box').style.display = 'none';
       document.getElementById('charging-stops-list').style.display = 'none';
-      document.getElementById('share-card').classList.remove('visible');
-      lastMapsUrl = null;
       document.getElementById('map-container').classList.remove('visible');
       // Clear old charging markers
       if (chargingMarkers) chargingMarkers.forEach(m => m.setMap(null));
@@ -1931,13 +1322,10 @@
     function calculateRoute(from, to, departureTime, arrivalTime) {
       // Use Directions API instead of Distance Matrix API (one less API dependency)
       var depTime = departureTime || new Date(arrivalTime.getTime() - 4 * 3600 * 1000);
-      var waypoints = getWaypoints();
 
       var request = {
         origin: from,
         destination: to,
-        waypoints: waypoints.length > 0 ? waypoints : undefined,
-        optimizeWaypoints: waypoints.length > 1,
         travelMode: google.maps.TravelMode.DRIVING,
         drivingOptions: {
           departureTime: depTime,
@@ -1971,19 +1359,12 @@
               return;
             }
 
-            lastChargingStopPositions = []; // Reset before new calculation
-            var legs = result.routes[0].legs;
-            // Sum distance & duration across all legs (waypoints create multiple legs)
-            var totalDistanceM = 0, totalBaseSec = 0, totalTrafficSec = 0;
-            for (var li = 0; li < legs.length; li++) {
-              totalDistanceM += legs[li].distance.value;
-              totalBaseSec += legs[li].duration.value;
-              totalTrafficSec += (legs[li].duration_in_traffic ? legs[li].duration_in_traffic.value : legs[li].duration.value);
-            }
-            var distanceKm = totalDistanceM / 1000;
+            var leg = result.routes[0].legs[0];
+            var distanceKm = leg.distance.value / 1000;
 
-            var baseSec = totalBaseSec;
-            var trafficSec = totalTrafficSec;
+            // duration_in_traffic requires billing; fall back to duration
+            var baseSec = leg.duration.value;
+            var trafficSec = (leg.duration_in_traffic ? leg.duration_in_traffic.value : baseSec);
 
             var scenarios = {
               optimistic: { durationSeconds: Math.ceil(trafficSec * 0.85) },
@@ -2022,30 +1403,16 @@
               console.warn('Map display error:', mapErr);
             }
 
-            if (document.getElementById('ev-toggle').checked) {
-              if (chargingTimeMin > 0) {
-                displayEVInfo(distanceKm, chargingTimeMin);
-              } else if (!document.getElementById('ev-model').value) {
-                // EV-Toggle an, aber kein Modell gewählt
-                var box = document.getElementById('ev-info-box');
-                box.innerHTML = '<div id="ev-info-text">' + t('ev_no_model_hint') + '</div>';
-                box.style.display = 'block';
-              }
+            if (chargingTimeMin > 0) {
+              displayEVInfo(distanceKm, chargingTimeMin);
             }
 
             // Show traffic info for this day/time
             var trafficDelayMin = Math.round((trafficSec - baseSec) / 60);
-            var hasTrafficData = !!legs[0].duration_in_traffic;
+            var hasTrafficData = !!leg.duration_in_traffic;
             // In arrival mode, include charging time to match displayed departure times
             var depTime = departureTime || new Date(arrivalTime.getTime() - (trafficSec + chargingTimeMin * 60) * 1000);
             displayDelayInfo(trafficDelayMin, baseSec, trafficSec, hasTrafficData, depTime, distanceKm);
-
-            // Share-Card befüllen und anzeigen
-            var shareFrom = document.getElementById('from').value.trim();
-            var shareTo = document.getElementById('to').value.trim();
-            var shareWps = getWaypoints();
-            lastMapsUrl = buildMapsUrl(shareFrom, shareTo, shareWps, lastChargingStopPositions);
-            showShareCard(lastMapsUrl, shareFrom, shareTo);
 
             resetBtn();
           } catch (e) {
@@ -2072,31 +1439,12 @@
       const evData = EV_DATABASE[modelId];
       if (!evData) return 0;
 
-      const realRange = evData.wltp * REAL_WORLD_RANGE_FACTOR;
-      const kmPerPercent = realRange / 100;
+      const usableRange = evData.wltp * REAL_WORLD_RANGE_FACTOR * (startBattery - endBattery) / 100;
+      if (distanceKm <= usableRange) return 0;
 
-      // Can we reach destination without charging?
-      if (startBattery - distanceKm / kmPerPercent >= endBattery) return 0;
-
-      // Simulate journey: intermediate stops drain to MIN_CHARGE_SOC (10%)
-      const MIN_CHARGE_SOC = 10;
-      var currentSoC = startBattery;
-      var kmCovered = 0;
-      var stops = 0;
-
-      while (true) {
-        var kmRemaining = distanceKm - kmCovered;
-        // Can we reach destination with endBattery remaining?
-        if (currentSoC - kmRemaining / kmPerPercent >= endBattery) break;
-        // Drive until MIN_CHARGE_SOC, then charge
-        var drivableKm = (currentSoC - MIN_CHARGE_SOC) * kmPerPercent;
-        kmCovered += drivableKm;
-        stops++;
-        currentSoC = 80;
-        if (stops > 50) break; // safety limit
-      }
-
-      return stops * 25; // 25 min per stop
+      const chargableRange = evData.wltp * REAL_WORLD_RANGE_FACTOR * (80 - endBattery) / 100;
+      const stopsNeeded = Math.ceil((distanceKm - usableRange) / chargableRange);
+      return stopsNeeded * 25; // 25 min per stop
     }
 
     function displayEVInfo(distanceKm, chargingTimeMin) {
@@ -2292,18 +1640,7 @@
       chargingMarkers.forEach(function(m) { try { m.setMap(null); } catch(e){} });
       chargingMarkers = [];
 
-      // Combine all legs into one virtual leg for multi-waypoint routes
-      var allLegs = route.legs;
-      var combinedLeg = { steps: [], distance: { value: 0 } };
-      for (var li = 0; li < allLegs.length; li++) {
-        combinedLeg.distance.value += allLegs[li].distance.value;
-        var legSteps = allLegs[li].steps || [];
-        for (var si = 0; si < legSteps.length; si++) {
-          combinedLeg.steps.push(legSteps[si]);
-        }
-      }
-      var leg = combinedLeg;
-
+      var leg = route.legs[0];
       var modelId = document.getElementById('ev-model').value;
       if (!modelId) return;
 
@@ -2316,30 +1653,29 @@
       var distanceKm = leg.distance.value / 1000;
       var tesla = isTesla(modelId);
 
-      // Can we reach destination without charging?
-      var kmPerPercent = realRange / 100;
-      if (startBattery - distanceKm / kmPerPercent >= endBattery) {
+      // Use same math as getChargingTime to determine stops
+      var usableRange = realRange * (startBattery - endBattery) / 100;
+      if (distanceKm <= usableRange) {
         document.getElementById('charging-stops-list').style.display = 'none';
-        lastChargingStopPositions = [];
         return;
       }
 
-      // Simulate journey: intermediate stops drain to MIN_CHARGE_SOC (10%)
-      var MIN_CHARGE_SOC = 10;
+      var chargeRange = realRange * (80 - endBattery) / 100; // km per charge (10%→80%)
+      var stopsNeeded = Math.ceil((distanceKm - usableRange) / chargeRange);
+
+      // Simulate battery drain along route to find realistic stop positions + SoC
       var chargingStops = [];
+      var kmPerPercent = realRange / 100;
       var currentSoC = startBattery;
       var lastChargeKm = 0;
 
-      for (var safety = 0; safety < 50; safety++) {
-        var kmRemaining = distanceKm - lastChargeKm;
-        // Can we reach destination with endBattery remaining?
-        if (currentSoC - kmRemaining / kmPerPercent >= endBattery) break;
+      for (var s = 0; s < stopsNeeded; s++) {
+        // How far can we drive from current position with currentSoC?
+        var rangeLeft = (currentSoC - endBattery) * kmPerPercent;
+        var stopKm = lastChargeKm + rangeLeft;
+        if (stopKm > distanceKm) stopKm = distanceKm - 5;
 
-        // Drive until MIN_CHARGE_SOC
-        var drivableKm = (currentSoC - MIN_CHARGE_SOC) * kmPerPercent;
-        var stopKm = lastChargeKm + drivableKm;
-        if (stopKm >= distanceKm - 5) stopKm = distanceKm - 5;
-
+        // SoC at arrival = how much battery is left after driving rangeLeft km
         var kmDriven = stopKm - lastChargeKm;
         var socAtArrival = Math.max(0, Math.round(currentSoC - kmDriven / kmPerPercent));
 
@@ -2356,11 +1692,7 @@
         lastChargeKm = stopKm;
       }
 
-      var stopsNeeded = chargingStops.length;
       console.log('[Fahrcast] Charging: ' + stopsNeeded + ' stops needed for ' + distanceKm.toFixed(0) + 'km (range=' + realRange.toFixed(0) + 'km, startSoC=' + startBattery + '%)');
-
-      // Save positions for Google Maps share link
-      lastChargingStopPositions = chargingStops.filter(function(s) { return s.position; }).map(function(s) { return s.position; });
 
       // Render all stops immediately
       renderChargingStops(chargingStops, tesla);
@@ -2427,11 +1759,13 @@
       document.getElementById('calculate-btn').disabled = false;
     }
 
-    // Global error handler — show ALL JS errors on page
+    // Global error handler — log details to console, show generic message to user
     window.onerror = function(msg, url, line) {
+      console.error('[Fahrcast] JS error:', msg, 'at', url, 'line', line);
       var el = document.getElementById('error-container');
       if (el) {
-        el.innerHTML = '<div class="error-message">' + t('err_js', {msg: msg, line: line}) + '</div>';
+        var userMsg = currentLang === 'de' ? 'Ein Fehler ist aufgetreten. Bitte Seite neu laden.' : 'An error occurred. Please reload the page.';
+        el.innerHTML = '<div class="error-message">' + userMsg + '</div>';
         document.getElementById('results').classList.add('visible');
       }
     };
@@ -2450,7 +1784,7 @@
       });
     });
 
-    console.log('[Fahrcast v34] UI initialized OK, lang=' + currentLang);
+    console.log('[Fahrcast v29] UI initialized OK, lang=' + currentLang);
 
     // Timeout: if Maps hasn't loaded after 8 seconds, show clear error
     setTimeout(function() {
@@ -2479,7 +1813,6 @@
     window.initApp = initApp;
   </script>
 
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCVxgaDTwgPR8SwgLaB6zHiHNmeQcPPzow&libraries=places&language=de&region=DE&callback=initApp" async defer></script>
 </body>
 </html>

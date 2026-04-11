@@ -1,4 +1,4 @@
-const CACHE_NAME = 'fahrcast-v34';
+const CACHE_NAME = 'fahrcast-v30';
 
 // Install: skip waiting immediately to take over
 self.addEventListener('install', (e) => {
@@ -19,7 +19,7 @@ self.addEventListener('fetch', (e) => {
   e.respondWith(
     fetch(e.request).then((resp) => {
       // Cache a copy for offline use
-      if (resp.ok && e.request.method === 'GET') {
+      if (resp.ok && e.request.method === 'GET' && !e.request.url.includes('googleapis.com')) {
         const clone = resp.clone();
         caches.open(CACHE_NAME).then((cache) => cache.put(e.request, clone));
       }
