@@ -396,7 +396,7 @@
       </div>
       <div class="logo">FAHRCAST</div>
       <div class="subtitle" id="subtitle"></div>
-      <div style="font-size:10px;color:var(--muted);margin-top:4px;" id="version-tag">v29</div>
+      <div style="font-size:10px;color:var(--muted);margin-top:4px;" id="version-tag">v30</div>
     </header>
 
     <div class="form-card">
@@ -930,6 +930,50 @@
     let autocompleteService, sessionToken, directionsService, directionsRenderer;
     let currentMode = 'departure';
     let lastResults = null;
+
+    /* ── Search History (localStorage) ── */
+    const HISTORY_KEY = 'fahrcast_search_history';
+    const MAX_HISTORY = 8;
+
+    function getSearchHistory() {
+      try { return JSON.parse(localStorage.getItem(HISTORY_KEY)) || []; }
+      catch(e) { return []; }
+    }
+
+    function saveToHistory(address) {
+      if (!address || address.length < 3) return;
+      var history = getSearchHistory();
+      // Remove duplicate (case-insensitive)
+      history = history.filter(function(h) { return h.toLowerCase() !== address.toLowerCase(); });
+      // Add to front
+      history.unshift(address);
+      // Limit
+      if (history.length > MAX_HISTORY) history = history.slice(0, MAX_HISTORY);
+      try { localStorage.setItem(HISTORY_KEY, JSON.stringify(history)); } catch(e) {}
+    }
+
+    function showHistoryDropdown(dropdown, input) {
+      var history = getSearchHistory();
+      if (history.length === 0) return;
+      dropdown.innerHTML = '';
+      var headerEl = document.createElement('div');
+      headerEl.className = 'dropdown-item-header';
+      headerEl.textContent = currentLang === 'de' ? 'Letzte Eingaben' : 'Recent searches';
+      headerEl.style.cssText = 'padding:6px 12px;font-size:11px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:0.5px;';
+      dropdown.appendChild(headerEl);
+      history.forEach(function(addr) {
+        var item = document.createElement('div');
+        item.className = 'dropdown-item';
+        item.innerHTML = '<div class="dropdown-item-primary" style="display:flex;align-items:center;gap:6px;">'
+          + '<span style="opacity:0.4;font-size:13px;">&#x1f551;</span> ' + addr + '</div>';
+        item.addEventListener('click', function() {
+          input.value = addr;
+          hideDropdown(dropdown);
+        });
+        dropdown.appendChild(item);
+      });
+      dropdown.classList.add('active');
+    }
     let currentMap = null;
     let selectedWeekday = new Date().getDay(); // 0=So, 1=Mo, ...
     let chargingMarkers = [];
@@ -1200,7 +1244,12 @@
 
       input.addEventListener('input', (e) => {
         const query = e.target.value;
-        if (!query || query.length < 2) { hideDropdown(dropdown); return; }
+        if (!query || query.length < 2) {
+          // Show history when field is cleared/short
+          if (query.length === 0) showHistoryDropdown(dropdown, input);
+          else hideDropdown(dropdown);
+          return;
+        }
 
         autocompleteService.getPlacePredictions({
           input: query,
@@ -1215,7 +1264,12 @@
       });
 
       input.addEventListener('focus', (e) => {
-        if (e.target.value.length >= 2) dropdown.classList.add('active');
+        if (e.target.value.length >= 2) {
+          dropdown.classList.add('active');
+        } else {
+          // Show history on focus when field is empty
+          showHistoryDropdown(dropdown, input);
+        }
       });
     }
 
@@ -1230,6 +1284,7 @@
           + '<div class="dropdown-item-secondary">' + (secondaryText || '') + '</div>';
         item.addEventListener('click', () => {
           input.value = pred.description;
+          saveToHistory(pred.description);
           hideDropdown(dropdown);
           sessionToken = new google.maps.places.AutocompleteSessionToken();
         });
@@ -1432,12 +1487,31 @@
       const evData = EV_DATABASE[modelId];
       if (!evData) return 0;
 
-      const usableRange = evData.wltp * REAL_WORLD_RANGE_FACTOR * (startBattery - endBattery) / 100;
-      if (distanceKm <= usableRange) return 0;
+      const realRange = evData.wltp * REAL_WORLD_RANGE_FACTOR;
+      const kmPerPercent = realRange / 100;
 
-      const chargableRange = evData.wltp * REAL_WORLD_RANGE_FACTOR * (80 - endBattery) / 100;
-      const stopsNeeded = Math.ceil((distanceKm - usableRange) / chargableRange);
-      return stopsNeeded * 25; // 25 min per stop
+      // Can we reach destination without charging?
+      if (startBattery - distanceKm / kmPerPercent >= endBattery) return 0;
+
+      // Simulate journey: intermediate stops drain to MIN_CHARGE_SOC (10%)
+      const MIN_CHARGE_SOC = 10;
+      var currentSoC = startBattery;
+      var kmCovered = 0;
+      var stops = 0;
+
+      while (true) {
+        var kmRemaining = distanceKm - kmCovered;
+        // Can we reach destination with endBattery remaining?
+        if (currentSoC - kmRemaining / kmPerPercent >= endBattery) break;
+        // Drive until MIN_CHARGE_SOC, then charge
+        var drivableKm = (currentSoC - MIN_CHARGE_SOC) * kmPerPercent;
+        kmCovered += drivableKm;
+        stops++;
+        currentSoC = 80;
+        if (stops > 50) break; // safety limit
+      }
+
+      return stops * 25; // 25 min per stop
     }
 
     function displayEVInfo(distanceKm, chargingTimeMin) {
@@ -1646,29 +1720,29 @@
       var distanceKm = leg.distance.value / 1000;
       var tesla = isTesla(modelId);
 
-      // Use same math as getChargingTime to determine stops
-      var usableRange = realRange * (startBattery - endBattery) / 100;
-      if (distanceKm <= usableRange) {
+      // Can we reach destination without charging?
+      var kmPerPercent = realRange / 100;
+      if (startBattery - distanceKm / kmPerPercent >= endBattery) {
         document.getElementById('charging-stops-list').style.display = 'none';
         return;
       }
 
-      var chargeRange = realRange * (80 - endBattery) / 100; // km per charge (10%→80%)
-      var stopsNeeded = Math.ceil((distanceKm - usableRange) / chargeRange);
-
-      // Simulate battery drain along route to find realistic stop positions + SoC
+      // Simulate journey: intermediate stops drain to MIN_CHARGE_SOC (10%)
+      var MIN_CHARGE_SOC = 10;
       var chargingStops = [];
-      var kmPerPercent = realRange / 100;
       var currentSoC = startBattery;
       var lastChargeKm = 0;
 
-      for (var s = 0; s < stopsNeeded; s++) {
-        // How far can we drive from current position with currentSoC?
-        var rangeLeft = (currentSoC - endBattery) * kmPerPercent;
-        var stopKm = lastChargeKm + rangeLeft;
-        if (stopKm > distanceKm) stopKm = distanceKm - 5;
+      for (var safety = 0; safety < 50; safety++) {
+        var kmRemaining = distanceKm - lastChargeKm;
+        // Can we reach destination with endBattery remaining?
+        if (currentSoC - kmRemaining / kmPerPercent >= endBattery) break;
 
-        // SoC at arrival = how much battery is left after driving rangeLeft km
+        // Drive until MIN_CHARGE_SOC
+        var drivableKm = (currentSoC - MIN_CHARGE_SOC) * kmPerPercent;
+        var stopKm = lastChargeKm + drivableKm;
+        if (stopKm >= distanceKm - 5) stopKm = distanceKm - 5;
+
         var kmDriven = stopKm - lastChargeKm;
         var socAtArrival = Math.max(0, Math.round(currentSoC - kmDriven / kmPerPercent));
 
@@ -1685,6 +1759,7 @@
         lastChargeKm = stopKm;
       }
 
+      var stopsNeeded = chargingStops.length;
       console.log('[Fahrcast] Charging: ' + stopsNeeded + ' stops needed for ' + distanceKm.toFixed(0) + 'km (range=' + realRange.toFixed(0) + 'km, startSoC=' + startBattery + '%)');
 
       // Render all stops immediately
@@ -1775,7 +1850,7 @@
       });
     });
 
-    console.log('[Fahrcast v29] UI initialized OK, lang=' + currentLang);
+    console.log('[Fahrcast v30] UI initialized OK, lang=' + currentLang);
 
     // Timeout: if Maps hasn't loaded after 8 seconds, show clear error
     setTimeout(function() {
