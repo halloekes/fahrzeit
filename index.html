@@ -396,7 +396,7 @@
       </div>
       <div class="logo">FAHRCAST</div>
       <div class="subtitle" id="subtitle"></div>
-      <div style="font-size:10px;color:var(--muted);margin-top:4px;" id="version-tag">v24</div>
+      <div style="font-size:10px;color:var(--muted);margin-top:4px;" id="version-tag">v25</div>
     </header>
 
     <div class="form-card">
@@ -1582,200 +1582,144 @@
 
     function addChargingMarkers(route) {
       // Clear old markers
-      chargingMarkers.forEach(m => m.setMap(null));
+      chargingMarkers.forEach(function(m) { m.setMap(null); });
       chargingMarkers = [];
 
-      const leg = route.legs[0];
-      const modelId = document.getElementById('ev-model').value;
+      var leg = route.legs[0];
+      var modelId = document.getElementById('ev-model').value;
       if (!modelId) return;
-      const startBattery = parseInt(document.getElementById('ev-start-battery').value);
-      const evData = EV_DATABASE[modelId];
-      const fullRange = evData.wltp * REAL_WORLD_RANGE_FACTOR;
-      const kmPerPercent = fullRange / 100;
+      var startBattery = parseInt(document.getElementById('ev-start-battery').value);
+      var evData = EV_DATABASE[modelId];
+      var fullRange = evData.wltp * REAL_WORLD_RANGE_FACTOR;
+      var kmPerPercent = fullRange / 100;
+      var tesla = isTesla(modelId);
 
-      // Find positions along route where charging is needed
-      let currentSoC = startBattery;
-      const steps = leg.steps || [];
-      const chargingNeededAt = []; // {position, cumulativeKm, socAtArrival}
+      // Calculate positions along route where charging is needed
+      var currentSoC = startBattery;
+      var steps = leg.steps || [];
+      var chargingStops = [];
+      var cumulativeKm = 0;
 
-      let cumulativeKm = 0;
-      for (let i = 0; i < steps.length; i++) {
-        const step = steps[i];
-        const stepKm = step.distance.value / 1000;
+      for (var i = 0; i < steps.length; i++) {
+        var stepKm = steps[i].distance.value / 1000;
         cumulativeKm += stepKm;
         currentSoC -= stepKm / kmPerPercent;
 
         if (currentSoC <= 15) {
-          chargingNeededAt.push({
-            position: step.end_location,
+          chargingStops.push({
+            position: steps[i].end_location,
             cumulativeKm: cumulativeKm,
             socAtArrival: Math.max(0, Math.round(currentSoC)),
+            name: null, address: null, rating: null, isSupercharger: false,
           });
-          currentSoC = 80; // assume charge to 80%
+          currentSoC = 80;
         }
       }
 
-      if (chargingNeededAt.length === 0) {
+      if (chargingStops.length === 0) {
         document.getElementById('charging-stops-list').style.display = 'none';
         return;
       }
 
-      // Show searching state
-      const listEl = document.getElementById('charging-stops-list');
-      listEl.style.display = 'block';
-      listEl.innerHTML = '<div class="charging-stop-searching">' + t('charging_searching') + '</div>';
+      // RENDER ALL STOPS IMMEDIATELY with basic data
+      renderChargingStops(chargingStops, tesla);
 
-      const tesla = isTesla(modelId);
-
-      // Search for charging stations SEQUENTIALLY with robust error handling
-      const stopsData = [];
-      const DELAY_BETWEEN = 1500; // 1.5s between Places API requests
-
-      function makeFallback(stop) {
-        return {
-          name: t('charging_searched'),
-          address: t('charging_not_found'),
-          isSupercharger: false,
-          cumulativeKm: stop.cumulativeKm,
-          socAtArrival: stop.socAtArrival,
-          position: stop.position,
-        };
-      }
-
-      function searchNextStop(idx) {
-        if (idx >= chargingNeededAt.length) {
-          console.log('[Fahrcast] All ' + stopsData.length + ' charging stops resolved, rendering');
-          renderChargingStops(stopsData);
-          return;
-        }
-        var stop = chargingNeededAt[idx];
-        console.log('[Fahrcast] Searching charging stop ' + (idx + 1) + '/' + chargingNeededAt.length);
-
+      // Add map markers for each stop
+      chargingStops.forEach(function(stop, idx) {
         try {
-          findChargingStation(stop.position, tesla, stop, idx, function(result) {
-            stopsData.push(result || makeFallback(stop));
-            setTimeout(function() { searchNextStop(idx + 1); }, DELAY_BETWEEN);
+          var marker = new google.maps.Marker({
+            position: stop.position, map: currentMap,
+            title: t('charging_stop_label', {idx: idx + 1, name: '⚡'}),
+            icon: { url: tesla ? 'https://maps.google.com/mapfiles/ms/icons/red-dot.png' : 'https://maps.google.com/mapfiles/ms/icons/blue-dot.png', scaledSize: new google.maps.Size(36, 36) },
           });
-        } catch (e) {
-          console.warn('[Fahrcast] findChargingStation threw for stop ' + idx + ':', e);
-          stopsData.push(makeFallback(stop));
-          setTimeout(function() { searchNextStop(idx + 1); }, DELAY_BETWEEN);
-        }
-      }
-      searchNextStop(0);
+          chargingMarkers.push(marker);
+        } catch (e) { console.warn('[Fahrcast] Marker error:', e); }
+      });
+
+      // THEN try to enhance with Places API data (best effort, one at a time)
+      enhanceStopsWithPlaces(chargingStops, tesla, 0);
     }
 
-    function findChargingStation(position, tesla, stopInfo, idx, callback) {
-      var cumulativeKm = stopInfo.cumulativeKm;
-      var socAtArrival = stopInfo.socAtArrival;
-      var fallback = {
-        name: t('charging_searched'),
-        address: t('charging_not_found'),
-        isSupercharger: false,
-        cumulativeKm: cumulativeKm,
-        socAtArrival: socAtArrival,
-        position: position,
-      };
+    function enhanceStopsWithPlaces(stops, tesla, idx) {
+      if (idx >= stops.length) return;
 
       var ps;
-      try { ps = getPlacesService(); } catch (e) { ps = null; }
-      if (!ps) {
-        console.warn('[Fahrcast] No PlacesService for stop ' + idx);
-        callback(fallback);
-        return;
-      }
+      try { ps = getPlacesService(); } catch (e) { return; }
+      if (!ps) return;
 
-      // Safety timeout — always fire callback even if API is silent
-      var done = false;
-      function finish(result) {
-        if (done) return;
-        done = true;
-        clearTimeout(timer);
-        callback(result);
-      }
-      var timer = setTimeout(function() {
-        console.warn('[Fahrcast] Timeout for charging stop ' + idx);
-        finish(fallback);
-      }, 6000);
-
-      var keyword = tesla ? 'Tesla Supercharger' : 'Schnellladestation Elektroauto';
+      var stop = stops[idx];
+      var keyword = tesla ? 'Tesla Supercharger' : 'Ladestation Elektroauto';
 
       try {
         ps.nearbySearch({
-          location: position,
-          radius: 10000,
+          location: stop.position,
+          radius: 15000,
           keyword: keyword,
-          type: 'point_of_interest',
         }, function(results, status) {
           try {
-            console.log('[Fahrcast] nearbySearch stop ' + idx + ' status: ' + status + ', results: ' + (results ? results.length : 0));
             if (status === 'OK' && results && results.length > 0) {
               var best = results[0];
               var bestDist = Infinity;
-              var pLat = position.lat(), pLng = position.lng();
+              var pLat = stop.position.lat(), pLng = stop.position.lng();
               results.forEach(function(r) {
                 var dLat = r.geometry.location.lat() - pLat;
                 var dLng = r.geometry.location.lng() - pLng;
                 var d = dLat * dLat + dLng * dLng;
                 if (d < bestDist) { bestDist = d; best = r; }
               });
+              stop.name = best.name;
+              stop.address = best.vicinity || '';
+              stop.rating = best.rating || null;
+              stop.isSupercharger = tesla || (best.name && best.name.toLowerCase().includes('supercharger'));
 
-              try {
-                var marker = new google.maps.Marker({
-                  position: best.geometry.location, map: currentMap, title: best.name,
-                  icon: { url: tesla ? 'https://maps.google.com/mapfiles/ms/icons/red-dot.png' : 'https://maps.google.com/mapfiles/ms/icons/blue-dot.png', scaledSize: new google.maps.Size(36, 36) },
-                });
-                chargingMarkers.push(marker);
-                var infoWindow = new google.maps.InfoWindow({
-                  content: '<div style="font-family:sans-serif;font-size:13px;max-width:200px"><strong>' + best.name + '</strong><br>' + (best.vicinity || '') + '<br><span style="color:#666">' + t('charging_stop_label', {idx: idx + 1, name: ''}) + ' ~' + Math.round(cumulativeKm) + ' km</span></div>',
-                });
-                marker.addListener('click', function() { infoWindow.open(currentMap, marker); });
-              } catch (markerErr) { console.warn('[Fahrcast] Marker error stop ' + idx + ':', markerErr); }
+              // Update marker position to actual station
+              if (chargingMarkers[idx]) {
+                try { chargingMarkers[idx].setPosition(best.geometry.location); } catch (e) {}
+              }
 
-              finish({
-                name: best.name, address: best.vicinity || '', rating: best.rating || null,
-                isSupercharger: tesla || (best.name && best.name.toLowerCase().includes('supercharger')),
-                cumulativeKm: cumulativeKm, socAtArrival: socAtArrival, position: best.geometry.location,
-              });
-            } else {
-              console.log('[Fahrcast] No results for stop ' + idx + ', using fallback');
-              try {
-                var marker2 = new google.maps.Marker({ position: position, map: currentMap, title: 'Stop ' + (idx+1), icon: 'https://maps.google.com/mapfiles/ms/icons/blue-dot.png' });
-                chargingMarkers.push(marker2);
-              } catch (e2) {}
-              finish(fallback);
+              // Re-render with updated data
+              renderChargingStops(stops, tesla);
             }
-          } catch (cbErr) {
-            console.error('[Fahrcast] nearbySearch callback error stop ' + idx + ':', cbErr);
-            finish(fallback);
-          }
+          } catch (e) { console.warn('[Fahrcast] Places enhance error stop ' + idx, e); }
+
+          // Next stop after delay
+          setTimeout(function() { enhanceStopsWithPlaces(stops, tesla, idx + 1); }, 2000);
         });
-      } catch (searchErr) {
-        console.error('[Fahrcast] nearbySearch call error stop ' + idx + ':', searchErr);
-        finish(fallback);
+      } catch (e) {
+        setTimeout(function() { enhanceStopsWithPlaces(stops, tesla, idx + 1); }, 2000);
       }
     }
 
-    function renderChargingStops(stopsData) {
-      const listEl = document.getElementById('charging-stops-list');
-      let html = '<div class="charging-stops-list">';
+    function renderChargingStops(stopsData, tesla) {
+      var listEl = document.getElementById('charging-stops-list');
+      var html = '<div class="charging-stops-list">';
 
-      stopsData.forEach((stop, idx) => {
-        if (!stop) return;
-        const networkClass = stop.isSupercharger ? 'supercharger' : 'other';
-        const networkLabel = stop.isSupercharger ? 'Supercharger' : t('charging_station');
-        html += '<div class="charging-stop-card">'
+      stopsData.forEach(function(stop, idx) {
+        var hasDetails = !!stop.name;
+        var displayName = hasDetails ? stop.name : (t('charging_stop_label', {idx: idx + 1, name: ''}).replace(/: $/, ''));
+        var networkClass = stop.isSupercharger ? 'supercharger' : 'other';
+        var networkLabel = stop.isSupercharger ? 'Supercharger' : t('charging_station');
+
+        html += '<div class="charging-stop-card" id="charging-stop-' + idx + '">'
           + '<div class="charging-stop-icon">⚡</div>'
-          + '<div class="charging-stop-info">'
-          + '<div class="charging-stop-name">' + t('charging_stop_label', {idx: idx + 1, name: stop.name}) + '</div>'
-          + '<div class="charging-stop-detail">'
-          + stop.address + '<br>'
-          + t('charging_stop_detail', {km: Math.round(stop.cumulativeKm), soc: stop.socAtArrival})
-          + (stop.rating ? ' · ★ ' + stop.rating.toFixed(1) : '')
-          + '</div>'
-          + '<span class="charging-stop-network ' + networkClass + '">' + networkLabel + '</span>'
-          + '</div>'
-          + '</div>';
+          + '<div class="charging-stop-info">';
+
+        if (hasDetails) {
+          html += '<div class="charging-stop-name">' + t('charging_stop_label', {idx: idx + 1, name: stop.name}) + '</div>'
+            + '<div class="charging-stop-detail">'
+            + stop.address + '<br>'
+            + t('charging_stop_detail', {km: Math.round(stop.cumulativeKm), soc: stop.socAtArrival})
+            + (stop.rating ? ' · ★ ' + stop.rating.toFixed(1) : '')
+            + '</div>'
+            + '<span class="charging-stop-network ' + networkClass + '">' + networkLabel + '</span>';
+        } else {
+          html += '<div class="charging-stop-name">' + t('charging_stop_label', {idx: idx + 1, name: (tesla ? 'Supercharger' : t('charging_station'))}) + '</div>'
+            + '<div class="charging-stop-detail">'
+            + t('charging_stop_detail', {km: Math.round(stop.cumulativeKm), soc: stop.socAtArrival})
+            + '</div>';
+        }
+
+        html += '</div></div>';
       });
 
       html += '</div>';
@@ -1829,7 +1773,7 @@
       });
     });
 
-    console.log('[Fahrcast v24] UI initialized OK, lang=' + currentLang);
+    console.log('[Fahrcast v25] UI initialized OK, lang=' + currentLang);
 
     // Timeout: if Maps hasn't loaded after 8 seconds, show clear error
     setTimeout(function() {
