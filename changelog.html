@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0B3041">
+<title>Release Notes – Fahrcast</title>
+<link href="fonts/fonts.css" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Syne', -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    font-size: 16px; line-height: 1.6; color: #1a2e28;
+    background: #f0f5f3; padding: 0 0 60px 0;
+  }
+  header {
+    background: #0B3041; color: white; padding: 16px 20px;
+    display: flex; align-items: center; gap: 12px;
+    position: sticky; top: 0; z-index: 10;
+  }
+  header a { color: white; text-decoration: none; font-size: 20px; }
+  header h1 { font-size: 18px; font-weight: 600; }
+  .container { max-width: 680px; margin: 0 auto; padding: 24px 20px; }
+  .version-card {
+    background: white; border-radius: 12px; padding: 24px;
+    margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+  }
+  .version-header {
+    display: flex; align-items: baseline; gap: 10px;
+    margin-bottom: 14px; padding-bottom: 10px; border-bottom: 2px solid #d0ddd6;
+  }
+  .version-tag {
+    font-size: 20px; font-weight: 700; color: #0B3041;
+  }
+  .version-date {
+    font-size: 13px; color: #6b8a7e; font-weight: 500;
+  }
+  .version-badge {
+    display: inline-block; font-size: 11px; font-weight: 700;
+    padding: 2px 8px; border-radius: 6px; margin-left: auto;
+    text-transform: uppercase; letter-spacing: 0.5px;
+  }
+  .badge-new { background: #e0f5ec; color: #1a6b44; }
+  .badge-fix { background: #fef3e0; color: #9a6700; }
+  .badge-design { background: #e8eaf6; color: #3949ab; }
+  .change-item {
+    padding: 6px 0; font-size: 15px;
+  }
+  .change-item + .change-item {
+    border-top: 1px solid #f0f5f3;
+  }
+  .change-icon {
+    display: inline-block; width: 22px; text-align: center; margin-right: 6px;
+  }
+  .intro {
+    background: white; border-radius: 12px; padding: 20px 24px;
+    margin-bottom: 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    font-size: 14px; color: #6b8a7e;
+  }
+</style>
+</head>
+<body>
+<header>
+  <a href="index.html" aria-label="Zurueck">&larr;</a>
+  <h1>Release Notes</h1>
+</header>
+
+<div class="container">
+
+<div class="intro">
+  Alle Neuerungen und Verbesserungen in Fahrcast auf einen Blick.
+</div>
+
+<div class="version-card">
+  <div class="version-header">
+    <span class="version-tag">v42</span>
+    <span class="version-date">12. April 2026</span>
+    <span class="version-badge badge-new">Neu</span>
+  </div>
+  <div class="change-item"><span class="change-icon">&#128214;</span> Release Notes hinzugefuegt &ndash; alle Aenderungen jetzt direkt aus dem Footer erreichbar</div>
+</div>
+
+<div class="version-card">
+  <div class="version-header">
+    <span class="version-tag">v41</span>
+    <span class="version-date">12. April 2026</span>
+    <span class="version-badge badge-fix">Fix</span>
+  </div>
+  <div class="change-item"><span class="change-icon">&#128260;</span> Seitenneuladen beim Tippen behoben &ndash; die App laedt sich nicht mehr automatisch neu, wenn ein Update im Hintergrund bereitsteht</div>
+</div>
+
+<div class="version-card">
+  <div class="version-header">
+    <span class="version-tag">v40</span>
+    <span class="version-date">12. April 2026</span>
+    <span class="version-badge badge-new">Neu</span>
+  </div>
+  <div class="change-item"><span class="change-icon">&#9889;</span> Ladestationen zeigen jetzt den Anbieter an (z.B. IONITY, EnBW, E.ON) bei Nicht-Tesla-Fahrzeugen</div>
+  <div class="change-item"><span class="change-icon">&#128267;</span> Ladeberechnung korrigiert &ndash; Start mit niedrigem Akkustand (z.B. 10%) zeigt jetzt korrekte Distanz zum ersten Ladestopp</div>
+  <div class="change-item"><span class="change-icon">&#127912;</span> &bdquo;built with &hearts; and AI&ldquo; aus der Kopfzeile entfernt (bleibt im Footer)</div>
+</div>
+
+<div class="version-card">
+  <div class="version-header">
+    <span class="version-tag">v39</span>
+    <span class="version-date">12. April 2026</span>
+    <span class="version-badge badge-new">Neu</span>
+  </div>
+  <div class="change-item"><span class="change-icon">&#128205;</span> Ladestopps zeigen jetzt den Ortsnamen an (z.B. &bdquo;Supercharger &middot; Leipzig&ldquo;) statt nur &bdquo;Ladestopp 1&ldquo;</div>
+  <div class="change-item"><span class="change-icon">&#128274;</span> Sicherheitsverbesserungen: HTTP-Security-Header, XSS-Schutz, aktualisierte Datenschutzerklaerung</div>
+</div>
+
+<div class="version-card">
+  <div class="version-header">
+    <span class="version-tag">v38</span>
+    <span class="version-date">11. April 2026</span>
+    <span class="version-badge badge-fix">Fix</span>
+  </div>
+  <div class="change-item"><span class="change-icon">&#128269;</span> Adress-Autovervollstaendigung repariert &ndash; erweiterte CSP-Regeln fuer Google-Dienste</div>
+</div>
+
+<div class="version-card">
+  <div class="version-header">
+    <span class="version-tag">v35 &ndash; v37</span>
+    <span class="version-date">11. April 2026</span>
+    <span class="version-badge badge-design">Design</span>
+  </div>
+  <div class="change-item"><span class="change-icon">&#128153;</span> &bdquo;built with &hearts; and AI&ldquo; im Footer und Kopfzeile hinzugefuegt</div>
+  <div class="change-item"><span class="change-icon">&copy;</span> Copyright-Hinweis im Footer</div>
+  <div class="change-item"><span class="change-icon">&#128737;</span> DSGVO-Konformitaet: Datenschutzerklaerung, Impressum, Sicherheits-Hardening</div>
+</div>
+
+<div class="version-card">
+  <div class="version-header">
+    <span class="version-tag">v33 &ndash; v34</span>
+    <span class="version-date">11. April 2026</span>
+    <span class="version-badge badge-new">Neu</span>
+  </div>
+  <div class="change-item"><span class="change-icon">&#128279;</span> Route teilen per QR-Code und Share-Karte (unterhalb der Karte)</div>
+  <div class="change-item"><span class="change-icon">&#128663;</span> Ladestopps werden jetzt im Google-Maps-Link mit uebernommen</div>
+  <div class="change-item"><span class="change-icon">&#128161;</span> Hinweis zur Auswahl des richtigen EV-Modells</div>
+</div>
+
+<div class="version-card">
+  <div class="version-header">
+    <span class="version-tag">v32</span>
+    <span class="version-date">10. April 2026</span>
+    <span class="version-badge badge-new">Neu</span>
+  </div>
+  <div class="change-item"><span class="change-icon">&#128187;</span> Zweispaltiges Desktop-Layout ab 1024px Bildschirmbreite</div>
+  <div class="change-item"><span class="change-icon">&#128736;</span> Bugfixes: Toggle-Buttons, versteckte Karten auf Desktop</div>
+</div>
+
+<div class="version-card">
+  <div class="version-header">
+    <span class="version-tag">v31</span>
+    <span class="version-date">10. April 2026</span>
+    <span class="version-badge badge-new">Neu</span>
+  </div>
+  <div class="change-item"><span class="change-icon">&#128204;</span> Zwischenstopps: bis zu 5 Zwischenziele auf der Route hinzufuegen</div>
+</div>
+
+<div class="version-card">
+  <div class="version-header">
+    <span class="version-tag">v30</span>
+    <span class="version-date">10. April 2026</span>
+    <span class="version-badge badge-new">Neu</span>
+  </div>
+  <div class="change-item"><span class="change-icon">&#128267;</span> Realistischer Akkustand an jedem Ladestopp</div>
+  <div class="change-item"><span class="change-icon">&#128336;</span> Suchverlauf: letzte Eingaben werden vorgeschlagen</div>
+</div>
+
+<div class="version-card">
+  <div class="version-header">
+    <span class="version-tag">v28 &ndash; v29</span>
+    <span class="version-date">9. April 2026</span>
+    <span class="version-badge badge-new">Neu</span>
+  </div>
+  <div class="change-item"><span class="change-icon">&#9889;</span> Alle Ladestopps werden berechnet und auf der Karte angezeigt</div>
+  <div class="change-item"><span class="change-icon">&#128664;</span> Tesla Performance-Modelle hinzugefuegt</div>
+  <div class="change-item"><span class="change-icon">&#128267;</span> SoC-Berechnung an jedem Stopp (Ankunft &rarr; Abfahrt)</div>
+</div>
+
+<div class="version-card">
+  <div class="version-header">
+    <span class="version-tag">v25 &ndash; v27</span>
+    <span class="version-date">8. April 2026</span>
+    <span class="version-badge badge-fix">Fix</span>
+  </div>
+  <div class="change-item"><span class="change-icon">&#128260;</span> Ladestopps werden zuverlaessiger und schneller gefunden</div>
+  <div class="change-item"><span class="change-icon">&#128260;</span> Zeitsynchronisation zwischen Abfahrt/Ankunft-Modus korrigiert</div>
+</div>
+
+<div class="version-card">
+  <div class="version-header">
+    <span class="version-tag">v21 &ndash; v22</span>
+    <span class="version-date">7. April 2026</span>
+    <span class="version-badge badge-new">Neu</span>
+  </div>
+  <div class="change-item"><span class="change-icon">&#127760;</span> Zweisprachig: Deutsch/Englisch umschaltbar</div>
+  <div class="change-item"><span class="change-icon">&#127752;</span> Verkehrsbalken mit Farbverlauf fuer bessere Lesbarkeit</div>
+  <div class="change-item"><span class="change-icon">&#128260;</span> Korrekturen bei Verkehrskontext, Ankunftszeit und Ladestopps</div>
+</div>
+
+<div class="version-card">
+  <div class="version-header">
+    <span class="version-tag">v19 &ndash; v20</span>
+    <span class="version-date">6. April 2026</span>
+    <span class="version-badge badge-design">Design</span>
+  </div>
+  <div class="change-item"><span class="change-icon">&#127912;</span> Rebranding zu <strong>FAHRCAST</strong> mit neuem Logo und Farbschema (#0B3041)</div>
+  <div class="change-item"><span class="change-icon">&#127912;</span> Einheitliches Button-Design, optimierte Scroll-Picker auf iPhone</div>
+</div>
+
+<div class="version-card">
+  <div class="version-header">
+    <span class="version-tag">v16 &ndash; v18</span>
+    <span class="version-date">5. April 2026</span>
+    <span class="version-badge badge-new">Neu</span>
+  </div>
+  <div class="change-item"><span class="change-icon">&#128663;</span> Wochentag- und uhrzeitabhaengiger Verkehrskontext in der Verzoegerungsanzeige</div>
+  <div class="change-item"><span class="change-icon">&#127912;</span> Neues App-Icon (Infinity-Design)</div>
+  <div class="change-item"><span class="change-icon">&#128260;</span> Umstieg auf Directions API fuer genauere Ergebnisse</div>
+</div>
+
+<div class="version-card">
+  <div class="version-header">
+    <span class="version-tag">v1 &ndash; v15</span>
+    <span class="version-date">April 2026</span>
+    <span class="version-badge badge-new">Grundlagen</span>
+  </div>
+  <div class="change-item"><span class="change-icon">&#128640;</span> Progressive Web App mit Offline-Support</div>
+  <div class="change-item"><span class="change-icon">&#128663;</span> Fahrzeitberechnung mit Google Maps fuer individuelle Strecken</div>
+  <div class="change-item"><span class="change-icon">&#9889;</span> E-Auto-Modus: Ladestopps und Ladezeit entlang der Route</div>
+  <div class="change-item"><span class="change-icon">&#128205;</span> Interaktive Karte mit Routenanzeige</div>
+  <div class="change-item"><span class="change-icon">&#128269;</span> Adress-Autovervollstaendigung</div>
+  <div class="change-item"><span class="change-icon">&#128197;</span> Abfahrts- und Ankunftszeit-Modus mit Scroll-Picker</div>
+</div>
+
+</div>
+</body>
+</html>
