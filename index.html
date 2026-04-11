@@ -763,7 +763,9 @@
         traffic_jam: 'Starker Verkehr / Staugefahr (+{min} Min.)',
         // Traffic context
         ctx_commute_morning: 'Berufsverkehr: Auf dieser Strecke ist {day}morgen typischerweise mit erhöhtem Pendleraufkommen zu rechnen.',
+        ctx_commute_morning_clear: 'Trotz Berufsverkehr: Auf dieser Strecke zeigt die Prognose für {day}morgen kaum Verzögerungen.',
         ctx_commute_evening: 'Feierabendverkehr: {day}nachmittag ist auf Autobahnen mit dichtem Verkehr und Staus in Ballungsräumen zu rechnen.',
+        ctx_commute_evening_clear: 'Trotz Feierabendverkehr: Auf dieser Strecke zeigt die Prognose für {day}nachmittag kaum Verzögerungen.',
         ctx_night: 'Nachtfahrt: Zu dieser Uhrzeit ist die Strecke typischerweise frei. Wenig Verkehr erwartet.',
         ctx_off_peak: 'Außerhalb der Stoßzeiten: Verkehrsaufkommen {day} um {time} ist auf dieser Strecke typischerweise moderat.',
         ctx_sat_morning: 'Samstag-Reiseverkehr: Vormittags kann es auf Autobahnen in Richtung Ausflugs- und Urlaubsgebiete voller werden.',
@@ -776,6 +778,8 @@
         charging_stop_detail: 'Nach ~{km} km · Akku bei ~{soc}% → 80%',
         charging_searched: 'Ladestation gesucht',
         charging_not_found: 'Keine Station in 10 km gefunden',
+        charging_searching: 'Lade Ladestationen entlang der Route...',
+        charging_station: 'Ladestation',
       },
       en: {
         subtitle: 'Calculate your travel time with typical traffic conditions',
@@ -838,7 +842,9 @@
         traffic_heavy: 'Heavy traffic (+{min} min)',
         traffic_jam: 'Congestion / traffic jam risk (+{min} min)',
         ctx_commute_morning: 'Rush hour: {day} mornings on this route typically see high commuter traffic.',
+        ctx_commute_morning_clear: 'Despite rush hour: The forecast for {day} morning shows little delay on this route.',
         ctx_commute_evening: 'Evening rush: {day} afternoons see dense traffic and congestion in urban areas.',
+        ctx_commute_evening_clear: 'Despite evening rush: The forecast for {day} afternoon shows little delay on this route.',
         ctx_night: 'Night driving: Roads are typically clear at this time. Little traffic expected.',
         ctx_off_peak: 'Off-peak: Traffic on {day} at {time} is typically moderate on this route.',
         ctx_sat_morning: 'Saturday travel: Mornings can see heavier traffic towards leisure and holiday destinations.',
@@ -851,6 +857,8 @@
         charging_stop_detail: 'After ~{km} km · Battery at ~{soc}% → 80%',
         charging_searched: 'Charging station search',
         charging_not_found: 'No station found within 10 km',
+        charging_searching: 'Searching for charging stations along the route...',
+        charging_station: 'Charging station',
       }
     };
 
@@ -1362,7 +1370,8 @@
             // Show traffic info for this day/time
             var trafficDelayMin = Math.round((trafficSec - baseSec) / 60);
             var hasTrafficData = !!leg.duration_in_traffic;
-            var depTime = departureTime || new Date(arrivalTime.getTime() - trafficSec * 1000);
+            // In arrival mode, include charging time to match displayed departure times
+            var depTime = departureTime || new Date(arrivalTime.getTime() - (trafficSec + chargingTimeMin * 60) * 1000);
             displayDelayInfo(trafficDelayMin, baseSec, trafficSec, hasTrafficData, depTime, distanceKm);
 
             resetBtn();
@@ -1492,16 +1501,29 @@
 
       var label = t('traffic_label', {day: dayName, time: timeStr});
 
-      // Build contextual detail text based on day and time
+      // Build contextual detail text — must be consistent with actual traffic data
       var hour = depTime.getHours();
       var day = depTime.getDay(); // 0=So
       var details = [];
+      var isRushHourTime = (day >= 1 && day <= 5 && ((hour >= 6 && hour <= 9) || (hour >= 15 && hour <= 18)));
+      var isFridayTravel = (day === 5 && hour >= 13 && hour <= 19);
 
-      if (day >= 1 && day <= 5) {
+      // Only show "heavy traffic expected" context if the actual data confirms it
+      if (isFridayTravel && ratio >= 1.15) {
+        details = [t('ctx_friday')];
+      } else if (day >= 1 && day <= 5) {
         if (hour >= 6 && hour <= 9) {
-          details.push(t('ctx_commute_morning', {day: dayName}));
+          if (ratio >= 1.15) {
+            details.push(t('ctx_commute_morning', {day: dayName}));
+          } else {
+            details.push(t('ctx_commute_morning_clear', {day: dayName}));
+          }
         } else if (hour >= 15 && hour <= 18) {
-          details.push(t('ctx_commute_evening', {day: dayName}));
+          if (ratio >= 1.15) {
+            details.push(t('ctx_commute_evening', {day: dayName}));
+          } else {
+            details.push(t('ctx_commute_evening_clear', {day: dayName}));
+          }
         } else if (hour >= 21 || hour <= 5) {
           details.push(t('ctx_night'));
         } else {
@@ -1509,16 +1531,20 @@
         }
       } else {
         if (day === 6 && hour >= 9 && hour <= 14) {
-          details.push(t('ctx_sat_morning'));
+          if (ratio >= 1.15) {
+            details.push(t('ctx_sat_morning'));
+          } else {
+            details.push(t('ctx_weekend', {day: dayName, time: timeStr}));
+          }
         } else if (day === 0 && hour >= 15 && hour <= 20) {
-          details.push(t('ctx_sun_afternoon'));
+          if (ratio >= 1.15) {
+            details.push(t('ctx_sun_afternoon'));
+          } else {
+            details.push(t('ctx_weekend', {day: dayName, time: timeStr}));
+          }
         } else {
           details.push(t('ctx_weekend', {day: dayName, time: timeStr}));
         }
-      }
-
-      if (day === 5 && hour >= 13 && hour <= 19) {
-        details = [t('ctx_friday')];
       }
 
       if (distanceKm > 400) {
@@ -1597,7 +1623,7 @@
       // Show searching state
       const listEl = document.getElementById('charging-stops-list');
       listEl.style.display = 'block';
-      listEl.innerHTML = '<div class="charging-stop-searching">Lade Ladestationen entlang der Route...</div>';
+      listEl.innerHTML = '<div class="charging-stop-searching">' + t('charging_searching') + '</div>';
 
       const tesla = isTesla(modelId);
 
@@ -1618,10 +1644,36 @@
 
     function findChargingStation(position, tesla, cumulativeKm, socAtArrival, idx, callback) {
       const ps = getPlacesService();
-      if (!ps) { callback(null); return; }
+      if (!ps) {
+        // PlacesService not available — return a fallback entry instead of null
+        callback({
+          name: t('charging_searched'),
+          address: t('charging_not_found'),
+          isSupercharger: false,
+          cumulativeKm: cumulativeKm,
+          socAtArrival: socAtArrival,
+          position: position,
+        });
+        return;
+      }
+
+      // Safety timeout — if Places API doesn't respond within 5s, return fallback
+      var callbackFired = false;
+      var safetyTimeout = setTimeout(function() {
+        if (!callbackFired) {
+          callbackFired = true;
+          callback({
+            name: t('charging_searched'),
+            address: t('charging_not_found'),
+            isSupercharger: false,
+            cumulativeKm: cumulativeKm,
+            socAtArrival: socAtArrival,
+            position: position,
+          });
+        }
+      }, 5000);
 
       // Search for EV charging stations nearby
-      // Tesla: prefer Superchargers; Others: search for any EV charger (incl. Supercharger)
       const keyword = tesla ? 'Tesla Supercharger' : 'Schnellladestation Elektroauto';
 
       ps.nearbySearch({
@@ -1630,6 +1682,9 @@
         keyword: keyword,
         type: 'point_of_interest',
       }, (results, status) => {
+        if (callbackFired) return;
+        callbackFired = true;
+        clearTimeout(safetyTimeout);
         if (status === google.maps.places.PlacesServiceStatus.OK && results && results.length > 0) {
           // Pick the closest result
           // Sort by distance, pick closest (simple lat/lng diff)
@@ -1704,7 +1759,7 @@
       stopsData.forEach((stop, idx) => {
         if (!stop) return;
         const networkClass = stop.isSupercharger ? 'supercharger' : 'other';
-        const networkLabel = stop.isSupercharger ? 'Supercharger' : 'Ladestation';
+        const networkLabel = stop.isSupercharger ? 'Supercharger' : t('charging_station');
         html += '<div class="charging-stop-card">'
           + '<div class="charging-stop-icon">⚡</div>'
           + '<div class="charging-stop-info">'
