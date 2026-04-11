@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="de">
+<html lang="de" id="html-root">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -341,13 +341,20 @@
     .arrival-card.bestguess .risk-dot { background: var(--accent2); }
     .arrival-card.relaxed .risk-dot { background: var(--warning); }
 
+    .lang-toggle { display: flex; gap: 0; border-radius: 8px; overflow: hidden; border: 1.5px solid var(--border); margin-bottom: 8px; align-self: center; }
+    .lang-btn { background: var(--surface); color: var(--muted); border: none; padding: 4px 12px; font-size: 12px; font-weight: 600; font-family: 'Syne', sans-serif; cursor: pointer; transition: all 0.2s; }
+    .lang-btn.active { background: var(--accent); color: #fff; }
+
     .delay-info { background: var(--surface); border: 1.5px solid var(--border); border-radius: 12px; padding: 16px; margin-bottom: 20px; }
     .delay-top { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
-    .delay-icon { font-size: 24px; flex-shrink: 0; }
+    .delay-icon { width: 24px; height: 24px; border-radius: 50%; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 14px; color: #fff; font-weight: 700; }
+    .delay-icon.green { background: #22a34a; }
+    .delay-icon.yellow { background: #d4960a; }
+    .delay-icon.red { background: #c53030; }
     .delay-text-label { font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--muted); letter-spacing: 0.5px; margin-bottom: 2px; }
     .delay-text-main { font-size: 14px; font-weight: 600; line-height: 1.3; }
     .delay-bar { width: 100%; height: 6px; background: var(--surface2); border-radius: 3px; overflow: hidden; }
-    .delay-bar-fill { height: 100%; background: var(--success); transition: width 0.3s ease, background-color 0.3s ease; border-radius: 3px; }
+    .delay-bar-fill { height: 100%; transition: width 0.3s ease; border-radius: 3px; }
 
     .map-container { background: var(--surface); border: 1.5px solid var(--border); border-radius: 16px; overflow: hidden; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); display: none; }
     .map-container.visible { display: block; }
@@ -383,50 +390,46 @@
 <body>
   <div class="container">
     <header>
+      <div class="lang-toggle" id="lang-toggle">
+        <button type="button" class="lang-btn active" data-lang="de">DE</button>
+        <button type="button" class="lang-btn" data-lang="en">EN</button>
+      </div>
       <div class="logo">FAHRCAST</div>
-      <div class="subtitle">Reisezeit-Rechner mit Echtzeit-Verkehr</div>
-      <div style="font-size:10px;color:var(--muted);margin-top:4px;" id="version-tag">v19</div>
+      <div class="subtitle" id="subtitle"></div>
+      <div style="font-size:10px;color:var(--muted);margin-top:4px;" id="version-tag">v21</div>
     </header>
 
     <div class="form-card">
       <div class="mode-toggle">
-        <button type="button" class="toggle-btn active" data-mode="departure">Ankunftszeit<br>berechnen</button>
-        <button type="button" class="toggle-btn" data-mode="arrival">Abfahrtszeit<br>berechnen</button>
+        <button type="button" class="toggle-btn active" data-mode="departure" id="btn-departure"></button>
+        <button type="button" class="toggle-btn" data-mode="arrival" id="btn-arrival"></button>
       </div>
 
       <div class="form-group">
-        <label for="from">Startort</label>
+        <label for="from" data-i18n="from_label"></label>
         <div class="input-wrapper">
-          <input type="text" id="from" placeholder="Adresse eingeben...">
+          <input type="text" id="from" data-i18n-placeholder="address_placeholder">
           <div class="dropdown" id="from-dropdown"></div>
         </div>
       </div>
       <div class="form-group">
-        <label for="to">Zielort</label>
+        <label for="to" data-i18n="to_label"></label>
         <div class="input-wrapper">
-          <input type="text" id="to" placeholder="Adresse eingeben...">
+          <input type="text" id="to" data-i18n-placeholder="address_placeholder">
           <div class="dropdown" id="to-dropdown"></div>
         </div>
       </div>
 
       <!-- Weekday selector -->
       <div class="form-group">
-        <label>Wochentag</label>
-        <div class="weekday-selector" id="weekday-selector">
-          <button type="button" class="weekday-btn" data-day="1">Mo</button>
-          <button type="button" class="weekday-btn" data-day="2">Di</button>
-          <button type="button" class="weekday-btn" data-day="3">Mi</button>
-          <button type="button" class="weekday-btn" data-day="4">Do</button>
-          <button type="button" class="weekday-btn" data-day="5">Fr</button>
-          <button type="button" class="weekday-btn" data-day="6">Sa</button>
-          <button type="button" class="weekday-btn" data-day="0">So</button>
-        </div>
+        <label data-i18n="weekday_label"></label>
+        <div class="weekday-selector" id="weekday-selector"></div>
       </div>
 
       <!-- Time picker: departure mode -->
       <div id="departure-mode">
         <div class="form-group">
-          <label>Abfahrtszeit</label>
+          <label data-i18n="departure_time_label"></label>
           <div class="wheel-picker-container" id="departure-picker">
             <div>
               <div class="wheel-picker" id="dep-hour-picker">
@@ -448,7 +451,7 @@
       <!-- Time picker: arrival mode -->
       <div id="arrival-mode" style="display: none;">
         <div class="form-group">
-          <label>Gewünschte Ankunftszeit</label>
+          <label data-i18n="arrival_time_label"></label>
           <div class="wheel-picker-container" id="arrival-picker">
             <div>
               <div class="wheel-picker" id="arr-hour-picker">
@@ -470,17 +473,17 @@
       <div class="form-group">
         <div class="checkbox-wrapper">
           <input type="checkbox" id="ev-toggle">
-          <label for="ev-toggle" class="checkbox-label">⚡ Ich fahre ein E-Auto</label>
+          <label for="ev-toggle" class="checkbox-label" data-i18n="ev_toggle_label"></label>
         </div>
       </div>
 
       <div id="ev-section" class="ev-section">
-        <div class="ev-section-title">E-Auto Einstellungen</div>
+        <div class="ev-section-title" data-i18n="ev_settings_title"></div>
         <div class="ev-grid">
           <div class="form-group">
-            <label for="ev-model">Fahrzeugmodell</label>
+            <label for="ev-model" data-i18n="ev_model_label"></label>
             <select id="ev-model">
-              <option value="">-- Modell auswählen --</option>
+              <option value="" data-i18n="ev_model_placeholder"></option>
               <optgroup label="Tesla">
                 <option value="tesla-model-3-lr">Model 3 LR (629 km)</option>
                 <option value="tesla-model-3-sr">Model 3 SR (513 km)</option>
@@ -572,12 +575,12 @@
             </select>
           </div>
           <div class="form-group">
-            <label for="ev-start-battery">Startladung</label>
+            <label for="ev-start-battery" data-i18n="ev_start_battery_label"></label>
             <input type="range" id="ev-start-battery" min="10" max="100" value="80">
             <div class="slider-value"><span id="ev-start-battery-value">80</span>%</div>
           </div>
           <div class="form-group">
-            <label for="ev-end-battery">Zielladung (mindestens)</label>
+            <label for="ev-end-battery" data-i18n="ev_end_battery_label"></label>
             <input type="range" id="ev-end-battery" min="10" max="90" value="10">
             <div class="slider-value"><span id="ev-end-battery-value">10</span>%</div>
           </div>
@@ -601,9 +604,9 @@
 
       <div class="delay-info" id="delay-info" style="display: none;">
         <div class="delay-top">
-          <div class="delay-icon" id="delay-icon">⚠️</div>
+          <div class="delay-icon" id="delay-icon"></div>
           <div>
-            <div class="delay-text-label" id="delay-label">Verzögerungsrisiko</div>
+            <div class="delay-text-label" id="delay-label"></div>
             <div class="delay-text-main" id="delay-text"></div>
           </div>
         </div>
@@ -617,22 +620,22 @@
         <div class="time-card">
           <div class="time-card-time" id="time-optimistic">--:--</div>
           <div class="time-card-info">
-            <div class="time-card-label">Günstig</div>
-            <div class="time-card-desc">Optimaler Verkehr</div>
+            <div class="time-card-label" data-i18n="scenario_optimistic"></div>
+            <div class="time-card-desc" data-i18n="scenario_optimistic_desc"></div>
           </div>
         </div>
         <div class="time-card">
           <div class="time-card-time" id="time-best-guess">--:--</div>
           <div class="time-card-info">
-            <div class="time-card-label">Typisch</div>
-            <div class="time-card-desc">Erwarteter Verkehr</div>
+            <div class="time-card-label" data-i18n="scenario_typical"></div>
+            <div class="time-card-desc" data-i18n="scenario_typical_desc"></div>
           </div>
         </div>
         <div class="time-card">
           <div class="time-card-time" id="time-pessimistic">--:--</div>
           <div class="time-card-info">
-            <div class="time-card-label">Ungünstig</div>
-            <div class="time-card-desc">Verzögerter Verkehr</div>
+            <div class="time-card-label" data-i18n="scenario_pessimistic"></div>
+            <div class="time-card-desc" data-i18n="scenario_pessimistic_desc"></div>
           </div>
         </div>
       </div>
@@ -642,24 +645,24 @@
           <div class="risk-dot"></div>
           <div class="arrival-time" id="arrival-safe">--:--</div>
           <div class="arrival-info">
-            <div class="arrival-label">Entspannt</div>
-            <div class="arrival-desc">Früh genug losfahren</div>
+            <div class="arrival-label" data-i18n="arrival_relaxed"></div>
+            <div class="arrival-desc" data-i18n="arrival_relaxed_desc"></div>
           </div>
         </div>
         <div class="arrival-card bestguess">
           <div class="risk-dot"></div>
           <div class="arrival-time" id="arrival-bestguess">--:--</div>
           <div class="arrival-info">
-            <div class="arrival-label">Typisch</div>
-            <div class="arrival-desc">Rechtzeitig ankommen</div>
+            <div class="arrival-label" data-i18n="arrival_typical"></div>
+            <div class="arrival-desc" data-i18n="arrival_typical_desc"></div>
           </div>
         </div>
         <div class="arrival-card relaxed">
           <div class="risk-dot"></div>
           <div class="arrival-time" id="arrival-relaxed">--:--</div>
           <div class="arrival-info">
-            <div class="arrival-label">Knapp</div>
-            <div class="arrival-desc">Riskante Zeitplanung</div>
+            <div class="arrival-label" data-i18n="arrival_tight"></div>
+            <div class="arrival-desc" data-i18n="arrival_tight_desc"></div>
           </div>
         </div>
       </div>
@@ -674,11 +677,11 @@
         <div id="map"></div>
         <div class="route-info">
           <div class="route-info-item">
-            <div class="route-info-label">Entfernung</div>
+            <div class="route-info-label" data-i18n="distance_label"></div>
             <div class="route-info-value" id="route-distance">--</div>
           </div>
           <div class="route-info-item">
-            <div class="route-info-label">Fahrzeit</div>
+            <div class="route-info-label" data-i18n="drive_time_label"></div>
             <div class="route-info-value" id="route-duration">--</div>
           </div>
           <div class="route-info-item">
@@ -690,11 +693,228 @@
     </div>
 
     <footer style="text-align:center;padding:24px 0 16px;font-size:12px;color:var(--muted);">
-      <a href="impressum.html" style="color:var(--muted);text-decoration:none;">Impressum & Datenschutz</a>
+      <a href="impressum.html" style="color:var(--muted);text-decoration:none;" data-i18n="imprint_link"></a>
     </footer>
   </div>
 
   <script>
+    /* ── i18n ── */
+    const I18N = {
+      de: {
+        subtitle: 'Berechne Deine Reisezeit mit typischem Verkehrsaufkommen',
+        btn_departure: 'Ankunftszeit<br>berechnen',
+        btn_arrival: 'Abfahrtszeit<br>berechnen',
+        from_label: 'Startort',
+        to_label: 'Zielort',
+        address_placeholder: 'Adresse eingeben...',
+        weekday_label: 'Wochentag',
+        weekdays_short: ['So','Mo','Di','Mi','Do','Fr','Sa'],
+        weekdays_long: ['Sonntag','Montag','Dienstag','Mittwoch','Donnerstag','Freitag','Samstag'],
+        departure_time_label: 'Abfahrtszeit',
+        arrival_time_label: 'Gewünschte Ankunftszeit',
+        ev_toggle_label: '⚡ Ich fahre ein E-Auto',
+        ev_settings_title: 'E-Auto Einstellungen',
+        ev_model_label: 'Fahrzeugmodell',
+        ev_model_placeholder: '-- Modell auswählen --',
+        ev_start_battery_label: 'Startladung',
+        ev_end_battery_label: 'Zielladung (mindestens)',
+        calculate_btn: 'Berechnen',
+        calculate_btn_loading: '⏳ Maps laden...',
+        calculate_btn_calculating: 'Berechne...',
+        calculate_btn_error: '❌ Maps nicht geladen',
+        hero_label_departure: 'Voraussichtliche Ankunft',
+        hero_label_arrival: 'Empfohlene Abfahrtszeit',
+        hero_meta_departure: 'Abfahrt: {time} · Dauer: {duration}',
+        hero_meta_charging: '+ {min} Min. Ladezeit',
+        hero_meta_arrival: 'Ankunft: {time} (mit Puffer für Verzögerungen)',
+        hero_meta_arrival_charging: 'inkl. {min} Min. Ladezeit',
+        scenario_optimistic: 'Günstig',
+        scenario_optimistic_desc: 'Optimaler Verkehr',
+        scenario_typical: 'Typisch',
+        scenario_typical_desc: 'Erwarteter Verkehr',
+        scenario_pessimistic: 'Ungünstig',
+        scenario_pessimistic_desc: 'Verzögerter Verkehr',
+        arrival_relaxed: 'Entspannt',
+        arrival_relaxed_desc: 'Früh genug losfahren',
+        arrival_typical: 'Typisch',
+        arrival_typical_desc: 'Rechtzeitig ankommen',
+        arrival_tight: 'Knapp',
+        arrival_tight_desc: 'Riskante Zeitplanung',
+        distance_label: 'Entfernung',
+        drive_time_label: 'Fahrzeit',
+        imprint_link: 'Impressum & Datenschutz',
+        ev_stops_info: '⚡ {stops} Ladestopp(s) empfohlen, ca. {min} Min. Ladezeit (in Zeiten eingerechnet)',
+        err_no_address: 'Bitte Start- und Zielort eingeben.',
+        err_maps_not_loaded: 'Google Maps konnte nicht geladen werden. Mögliche Ursachen: API-Key ungültig, keine Abrechnung aktiviert, oder Referrer-Einschränkung falsch.',
+        err_maps_timeout: 'Google Maps konnte nicht geladen werden. Bitte prüfe in der Google Cloud Console: (1) Abrechnung aktiviert? (2) Maps JavaScript API, Places API und Directions API aktiviert? (3) API-Key-Einschränkung korrekt?',
+        err_directions_timeout: 'Google Directions API hat nicht geantwortet. Bitte prüfe ob die Directions API aktiviert ist.',
+        err_route_failed: 'Routenberechnung fehlgeschlagen (Status: {status}). Bitte Adressen prüfen.',
+        err_no_route: 'Keine Route gefunden. Bitte Adressen prüfen.',
+        err_maps_init: 'Google Maps Fehler: {msg}',
+        err_calc: 'Berechnungsfehler: {msg}',
+        err_api_call: 'API-Aufruffehler: {msg}',
+        err_js: 'JS-Fehler: {msg} (Zeile {line})',
+        // Traffic display
+        traffic_label: 'Verkehrsprognose {day} {time}',
+        traffic_free: 'Freie Fahrt erwartet',
+        traffic_light: 'Leichte Verzögerung (+{min} Min.)',
+        traffic_moderate: 'Mäßiger Verkehr (+{min} Min.)',
+        traffic_heavy: 'Erhöhtes Verkehrsaufkommen (+{min} Min.)',
+        traffic_jam: 'Starker Verkehr / Staugefahr (+{min} Min.)',
+        // Traffic context
+        ctx_commute_morning: 'Berufsverkehr: Auf dieser Strecke ist {day}morgen typischerweise mit erhöhtem Pendleraufkommen zu rechnen.',
+        ctx_commute_evening: 'Feierabendverkehr: {day}nachmittag ist auf Autobahnen mit dichtem Verkehr und Staus in Ballungsräumen zu rechnen.',
+        ctx_night: 'Nachtfahrt: Zu dieser Uhrzeit ist die Strecke typischerweise frei. Wenig Verkehr erwartet.',
+        ctx_off_peak: 'Außerhalb der Stoßzeiten: Verkehrsaufkommen {day} um {time} ist auf dieser Strecke typischerweise moderat.',
+        ctx_sat_morning: 'Samstag-Reiseverkehr: Vormittags kann es auf Autobahnen in Richtung Ausflugs- und Urlaubsgebiete voller werden.',
+        ctx_sun_afternoon: 'Sonntag-Rückreiseverkehr: Nachmittags/abends kann es auf Fernstrecken zu Rückstaus durch Wochenendheimkehrer kommen.',
+        ctx_weekend: 'Wochenende: Verkehrsaufkommen am {day} um {time} ist typischerweise gering.',
+        ctx_friday: 'Freitag-Reiseverkehr: Auf Fernstrecken ist Freitagnachmittag traditionell der stärkste Reisetag. Besonders auf A-Autobahnen Richtung Osten und Küste ist mit deutlichen Verzögerungen zu rechnen.',
+        ctx_long_distance: 'Langstrecke ({km} km): Mehrere Ballungsräume auf der Route können zu kumulierten Verzögerungen führen.',
+        ctx_base_vs_traffic: 'Fahrzeit ohne Verkehr: {base} · Mit Verkehr: {traffic}',
+        charging_stop_label: 'Stopp {idx}: {name}',
+        charging_stop_detail: 'Nach ~{km} km · Akku bei ~{soc}% → 80%',
+        charging_searched: 'Ladestation gesucht',
+        charging_not_found: 'Keine Station in 10 km gefunden',
+      },
+      en: {
+        subtitle: 'Calculate your travel time with typical traffic conditions',
+        btn_departure: 'Calculate<br>arrival time',
+        btn_arrival: 'Calculate<br>departure time',
+        from_label: 'Origin',
+        to_label: 'Destination',
+        address_placeholder: 'Enter address...',
+        weekday_label: 'Day of week',
+        weekdays_short: ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'],
+        weekdays_long: ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'],
+        departure_time_label: 'Departure time',
+        arrival_time_label: 'Desired arrival time',
+        ev_toggle_label: '⚡ I drive an EV',
+        ev_settings_title: 'EV Settings',
+        ev_model_label: 'Vehicle model',
+        ev_model_placeholder: '-- Select model --',
+        ev_start_battery_label: 'Starting charge',
+        ev_end_battery_label: 'Target charge (minimum)',
+        calculate_btn: 'Calculate',
+        calculate_btn_loading: '⏳ Loading Maps...',
+        calculate_btn_calculating: 'Calculating...',
+        calculate_btn_error: '❌ Maps not loaded',
+        hero_label_departure: 'Estimated arrival',
+        hero_label_arrival: 'Recommended departure',
+        hero_meta_departure: 'Departure: {time} · Duration: {duration}',
+        hero_meta_charging: '+ {min} min charging time',
+        hero_meta_arrival: 'Arrival: {time} (with buffer for delays)',
+        hero_meta_arrival_charging: 'incl. {min} min charging time',
+        scenario_optimistic: 'Best case',
+        scenario_optimistic_desc: 'Light traffic',
+        scenario_typical: 'Typical',
+        scenario_typical_desc: 'Expected traffic',
+        scenario_pessimistic: 'Worst case',
+        scenario_pessimistic_desc: 'Heavy traffic',
+        arrival_relaxed: 'Relaxed',
+        arrival_relaxed_desc: 'Leave with buffer',
+        arrival_typical: 'Typical',
+        arrival_typical_desc: 'Arrive on time',
+        arrival_tight: 'Tight',
+        arrival_tight_desc: 'Risky schedule',
+        distance_label: 'Distance',
+        drive_time_label: 'Drive time',
+        imprint_link: 'Legal & Privacy',
+        ev_stops_info: '⚡ {stops} charging stop(s) recommended, ~{min} min charging time (included in times)',
+        err_no_address: 'Please enter origin and destination.',
+        err_maps_not_loaded: 'Google Maps could not be loaded. Possible causes: invalid API key, billing not enabled, or referrer restriction.',
+        err_maps_timeout: 'Google Maps could not be loaded. Please check your Google Cloud Console: (1) Billing enabled? (2) Maps JavaScript API, Places API & Directions API enabled? (3) API key restriction correct?',
+        err_directions_timeout: 'Google Directions API did not respond. Please check if the Directions API is enabled.',
+        err_route_failed: 'Route calculation failed (status: {status}). Please check addresses.',
+        err_no_route: 'No route found. Please check addresses.',
+        err_maps_init: 'Google Maps error: {msg}',
+        err_calc: 'Calculation error: {msg}',
+        err_api_call: 'API call error: {msg}',
+        err_js: 'JS error: {msg} (line {line})',
+        traffic_label: 'Traffic forecast {day} {time}',
+        traffic_free: 'Clear roads expected',
+        traffic_light: 'Slight delay (+{min} min)',
+        traffic_moderate: 'Moderate traffic (+{min} min)',
+        traffic_heavy: 'Heavy traffic (+{min} min)',
+        traffic_jam: 'Congestion / traffic jam risk (+{min} min)',
+        ctx_commute_morning: 'Rush hour: {day} mornings on this route typically see high commuter traffic.',
+        ctx_commute_evening: 'Evening rush: {day} afternoons see dense traffic and congestion in urban areas.',
+        ctx_night: 'Night driving: Roads are typically clear at this time. Little traffic expected.',
+        ctx_off_peak: 'Off-peak: Traffic on {day} at {time} is typically moderate on this route.',
+        ctx_sat_morning: 'Saturday travel: Mornings can see heavier traffic towards leisure and holiday destinations.',
+        ctx_sun_afternoon: 'Sunday return traffic: Afternoons/evenings can see congestion from weekend travelers returning.',
+        ctx_weekend: 'Weekend: Traffic on {day} at {time} is typically light.',
+        ctx_friday: 'Friday travel: Friday afternoons are traditionally the busiest travel day, especially on major highways. Significant delays expected.',
+        ctx_long_distance: 'Long distance ({km} km): Multiple urban areas on the route may cause cumulative delays.',
+        ctx_base_vs_traffic: 'Drive time without traffic: {base} · With traffic: {traffic}',
+        charging_stop_label: 'Stop {idx}: {name}',
+        charging_stop_detail: 'After ~{km} km · Battery at ~{soc}% → 80%',
+        charging_searched: 'Charging station search',
+        charging_not_found: 'No station found within 10 km',
+      }
+    };
+
+    let currentLang = (navigator.language || navigator.userLanguage || 'de').startsWith('en') ? 'en' : 'de';
+
+    function t(key, params) {
+      var s = (I18N[currentLang] && I18N[currentLang][key]) || (I18N.de[key]) || key;
+      if (params) {
+        Object.keys(params).forEach(function(k) {
+          s = s.replace('{' + k + '}', params[k]);
+        });
+      }
+      return s;
+    }
+
+    function applyI18n() {
+      // Update html lang
+      document.getElementById('html-root').lang = currentLang;
+      // Subtitle
+      document.getElementById('subtitle').textContent = t('subtitle');
+      // Toggle buttons (innerHTML for <br>)
+      document.getElementById('btn-departure').innerHTML = t('btn_departure');
+      document.getElementById('btn-arrival').innerHTML = t('btn_arrival');
+      // data-i18n text
+      document.querySelectorAll('[data-i18n]').forEach(function(el) {
+        el.textContent = t(el.getAttribute('data-i18n'));
+      });
+      // data-i18n-placeholder
+      document.querySelectorAll('[data-i18n-placeholder]').forEach(function(el) {
+        el.placeholder = t(el.getAttribute('data-i18n-placeholder'));
+      });
+      // Weekday buttons
+      var wdSel = document.getElementById('weekday-selector');
+      var shorts = t('weekdays_short');
+      // Days order: Mo Di Mi Do Fr Sa So = 1 2 3 4 5 6 0
+      var dayOrder = [1,2,3,4,5,6,0];
+      wdSel.innerHTML = '';
+      dayOrder.forEach(function(d) {
+        var btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'weekday-btn';
+        btn.dataset.day = d;
+        btn.textContent = shorts[d];
+        if (d === selectedWeekday) btn.classList.add('active');
+        btn.addEventListener('click', function() {
+          document.querySelectorAll('.weekday-btn').forEach(function(b) { b.classList.remove('active'); });
+          btn.classList.add('active');
+          selectedWeekday = d;
+        });
+        wdSel.appendChild(btn);
+      });
+      // Calculate button (if maps not ready)
+      var calcBtn = document.getElementById('calculate-btn');
+      if (!mapsReady) {
+        calcBtn.textContent = t('calculate_btn_loading');
+      } else if (!calcBtn.disabled) {
+        calcBtn.textContent = t('calculate_btn');
+      }
+      // Lang toggle
+      document.querySelectorAll('.lang-btn').forEach(function(b) {
+        b.classList.toggle('active', b.dataset.lang === currentLang);
+      });
+    }
+
     let autocompleteService, sessionToken, directionsService, directionsRenderer;
     let currentMode = 'departure';
     let lastResults = null;
@@ -874,14 +1094,14 @@
         }
 
         mapsReady = true;
-        document.getElementById('calculate-btn').textContent = 'Berechnen';
+        document.getElementById('calculate-btn').textContent = t('calculate_btn');
         document.getElementById('btn-error-container').style.display = 'none';
         console.log('[Fahrcast] Google Maps loaded, mapsReady = true');
         setupAutocomplete('from', 'from-dropdown');
         setupAutocomplete('to', 'to-dropdown');
       } catch (e) {
         console.error('initApp error:', e);
-        showBtnError('Google Maps Fehler: ' + e.message);
+        showBtnError(t('err_maps_init', {msg: e.message}));
       }
     }
 
@@ -925,18 +1145,18 @@
         try {
           var btn = document.getElementById('calculate-btn');
           if (!mapsReady) {
-            showBtnError('Google Maps konnte nicht geladen werden. Mögliche Ursachen: API-Key ungültig, keine Abrechnung aktiviert, oder Referrer-Einschränkung falsch. Bitte die Google Cloud Console prüfen.');
+            showBtnError(t('err_maps_not_loaded'));
             return;
           }
-          btn.textContent = 'Berechne...';
+          btn.textContent = t('calculate_btn_calculating');
           btn.disabled = true;
           document.getElementById('btn-error-container').style.display = 'none';
-          setTimeout(function() { btn.textContent = 'Berechnen'; btn.disabled = false; }, 15000);
+          setTimeout(function() { btn.textContent = t('calculate_btn'); btn.disabled = false; }, 15000);
           handleCalculate();
         } catch (e) {
           console.error('Calculate error:', e);
-          showBtnError('Fehler: ' + e.message);
-          document.getElementById('calculate-btn').textContent = 'Berechnen';
+          showBtnError(t('err_calc', {msg: e.message}));
+          document.getElementById('calculate-btn').textContent = t('calculate_btn');
           document.getElementById('calculate-btn').disabled = false;
         }
       });
@@ -1023,7 +1243,7 @@
       const to = document.getElementById('to').value.trim();
       document.getElementById('error-container').innerHTML = '';
 
-      if (!from || !to) { showError('Bitte Start- und Zielort eingeben.'); return; }
+      if (!from || !to) { showError(t('err_no_address')); return; }
 
       document.getElementById('results').classList.add('visible');
       document.getElementById('time-cards').style.display = 'none';
@@ -1047,7 +1267,7 @@
     }
 
     function resetBtn() {
-      document.getElementById('calculate-btn').textContent = 'Berechnen';
+      document.getElementById('calculate-btn').textContent = t('calculate_btn');
       document.getElementById('calculate-btn').disabled = false;
     }
 
@@ -1070,7 +1290,7 @@
       var callbackFired = false;
       setTimeout(function() {
         if (!callbackFired) {
-          showBtnError('Google Directions API hat nicht geantwortet. Bitte prüfe in der Google Cloud Console ob die Directions API aktiviert ist und ein Abrechnungskonto verknüpft ist.');
+          showBtnError(t('err_directions_timeout'));
           resetBtn();
         }
       }, 12000);
@@ -1080,13 +1300,13 @@
           callbackFired = true;
           try {
             if (status !== 'OK') {
-              showBtnError('Routenberechnung fehlgeschlagen (Status: ' + status + '). Bitte Adressen prüfen oder Directions API in Google Cloud Console aktivieren.');
+              showBtnError(t('err_route_failed', {status: status}));
               resetBtn();
               return;
             }
 
             if (!result.routes || !result.routes[0] || !result.routes[0].legs || !result.routes[0].legs[0]) {
-              showBtnError('Keine Route gefunden. Bitte Adressen prüfen.');
+              showBtnError(t('err_no_route'));
               resetBtn();
               return;
             }
@@ -1148,14 +1368,14 @@
             resetBtn();
           } catch (e) {
             console.error('Directions callback error:', e);
-            showBtnError('Berechnungsfehler: ' + e.message);
+            showBtnError(t('err_calc', {msg: e.message}));
             resetBtn();
           }
         });
       } catch (e) {
         callbackFired = true;
         console.error('Directions call error:', e);
-        showBtnError('API-Aufruffehler: ' + e.message);
+        showBtnError(t('err_api_call', {msg: e.message}));
         resetBtn();
       }
     }
@@ -1181,7 +1401,7 @@
     function displayEVInfo(distanceKm, chargingTimeMin) {
       const stops = Math.ceil(chargingTimeMin / 25);
       const box = document.getElementById('ev-info-box');
-      box.innerHTML = '<div id="ev-info-text">⚡ ' + stops + ' Ladestopp(s) empfohlen, ca. ' + chargingTimeMin + ' Min. Ladezeit (in Zeiten eingerechnet)</div>';
+      box.innerHTML = '<div id="ev-info-text">' + t('ev_stops_info', {stops: stops, min: chargingTimeMin}) + '</div>';
       box.style.display = 'block';
     }
 
@@ -1193,9 +1413,9 @@
       const arrOptimistic = new Date(departureTime.getTime() + (scenarios.optimistic.durationSeconds + chargingSec) * 1000);
 
       document.getElementById('hero-time').textContent = formatTime(arrBestGuess);
-      document.getElementById('hero-label').textContent = 'Voraussichtliche Ankunft';
-      let meta = '<div>Abfahrt: ' + formatTime(departureTime) + ' · Dauer: ' + formatDuration(Math.round(scenarios.bestGuess.durationSeconds / 60)) + '</div>';
-      if (chargingTimeMin > 0) meta += '<div>+ ' + chargingTimeMin + ' Min. Ladezeit</div>';
+      document.getElementById('hero-label').textContent = t('hero_label_departure');
+      let meta = '<div>' + t('hero_meta_departure', {time: formatTime(departureTime), duration: formatDuration(Math.round(scenarios.bestGuess.durationSeconds / 60))}) + '</div>';
+      if (chargingTimeMin > 0) meta += '<div>' + t('hero_meta_charging', {min: chargingTimeMin}) + '</div>';
       document.getElementById('hero-meta').innerHTML = meta;
       document.getElementById('hero-card').style.display = 'block';
 
@@ -1219,9 +1439,9 @@
       document.getElementById('arrival-relaxed').textContent = formatTime(relaxedDeparture);
 
       document.getElementById('hero-time').textContent = formatTime(safeDeparture);
-      document.getElementById('hero-label').textContent = 'Empfohlene Abfahrtszeit';
-      let meta = '<div>Ankunft: ' + formatTime(targetTime) + ' (mit Puffer für Verzögerungen)</div>';
-      if (chargingTimeMin > 0) meta += '<div>inkl. ' + chargingTimeMin + ' Min. Ladezeit</div>';
+      document.getElementById('hero-label').textContent = t('hero_label_arrival');
+      let meta = '<div>' + t('hero_meta_arrival', {time: formatTime(targetTime)}) + '</div>';
+      if (chargingTimeMin > 0) meta += '<div>' + t('hero_meta_arrival_charging', {min: chargingTimeMin}) + '</div>';
       document.getElementById('hero-meta').innerHTML = meta;
       document.getElementById('hero-card').style.display = 'block';
 
@@ -1229,88 +1449,94 @@
     }
 
     function displayDelayInfo(trafficDelayMin, baseSec, trafficSec, hasTrafficData, depTime, distanceKm) {
-      var dayNames = ['Sonntag', 'Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag'];
+      var dayNames = t('weekdays_long');
       var dayName = dayNames[depTime.getDay()];
       var timeStr = String(depTime.getHours()).padStart(2, '0') + ':' + String(depTime.getMinutes()).padStart(2, '0');
       var baseMin = Math.round(baseSec / 60);
 
       // Determine traffic level based on ratio traffic/base
       var ratio = trafficSec / baseSec;
-      var icon, label, text, fillPercent, fillColor, detail;
+      var iconClass, text, fillPercent, barGradient, iconContent;
 
       if (!hasTrafficData || ratio < 1.05) {
-        icon = '✅';
-        label = 'Verkehrsprognose ' + dayName + ' ' + timeStr;
-        text = 'Kaum Verkehr – nahezu freie Fahrt erwartet';
-        fillPercent = 10; fillColor = '#0B3041';
+        // Free — green dot with checkmark, short green bar
+        iconClass = 'green'; iconContent = '✓';
+        text = t('traffic_free');
+        fillPercent = 15;
+        barGradient = 'linear-gradient(90deg, #22a34a, #22a34a)';
       } else if (ratio < 1.15) {
-        icon = '🟢';
-        label = 'Verkehrsprognose ' + dayName + ' ' + timeStr;
-        text = '+' + trafficDelayMin + ' Min. leichte Verzögerung durch Verkehr';
-        fillPercent = 25; fillColor = '#0B3041';
+        // Light — green dot, green→yellow bar
+        iconClass = 'green'; iconContent = '✓';
+        text = t('traffic_light', {min: trafficDelayMin});
+        fillPercent = 35;
+        barGradient = 'linear-gradient(90deg, #22a34a, #a8c926)';
       } else if (ratio < 1.30) {
-        icon = '🟡';
-        label = 'Verkehrsprognose ' + dayName + ' ' + timeStr;
-        text = '+' + trafficDelayMin + ' Min. mäßiger Verkehr erwartet';
-        fillPercent = 50; fillColor = '#d4960a';
+        // Moderate — yellow dot, green→yellow bar
+        iconClass = 'yellow'; iconContent = '!';
+        text = t('traffic_moderate', {min: trafficDelayMin});
+        fillPercent = 55;
+        barGradient = 'linear-gradient(90deg, #22a34a, #d4960a)';
       } else if (ratio < 1.50) {
-        icon = '🟠';
-        label = 'Verkehrsprognose ' + dayName + ' ' + timeStr;
-        text = '+' + trafficDelayMin + ' Min. erhöhtes Verkehrsaufkommen';
-        fillPercent = 75; fillColor = '#e87a1e';
+        // Heavy — yellow dot, green→yellow→red bar
+        iconClass = 'yellow'; iconContent = '!';
+        text = t('traffic_heavy', {min: trafficDelayMin});
+        fillPercent = 75;
+        barGradient = 'linear-gradient(90deg, #22a34a, #d4960a, #e87a1e)';
       } else {
-        icon = '🔴';
-        label = 'Verkehrsprognose ' + dayName + ' ' + timeStr;
-        text = '+' + trafficDelayMin + ' Min. starker Verkehr / Staugefahr';
-        fillPercent = 100; fillColor = '#c53030';
+        // Jam — red dot, full green→yellow→red bar
+        iconClass = 'red'; iconContent = '!';
+        text = t('traffic_jam', {min: trafficDelayMin});
+        fillPercent = 100;
+        barGradient = 'linear-gradient(90deg, #22a34a, #d4960a, #c53030)';
       }
+
+      var label = t('traffic_label', {day: dayName, time: timeStr});
 
       // Build contextual detail text based on day and time
       var hour = depTime.getHours();
       var day = depTime.getDay(); // 0=So
       var details = [];
 
-      // Typical traffic patterns for Germany
-      if (day >= 1 && day <= 5) { // Mo-Fr
+      if (day >= 1 && day <= 5) {
         if (hour >= 6 && hour <= 9) {
-          details.push('Berufsverkehr: Auf dieser Strecke ist ' + dayName + 'morgen typischerweise mit erhöhtem Pendleraufkommen zu rechnen.');
+          details.push(t('ctx_commute_morning', {day: dayName}));
         } else if (hour >= 15 && hour <= 18) {
-          details.push('Feierabendverkehr: ' + dayName + 'nachmittag ist auf Autobahnen mit dichtem Verkehr und Staus in Ballungsräumen zu rechnen.');
+          details.push(t('ctx_commute_evening', {day: dayName}));
         } else if (hour >= 21 || hour <= 5) {
-          details.push('Nachtfahrt: Zu dieser Uhrzeit ist die Strecke typischerweise frei. Wenig Verkehr erwartet.');
+          details.push(t('ctx_night'));
         } else {
-          details.push('Außerhalb der Stoßzeiten: Verkehrsaufkommen ' + dayName + ' um ' + timeStr + ' ist auf dieser Strecke typischerweise moderat.');
+          details.push(t('ctx_off_peak', {day: dayName, time: timeStr}));
         }
-      } else { // Sa/So
+      } else {
         if (day === 6 && hour >= 9 && hour <= 14) {
-          details.push('Samstag-Reiseverkehr: Vormittags kann es auf Autobahnen in Richtung Ausflugs- und Urlaubsgebiete voller werden.');
+          details.push(t('ctx_sat_morning'));
         } else if (day === 0 && hour >= 15 && hour <= 20) {
-          details.push('Sonntag-Rückreiseverkehr: Nachmittags/abends kann es auf Fernstrecken zu Rückstaus durch Wochenendheimkehrer kommen.');
+          details.push(t('ctx_sun_afternoon'));
         } else {
-          details.push('Wochenende: Verkehrsaufkommen am ' + dayName + ' um ' + timeStr + ' ist typischerweise gering.');
+          details.push(t('ctx_weekend', {day: dayName, time: timeStr}));
         }
       }
 
-      // Friday afternoon special case
       if (day === 5 && hour >= 13 && hour <= 19) {
-        details = ['Freitag-Reiseverkehr: Auf Fernstrecken ist Freitagnachmittag traditionell der stärkste Reisetag. Besonders auf A-Autobahnen Richtung Osten und Küste ist mit deutlichen Verzögerungen zu rechnen.'];
+        details = [t('ctx_friday')];
       }
 
-      // Distance-based context
       if (distanceKm > 400) {
-        details.push('Langstrecke (' + Math.round(distanceKm) + ' km): Mehrere Ballungsräume auf der Route können zu kumulierten Verzögerungen führen.');
+        details.push(t('ctx_long_distance', {km: Math.round(distanceKm)}));
       }
 
-      // Show base vs traffic comparison
       if (hasTrafficData && trafficDelayMin > 0) {
-        details.push('Fahrzeit ohne Verkehr: ' + formatDuration(baseMin) + ' · Mit Verkehr: ' + formatDuration(Math.round(trafficSec / 60)));
+        details.push(t('ctx_base_vs_traffic', {base: formatDuration(baseMin), traffic: formatDuration(Math.round(trafficSec / 60))}));
       }
 
-      document.getElementById('delay-icon').textContent = icon;
+      var iconEl = document.getElementById('delay-icon');
+      iconEl.className = 'delay-icon ' + iconClass;
+      iconEl.textContent = iconContent;
       document.getElementById('delay-label').textContent = label;
       document.getElementById('delay-text').textContent = text;
-      document.getElementById('delay-bar-fill').style.width = fillPercent + '%';
-      document.getElementById('delay-bar-fill').style.backgroundColor = fillColor;
+      var barFill = document.getElementById('delay-bar-fill');
+      barFill.style.width = fillPercent + '%';
+      barFill.style.background = barGradient;
       document.getElementById('delay-detail').innerHTML = details.join('<br>');
       document.getElementById('delay-info').style.display = 'block';
     }
@@ -1454,14 +1680,14 @@
           // Fallback: no station found, just mark approximate position
           const marker = new google.maps.Marker({
             position: position, map: currentMap,
-            title: 'Ladestopp ' + (idx + 1) + ' (ungefähr)',
+            title: t('charging_stop_label', {idx: idx + 1, name: '~'}),
             icon: 'https://maps.google.com/mapfiles/ms/icons/blue-dot.png',
           });
           chargingMarkers.push(marker);
 
           callback({
-            name: 'Ladestation gesucht',
-            address: 'Keine Station in 10 km gefunden',
+            name: t('charging_searched'),
+            address: t('charging_not_found'),
             isSupercharger: false,
             cumulativeKm: cumulativeKm,
             socAtArrival: socAtArrival,
@@ -1482,10 +1708,10 @@
         html += '<div class="charging-stop-card">'
           + '<div class="charging-stop-icon">⚡</div>'
           + '<div class="charging-stop-info">'
-          + '<div class="charging-stop-name">Stopp ' + (idx + 1) + ': ' + stop.name + '</div>'
+          + '<div class="charging-stop-name">' + t('charging_stop_label', {idx: idx + 1, name: stop.name}) + '</div>'
           + '<div class="charging-stop-detail">'
           + stop.address + '<br>'
-          + 'Nach ~' + Math.round(stop.cumulativeKm) + ' km · Akku bei ~' + stop.socAtArrival + '% → 80%'
+          + t('charging_stop_detail', {km: Math.round(stop.cumulativeKm), soc: stop.socAtArrival})
           + (stop.rating ? ' · ★ ' + stop.rating.toFixed(1) : '')
           + '</div>'
           + '<span class="charging-stop-network ' + networkClass + '">' + networkLabel + '</span>'
@@ -1517,7 +1743,7 @@
       var el = document.getElementById('btn-error-container');
       el.textContent = message;
       el.style.display = 'block';
-      document.getElementById('calculate-btn').textContent = 'Berechnen';
+      document.getElementById('calculate-btn').textContent = t('calculate_btn');
       document.getElementById('calculate-btn').disabled = false;
     }
 
@@ -1525,25 +1751,35 @@
     window.onerror = function(msg, url, line) {
       var el = document.getElementById('error-container');
       if (el) {
-        el.innerHTML = '<div class="error-message">JS-Fehler: ' + msg + ' (Zeile ' + line + ')</div>';
+        el.innerHTML = '<div class="error-message">' + t('err_js', {msg: msg, line: line}) + '</div>';
         document.getElementById('results').classList.add('visible');
       }
     };
 
     // Boot: set up UI immediately (don't wait for Maps)
+    try { applyI18n(); } catch (e) { console.error('applyI18n error:', e); }
     try { initAllPickers(); } catch (e) { console.error('initAllPickers error:', e); }
     try { setupEventListeners(); } catch (e) { console.error('setupEventListeners error:', e); }
     try { selectTodayWeekday(); } catch (e) { console.error('selectTodayWeekday error:', e); }
-    console.log('[Fahrcast v18] UI initialized OK');
+
+    // Language toggle
+    document.querySelectorAll('.lang-btn').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        currentLang = btn.dataset.lang;
+        applyI18n();
+      });
+    });
+
+    console.log('[Fahrcast v21] UI initialized OK, lang=' + currentLang);
 
     // Timeout: if Maps hasn't loaded after 8 seconds, show clear error
     setTimeout(function() {
       if (!mapsReady) {
         console.error('[Fahrcast] Google Maps did not load within 8 seconds');
         var btn = document.getElementById('calculate-btn');
-        btn.textContent = '❌ Maps nicht geladen';
+        btn.textContent = t('calculate_btn_error');
         btn.style.background = 'linear-gradient(135deg, #c53030 0%, #9b2c2c 100%)';
-        showBtnError('Google Maps konnte nicht geladen werden. Bitte prüfe in der Google Cloud Console: (1) Abrechnung aktiviert? (2) Maps JavaScript API, Distance Matrix API, Places API und Directions API aktiviert? (3) API-Key-Einschränkung korrekt auf halloekes.github.io/fahrzeit/* gesetzt?');
+        showBtnError(t('err_maps_timeout'));
       }
     }, 8000);
 
