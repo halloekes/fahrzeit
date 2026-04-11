@@ -939,24 +939,6 @@
     <div class="results-section" id="results">
       <div id="error-container"></div>
 
-      <div class="share-card" id="share-card">
-        <div class="share-title" id="share-title">Route teilen</div>
-        <div class="share-row">
-          <div class="share-qr" id="share-qr"></div>
-          <div class="share-actions">
-            <button class="share-btn-maps" id="share-btn-maps" onclick="openInMaps()">
-              <span class="share-btn-maps-icon">🗺</span>
-              <span id="share-btn-maps-label">In Google Maps öffnen</span>
-            </button>
-            <button class="share-btn-copy" id="share-btn-copy" onclick="copyMapsLink()">
-              <span>📋</span>
-              <span id="share-btn-copy-label">Link kopieren</span>
-            </button>
-          </div>
-        </div>
-        <div class="share-hint" id="share-hint">QR-Code mit dem Smartphone scannen, um die Route in Google Maps zu öffnen.</div>
-      </div>
-
       <div id="hero-card" class="hero-card" style="display: none;">
         <div class="hero-time" id="hero-time">--:--</div>
         <div class="hero-right">
@@ -1054,6 +1036,25 @@
         </div>
       </div>
     </div>
+
+      <div class="share-card" id="share-card">
+        <div class="share-title" id="share-title">Route teilen</div>
+        <div class="share-row">
+          <div class="share-qr" id="share-qr"></div>
+          <div class="share-actions">
+            <button class="share-btn-maps" id="share-btn-maps" onclick="openInMaps()">
+              <span class="share-btn-maps-icon">🗺</span>
+              <span id="share-btn-maps-label">In Google Maps öffnen</span>
+            </button>
+            <button class="share-btn-copy" id="share-btn-copy" onclick="copyMapsLink()">
+              <span>📋</span>
+              <span id="share-btn-copy-label">Link kopieren</span>
+            </button>
+          </div>
+        </div>
+        <div class="share-hint" id="share-hint">QR-Code mit dem Smartphone scannen, um die Route in Google Maps zu öffnen.</div>
+      </div>
+
     </div><!-- /results-column -->
 
     <footer style="text-align:center;padding:24px 0 16px;font-size:12px;color:var(--muted);">
@@ -1317,6 +1318,7 @@
     let currentMode = 'departure';
     let lastResults = null;
     let lastMapsUrl = null;
+    let lastChargingStopPositions = [];
 
     /* ── Search History (localStorage) ── */
     const HISTORY_KEY = 'fahrcast_search_history';
@@ -1433,15 +1435,25 @@
       return waypoints;
     }
 
-    function buildMapsUrl(from, to, waypoints) {
+    function buildMapsUrl(from, to, waypoints, chargingPositions) {
       var base = 'https://www.google.com/maps/dir/?api=1';
       base += '&origin=' + encodeURIComponent(from);
       base += '&destination=' + encodeURIComponent(to);
+
+      // Combine user waypoints + charging stop positions
+      var allWps = [];
       if (waypoints && waypoints.length > 0) {
-        var wps = waypoints.map(function(wp) {
-          return encodeURIComponent(wp.location || wp);
-        }).join('|');
-        base += '&waypoints=' + wps;
+        waypoints.forEach(function(wp) {
+          allWps.push(encodeURIComponent(wp.location || wp));
+        });
+      }
+      if (chargingPositions && chargingPositions.length > 0) {
+        chargingPositions.forEach(function(pos) {
+          allWps.push(pos.lat.toFixed(6) + ',' + pos.lng.toFixed(6));
+        });
+      }
+      if (allWps.length > 0) {
+        base += '&waypoints=' + allWps.join('|');
       }
       base += '&travelmode=driving';
       return base;
@@ -2028,7 +2040,7 @@
             var shareFrom = document.getElementById('from').value.trim();
             var shareTo = document.getElementById('to').value.trim();
             var shareWps = getWaypoints();
-            lastMapsUrl = buildMapsUrl(shareFrom, shareTo, shareWps);
+            lastMapsUrl = buildMapsUrl(shareFrom, shareTo, shareWps, lastChargingStopPositions);
             showShareCard(lastMapsUrl, shareFrom, shareTo);
 
             resetBtn();
@@ -2304,6 +2316,7 @@
       var kmPerPercent = realRange / 100;
       if (startBattery - distanceKm / kmPerPercent >= endBattery) {
         document.getElementById('charging-stops-list').style.display = 'none';
+        lastChargingStopPositions = [];
         return;
       }
 
@@ -2341,6 +2354,9 @@
 
       var stopsNeeded = chargingStops.length;
       console.log('[Fahrcast] Charging: ' + stopsNeeded + ' stops needed for ' + distanceKm.toFixed(0) + 'km (range=' + realRange.toFixed(0) + 'km, startSoC=' + startBattery + '%)');
+
+      // Save positions for Google Maps share link
+      lastChargingStopPositions = chargingStops.filter(function(s) { return s.position; }).map(function(s) { return s.position; });
 
       // Render all stops immediately
       renderChargingStops(chargingStops, tesla);
