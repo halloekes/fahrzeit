@@ -1523,10 +1523,10 @@
 
     function setupEventListeners() {
       document.querySelectorAll('.toggle-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => {
+        btn.addEventListener('click', () => {
           document.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
-          e.target.classList.add('active');
-          currentMode = e.target.dataset.mode;
+          btn.classList.add('active');
+          currentMode = btn.dataset.mode;
           toggleModeUI();
         });
       });
