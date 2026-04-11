@@ -721,7 +721,7 @@
   <div class="desktop-topbar">
     <div class="desktop-topbar-inner">
       <span class="desktop-logo">FAHRCAST</span>
-      <span class="desktop-version">v46</span>
+      <span class="desktop-version">v47</span>
       <span class="desktop-subtitle" id="desktop-subtitle-text"></span>
     </div>
     <div class="lang-toggle desktop-lang">
@@ -737,7 +737,7 @@
       </div>
       <div class="logo">FAHRCAST</div>
       <div class="subtitle" id="subtitle"></div>
-      <div style="font-size:10px;color:var(--muted);margin-top:4px;" id="version-tag">v46</div>
+      <div style="font-size:10px;color:var(--muted);margin-top:4px;" id="version-tag">v47</div>
     </header>
 
     <div class="form-card">
@@ -1161,7 +1161,7 @@
         ctx_long_distance: 'Langstrecke ({km} km): Mehrere Ballungsräume auf der Route können zu kumulierten Verzögerungen führen.',
         ctx_base_vs_traffic: 'Fahrzeit ohne Verkehr: {base} · Mit Verkehr: {traffic}',
         charging_stop_label: 'Stopp {idx}: {name}',
-        charging_stop_detail: 'Nach ~{km} km · Akku bei ~{soc}% → 80%',
+        charging_stop_detail: 'Nach ~{km} km · Akku bei ~{soc}% → {chargeTo}%',
         charging_searched: 'Ladestation gesucht',
         charging_not_found: 'Keine Station in 10 km gefunden',
         charging_searching: 'Lade Ladestationen entlang der Route...',
@@ -1245,7 +1245,7 @@
         ctx_long_distance: 'Long distance ({km} km): Multiple urban areas on the route may cause cumulative delays.',
         ctx_base_vs_traffic: 'Drive time without traffic: {base} · With traffic: {traffic}',
         charging_stop_label: 'Stop {idx}: {name}',
-        charging_stop_detail: 'After ~{km} km · Battery at ~{soc}% → 80%',
+        charging_stop_detail: 'After ~{km} km · Battery at ~{soc}% → {chargeTo}%',
         charging_searched: 'Charging station search',
         charging_not_found: 'No station found within 10 km',
         charging_searching: 'Searching for charging stations along the route...',
@@ -2118,7 +2118,19 @@
         if (stops > 50) break;
       }
 
-      return stops * 25; // 25 min per stop
+      // Base: 25 min per stop (10%→80%)
+      var totalMin = stops * 25;
+      // If last stop needs to charge above 80% for endBattery target, add extra time
+      if (stops > 0) {
+        var kmAfterLastStop = distanceKm - kmCovered;
+        var neededSoC = Math.ceil(endBattery + kmAfterLastStop / kmPerPercent);
+        if (neededSoC > 80) {
+          // Charging above 80% is much slower: ~1.5 min per extra %
+          var extraPercent = Math.min(neededSoC, 100) - 80;
+          totalMin += Math.round(extraPercent * 1.5);
+        }
+      }
+      return totalMin;
     }
 
     function displayEVInfo(distanceKm, chargingTimeMin) {
@@ -2374,6 +2386,7 @@
         chargingStops.push({
           stopKm: Math.round(stopKm),
           socAtArrival: socAtArrival,
+          chargeTo: 80,
           position: pos,
           tesla: tesla,
         });
@@ -2383,8 +2396,21 @@
         lastChargeKm = stopKm;
       }
 
+      // Adjust last stop: charge higher if needed to arrive with endBattery
+      if (chargingStops.length > 0) {
+        var lastStop = chargingStops[chargingStops.length - 1];
+        var kmAfterLastStop = distanceKm - lastStop.stopKm;
+        var neededSoC = Math.ceil(endBattery + kmAfterLastStop / kmPerPercent);
+        if (neededSoC > 80 && neededSoC <= 100) {
+          lastStop.chargeTo = neededSoC;
+        } else if (neededSoC > 100) {
+          // Can't fully meet target even at 100% — charge to max
+          lastStop.chargeTo = 100;
+        }
+      }
+
       var stopsNeeded = chargingStops.length;
-      console.log('[Fahrcast] Charging: ' + stopsNeeded + ' stops needed for ' + distanceKm.toFixed(0) + 'km (range=' + realRange.toFixed(0) + 'km, startSoC=' + startBattery + '%)');
+      console.log('[Fahrcast] Charging: ' + stopsNeeded + ' stops for ' + distanceKm.toFixed(0) + 'km, endBattery=' + endBattery + '%');
 
       // Save positions for Google Maps share link
       lastChargingStopPositions = chargingStops.filter(function(s) { return s.position; }).map(function(s) { return s.position; });
@@ -2420,7 +2446,7 @@
           + '<div class="charging-stop-info">'
           + '<div class="charging-stop-name" id="cs-name-' + idx + '">' + t('charging_stop_label', {idx: idx + 1, name: label}) + '</div>'
           + '<div class="charging-stop-detail">'
-          + t('charging_stop_detail', {km: stop.stopKm, soc: stop.socAtArrival})
+          + t('charging_stop_detail', {km: stop.stopKm, soc: stop.socAtArrival, chargeTo: stop.chargeTo || 80})
           + '</div>'
           + '</div>'
           + '</div>';
@@ -2641,7 +2667,7 @@
       });
     });
 
-    console.log('[Fahrcast v46] UI initialized OK, lang=' + currentLang);
+    console.log('[Fahrcast v47] UI initialized OK, lang=' + currentLang);
 
     // Timeout: if Maps hasn't loaded after 8 seconds, show clear error
     setTimeout(function() {
