@@ -396,7 +396,7 @@
       </div>
       <div class="logo">FAHRCAST</div>
       <div class="subtitle" id="subtitle"></div>
-      <div style="font-size:10px;color:var(--muted);margin-top:4px;" id="version-tag">v28</div>
+      <div style="font-size:10px;color:var(--muted);margin-top:4px;" id="version-tag">v29</div>
     </header>
 
     <div class="form-card">
@@ -1656,23 +1656,33 @@
       var chargeRange = realRange * (80 - endBattery) / 100; // km per charge (10%→80%)
       var stopsNeeded = Math.ceil((distanceKm - usableRange) / chargeRange);
 
-      // Calculate km position for each stop
+      // Simulate battery drain along route to find realistic stop positions + SoC
       var chargingStops = [];
-      var firstStopKm = usableRange; // first stop when initial battery runs out
-      for (var s = 0; s < stopsNeeded; s++) {
-        var stopKm = firstStopKm + s * chargeRange;
-        if (stopKm > distanceKm) stopKm = distanceKm - 5; // clamp near end
-        var socAtArrival = (s === 0)
-          ? Math.max(0, Math.round(endBattery + (usableRange - (stopKm)) / realRange * 100))
-          : Math.max(0, Math.round(endBattery));
-        var pos = getPositionAtKm(leg, stopKm);
+      var kmPerPercent = realRange / 100;
+      var currentSoC = startBattery;
+      var lastChargeKm = 0;
 
+      for (var s = 0; s < stopsNeeded; s++) {
+        // How far can we drive from current position with currentSoC?
+        var rangeLeft = (currentSoC - endBattery) * kmPerPercent;
+        var stopKm = lastChargeKm + rangeLeft;
+        if (stopKm > distanceKm) stopKm = distanceKm - 5;
+
+        // SoC at arrival = how much battery is left after driving rangeLeft km
+        var kmDriven = stopKm - lastChargeKm;
+        var socAtArrival = Math.max(0, Math.round(currentSoC - kmDriven / kmPerPercent));
+
+        var pos = getPositionAtKm(leg, stopKm);
         chargingStops.push({
           stopKm: Math.round(stopKm),
           socAtArrival: socAtArrival,
           position: pos,
           tesla: tesla,
         });
+
+        // After charging: SoC resets to 80%, next segment starts here
+        currentSoC = 80;
+        lastChargeKm = stopKm;
       }
 
       console.log('[Fahrcast] Charging: ' + stopsNeeded + ' stops needed for ' + distanceKm.toFixed(0) + 'km (range=' + realRange.toFixed(0) + 'km, startSoC=' + startBattery + '%)');
@@ -1765,7 +1775,7 @@
       });
     });
 
-    console.log('[Fahrcast v28] UI initialized OK, lang=' + currentLang);
+    console.log('[Fahrcast v29] UI initialized OK, lang=' + currentLang);
 
     // Timeout: if Maps hasn't loaded after 8 seconds, show clear error
     setTimeout(function() {
