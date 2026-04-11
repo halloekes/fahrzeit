@@ -721,7 +721,7 @@
   <div class="desktop-topbar">
     <div class="desktop-topbar-inner">
       <span class="desktop-logo">FAHRCAST</span>
-      <span class="desktop-version">v44</span>
+      <span class="desktop-version">v45</span>
       <span class="desktop-subtitle" id="desktop-subtitle-text"></span>
     </div>
     <div class="lang-toggle desktop-lang">
@@ -737,7 +737,7 @@
       </div>
       <div class="logo">FAHRCAST</div>
       <div class="subtitle" id="subtitle"></div>
-      <div style="font-size:10px;color:var(--muted);margin-top:4px;" id="version-tag">v44</div>
+      <div style="font-size:10px;color:var(--muted);margin-top:4px;" id="version-tag">v45</div>
     </header>
 
     <div class="form-card">
@@ -2096,23 +2096,23 @@
 
       const realRange = evData.wltp * REAL_WORLD_RANGE_FACTOR;
       const kmPerPercent = realRange / 100;
-      // Cap endBattery at 80 for stop calculation — we only charge to 80%
-      const effectiveEndBattery = Math.min(endBattery, 80);
+      const MIN_CHARGE_SOC = 5;
 
       // Can we reach destination without charging?
-      if (startBattery - distanceKm / kmPerPercent >= effectiveEndBattery) return 0;
+      // Check against both endBattery (desired) and MIN_CHARGE_SOC (minimum)
+      if (startBattery - distanceKm / kmPerPercent >= endBattery) return 0;
+      if (startBattery - distanceKm / kmPerPercent >= MIN_CHARGE_SOC) return 0;
 
-      // Simulate journey: intermediate stops drain to MIN_CHARGE_SOC (5%)
-      const MIN_CHARGE_SOC = 5;
+      // Simulate journey
       var currentSoC = startBattery;
       var kmCovered = 0;
       var stops = 0;
 
       while (true) {
         var kmRemaining = distanceKm - kmCovered;
-        // Can we reach destination with effectiveEndBattery remaining?
-        if (currentSoC - kmRemaining / kmPerPercent >= effectiveEndBattery) break;
-        // Drive until MIN_CHARGE_SOC, then charge
+        // Can we physically reach destination? (arrive with >= MIN_CHARGE_SOC)
+        if (currentSoC - kmRemaining / kmPerPercent >= MIN_CHARGE_SOC) break;
+        // Drive until MIN_CHARGE_SOC, then charge to 80%
         var drivableKm = Math.max(0, (currentSoC - MIN_CHARGE_SOC) * kmPerPercent);
         if (drivableKm < 5 && stops > 0) {
           currentSoC = 80;
@@ -2121,7 +2121,7 @@
         kmCovered += drivableKm;
         stops++;
         currentSoC = 80;
-        if (stops > 50) break; // safety limit
+        if (stops > 50) break;
       }
 
       return stops * 25; // 25 min per stop
@@ -2346,24 +2346,24 @@
 
       // Can we reach destination without charging?
       var kmPerPercent = realRange / 100;
-      // Cap endBattery at 80 for stop calculation — we only charge to 80%
-      var effectiveEndBattery = Math.min(endBattery, 80);
-      if (startBattery - distanceKm / kmPerPercent >= effectiveEndBattery) {
+      var MIN_CHARGE_SOC = 5;
+      // Check: can we reach with desired endBattery OR at least physically?
+      var arrivalSoC = startBattery - distanceKm / kmPerPercent;
+      if (arrivalSoC >= endBattery || arrivalSoC >= MIN_CHARGE_SOC) {
         document.getElementById('charging-stops-list').style.display = 'none';
         lastChargingStopPositions = [];
         return;
       }
 
       // Simulate journey: stop to charge when battery hits MIN_CHARGE_SOC
-      var MIN_CHARGE_SOC = 5;
       var chargingStops = [];
       var currentSoC = startBattery;
       var lastChargeKm = 0;
 
       for (var safety = 0; safety < 50; safety++) {
         var kmRemaining = distanceKm - lastChargeKm;
-        // Can we reach destination with effectiveEndBattery remaining?
-        if (currentSoC - kmRemaining / kmPerPercent >= effectiveEndBattery) break;
+        // Can we physically reach destination? (arrive with >= MIN_CHARGE_SOC)
+        if (currentSoC - kmRemaining / kmPerPercent >= MIN_CHARGE_SOC) break;
 
         // Drive until MIN_CHARGE_SOC
         var drivableKm = Math.max(0, (currentSoC - MIN_CHARGE_SOC) * kmPerPercent);
@@ -2538,16 +2538,30 @@
     }
 
     function applyProviderToStop(results, idx) {
+      // Try to find a known network provider
       var providerName = null;
       for (var i = 0; i < Math.min(results.length, 8); i++) {
         providerName = extractProvider(results[i].name);
         if (providerName) break;
       }
+      // Fallback: use the closest result's name directly (clean it up)
+      if (!providerName && results.length > 0) {
+        var raw = results[0].name;
+        // Remove generic words to extract the operator
+        providerName = raw
+          .replace(/\b(ladestation|ladesäule|ladepark|ladepunkt|charging station|ev charging|schnellladestation|e-ladestation)\b/gi, '')
+          .replace(/\s{2,}/g, ' ')
+          .trim();
+        // If nothing useful remains or it's just a city name, skip
+        if (!providerName || providerName.length < 2) providerName = null;
+      }
       if (!providerName) return;
       var nameEl = document.getElementById('cs-name-' + idx);
       if (!nameEl) return;
-      nameEl.setAttribute('data-provider', providerName);
+      // Avoid duplicate: don't show provider if it matches the locality
       var locality = nameEl.getAttribute('data-locality');
+      if (locality && providerName.toLowerCase() === locality.toLowerCase()) return;
+      nameEl.setAttribute('data-provider', providerName);
       if (locality) {
         var locationLabel = providerName + ' · ' + locality;
         nameEl.textContent = t('charging_stop_label', {idx: idx + 1, name: locationLabel});
@@ -2639,7 +2653,7 @@
       });
     });
 
-    console.log('[Fahrcast v44] UI initialized OK, lang=' + currentLang);
+    console.log('[Fahrcast v45] UI initialized OK, lang=' + currentLang);
 
     // Timeout: if Maps hasn't loaded after 8 seconds, show clear error
     setTimeout(function() {
