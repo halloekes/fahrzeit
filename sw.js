@@ -1,4 +1,4 @@
-const CACHE_NAME = 'fahrcast-v30';
+const CACHE_NAME = 'fahrcast-v31';
 
 // Install: skip waiting immediately to take over
 self.addEventListener('install', (e) => {

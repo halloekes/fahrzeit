@@ -110,6 +110,24 @@
 
     .input-wrapper { position: relative; }
 
+    /* Waypoints */
+    .waypoint-row { display: flex; align-items: flex-end; gap: 8px; margin-bottom: 16px; }
+    .waypoint-row .input-wrapper { flex: 1; }
+    .waypoint-row label { margin-bottom: 6px; }
+    .waypoint-remove-btn {
+      width: 40px; height: 42px; border: 1px solid var(--border); border-radius: 10px;
+      background: var(--surface); color: var(--danger); font-size: 16px; cursor: pointer;
+      display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+      transition: background 0.15s, border-color 0.15s;
+    }
+    .waypoint-remove-btn:hover { background: rgba(197, 48, 48, 0.08); border-color: var(--danger); }
+    .add-waypoint-btn {
+      width: 100%; padding: 10px; border: 1.5px dashed var(--border); border-radius: 10px;
+      background: transparent; color: var(--muted); font-family: 'Syne', sans-serif;
+      font-size: 13px; font-weight: 500; cursor: pointer; transition: all 0.15s;
+    }
+    .add-waypoint-btn:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-light); }
+
     input[type="text"], input[type="number"], select {
       width: 100%; padding: 12px 14px;
       border: 1.5px solid var(--border); border-radius: 10px;
@@ -396,7 +414,7 @@
       </div>
       <div class="logo">FAHRCAST</div>
       <div class="subtitle" id="subtitle"></div>
-      <div style="font-size:10px;color:var(--muted);margin-top:4px;" id="version-tag">v30</div>
+      <div style="font-size:10px;color:var(--muted);margin-top:4px;" id="version-tag">v31</div>
     </header>
 
     <div class="form-card">
@@ -412,6 +430,13 @@
           <div class="dropdown" id="from-dropdown"></div>
         </div>
       </div>
+
+      <!-- Waypoints container -->
+      <div id="waypoints-container"></div>
+      <div class="form-group" id="add-waypoint-group">
+        <button type="button" class="add-waypoint-btn" id="add-waypoint-btn" onclick="addWaypoint()"></button>
+      </div>
+
       <div class="form-group">
         <label for="to" data-i18n="to_label"></label>
         <div class="input-wrapper">
@@ -711,6 +736,9 @@
         from_label: 'Startort',
         to_label: 'Zielort',
         address_placeholder: 'Adresse eingeben...',
+        waypoint_label: 'Zwischenziel {idx}',
+        add_waypoint: '+ Zwischenziel',
+        remove_waypoint: '✕',
         weekday_label: 'Wochentag',
         weekdays_short: ['So','Mo','Di','Mi','Do','Fr','Sa'],
         weekdays_long: ['Sonntag','Montag','Dienstag','Mittwoch','Donnerstag','Freitag','Samstag'],
@@ -792,6 +820,9 @@
         from_label: 'Origin',
         to_label: 'Destination',
         address_placeholder: 'Enter address...',
+        waypoint_label: 'Waypoint {idx}',
+        add_waypoint: '+ Waypoint',
+        remove_waypoint: '✕',
         weekday_label: 'Day of week',
         weekdays_short: ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'],
         weekdays_long: ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'],
@@ -925,6 +956,12 @@
       document.querySelectorAll('.lang-btn').forEach(function(b) {
         b.classList.toggle('active', b.dataset.lang === currentLang);
       });
+      // Waypoints button + labels
+      var wpBtn = document.getElementById('add-waypoint-btn');
+      if (wpBtn) wpBtn.textContent = t('add_waypoint');
+      document.querySelectorAll('.waypoint-row label').forEach(function(lbl, i) {
+        lbl.textContent = t('waypoint_label', {idx: i + 1});
+      });
     }
 
     let autocompleteService, sessionToken, directionsService, directionsRenderer;
@@ -974,6 +1011,78 @@
       });
       dropdown.classList.add('active');
     }
+    /* ── Waypoints (max 5) ── */
+    const MAX_WAYPOINTS = 5;
+    let waypointCount = 0;
+
+    function addWaypoint() {
+      if (waypointCount >= MAX_WAYPOINTS) return;
+      waypointCount++;
+      var idx = waypointCount;
+      var container = document.getElementById('waypoints-container');
+
+      var row = document.createElement('div');
+      row.className = 'waypoint-row';
+      row.id = 'waypoint-row-' + idx;
+      row.innerHTML = '<div style="flex:1;">'
+        + '<label>' + t('waypoint_label', {idx: idx}) + '</label>'
+        + '<div class="input-wrapper">'
+        + '<input type="text" id="wp-' + idx + '" placeholder="' + t('address_placeholder') + '">'
+        + '<div class="dropdown" id="wp-' + idx + '-dropdown"></div>'
+        + '</div></div>'
+        + '<button type="button" class="waypoint-remove-btn" onclick="removeWaypoint(' + idx + ')" title="' + t('remove_waypoint') + '">' + t('remove_waypoint') + '</button>';
+      container.appendChild(row);
+
+      // Setup autocomplete for new input
+      setupAutocomplete('wp-' + idx, 'wp-' + idx + '-dropdown');
+
+      updateWaypointBtn();
+    }
+
+    function removeWaypoint(idx) {
+      var row = document.getElementById('waypoint-row-' + idx);
+      if (row) row.remove();
+
+      // Re-number remaining waypoints
+      var container = document.getElementById('waypoints-container');
+      var rows = container.querySelectorAll('.waypoint-row');
+      waypointCount = rows.length;
+      rows.forEach(function(r, i) {
+        var n = i + 1;
+        r.id = 'waypoint-row-' + n;
+        r.querySelector('label').textContent = t('waypoint_label', {idx: n});
+        var inp = r.querySelector('input[type="text"]');
+        var dd = r.querySelector('.dropdown');
+        inp.id = 'wp-' + n;
+        dd.id = 'wp-' + n + '-dropdown';
+        r.querySelector('.waypoint-remove-btn').setAttribute('onclick', 'removeWaypoint(' + n + ')');
+      });
+
+      updateWaypointBtn();
+    }
+
+    function updateWaypointBtn() {
+      var btn = document.getElementById('add-waypoint-btn');
+      var group = document.getElementById('add-waypoint-group');
+      if (waypointCount >= MAX_WAYPOINTS) {
+        group.style.display = 'none';
+      } else {
+        group.style.display = 'block';
+        btn.textContent = t('add_waypoint');
+      }
+    }
+
+    function getWaypoints() {
+      var waypoints = [];
+      for (var i = 1; i <= waypointCount; i++) {
+        var inp = document.getElementById('wp-' + i);
+        if (inp && inp.value.trim()) {
+          waypoints.push({ location: inp.value.trim(), stopover: true });
+        }
+      }
+      return waypoints;
+    }
+
     let currentMap = null;
     let selectedWeekday = new Date().getDay(); // 0=So, 1=Mo, ...
     let chargingMarkers = [];
@@ -1370,10 +1479,13 @@
     function calculateRoute(from, to, departureTime, arrivalTime) {
       // Use Directions API instead of Distance Matrix API (one less API dependency)
       var depTime = departureTime || new Date(arrivalTime.getTime() - 4 * 3600 * 1000);
+      var waypoints = getWaypoints();
 
       var request = {
         origin: from,
         destination: to,
+        waypoints: waypoints.length > 0 ? waypoints : undefined,
+        optimizeWaypoints: waypoints.length > 1,
         travelMode: google.maps.TravelMode.DRIVING,
         drivingOptions: {
           departureTime: depTime,
@@ -1407,12 +1519,18 @@
               return;
             }
 
-            var leg = result.routes[0].legs[0];
-            var distanceKm = leg.distance.value / 1000;
+            var legs = result.routes[0].legs;
+            // Sum distance & duration across all legs (waypoints create multiple legs)
+            var totalDistanceM = 0, totalBaseSec = 0, totalTrafficSec = 0;
+            for (var li = 0; li < legs.length; li++) {
+              totalDistanceM += legs[li].distance.value;
+              totalBaseSec += legs[li].duration.value;
+              totalTrafficSec += (legs[li].duration_in_traffic ? legs[li].duration_in_traffic.value : legs[li].duration.value);
+            }
+            var distanceKm = totalDistanceM / 1000;
 
-            // duration_in_traffic requires billing; fall back to duration
-            var baseSec = leg.duration.value;
-            var trafficSec = (leg.duration_in_traffic ? leg.duration_in_traffic.value : baseSec);
+            var baseSec = totalBaseSec;
+            var trafficSec = totalTrafficSec;
 
             var scenarios = {
               optimistic: { durationSeconds: Math.ceil(trafficSec * 0.85) },
@@ -1707,7 +1825,18 @@
       chargingMarkers.forEach(function(m) { try { m.setMap(null); } catch(e){} });
       chargingMarkers = [];
 
-      var leg = route.legs[0];
+      // Combine all legs into one virtual leg for multi-waypoint routes
+      var allLegs = route.legs;
+      var combinedLeg = { steps: [], distance: { value: 0 } };
+      for (var li = 0; li < allLegs.length; li++) {
+        combinedLeg.distance.value += allLegs[li].distance.value;
+        var legSteps = allLegs[li].steps || [];
+        for (var si = 0; si < legSteps.length; si++) {
+          combinedLeg.steps.push(legSteps[si]);
+        }
+      }
+      var leg = combinedLeg;
+
       var modelId = document.getElementById('ev-model').value;
       if (!modelId) return;
 
@@ -1850,7 +1979,7 @@
       });
     });
 
-    console.log('[Fahrcast v30] UI initialized OK, lang=' + currentLang);
+    console.log('[Fahrcast v31] UI initialized OK, lang=' + currentLang);
 
     // Timeout: if Maps hasn't loaded after 8 seconds, show clear error
     setTimeout(function() {
