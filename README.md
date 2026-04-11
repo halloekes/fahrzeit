@@ -1,4 +1,4 @@
-# Fahrtzeit
+# Fahrcast
 
 Reisezeit-Rechner mit Echtzeit-Verkehrsprognose für Deutschland — als installierbare PWA.
 

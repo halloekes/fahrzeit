@@ -1,11 +1,11 @@
 {
-  "name": "Fahrtzeit – Reisezeit-Prognose",
-  "short_name": "Fahrtzeit",
-  "description": "Historisch basierte Fahrzeitprognose für Deutschland mit Google Routes API.",
+  "name": "Fahrcast – Reisezeit-Prognose",
+  "short_name": "Fahrcast",
+  "description": "Reisezeit-Rechner mit Echtzeit-Verkehrsprognose für Deutschland.",
   "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#f0f5f3",
-  "theme_color": "#1a7a5a",
+  "theme_color": "#0B3041",
   "orientation": "portrait-primary",
   "lang": "de",
   "icons": [

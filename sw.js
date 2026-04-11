@@ -1,4 +1,4 @@
-const CACHE_NAME = 'fahrtzeit-v13';
+const CACHE_NAME = 'fahrcast-v19';
 
 // Install: skip waiting immediately to take over
 self.addEventListener('install', (e) => {

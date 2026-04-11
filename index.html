@@ -3,9 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <meta name="description" content="Fahrtzeit - Reisezeit-Rechner mit Google Maps API">
-  <meta name="theme-color" content="#1a7a5a">
-  <title>Fahrtzeit</title>
+  <meta name="description" content="Fahrcast - Reisezeit-Rechner mit Google Maps API">
+  <meta name="theme-color" content="#0B3041">
+  <title>Fahrcast</title>
   <link rel="manifest" href="manifest.json">
   <link rel="icon" type="image/png" sizes="32x32" href="favicon.ico">
   <link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch-icon.png">
@@ -20,15 +20,15 @@
       --surface2: #f5f9f7;
       --border: #d0ddd6;
       --accent: #1a7a5a;
-      --accent2: #2563b0;
+      --accent2: #0B3041;
       --accent-light: rgba(26, 122, 90, 0.08);
-      --accent2-light: rgba(37, 99, 176, 0.08);
+      --accent2-light: rgba(11, 48, 65, 0.08);
       --text: #1a2e28;
       --muted: #6b8a7e;
       --success: #1a7a5a;
       --warning: #d4960a;
       --danger: #c53030;
-      --ev-blue: #2563b0;
+      --ev-blue: #0B3041;
     }
 
     html, body {
@@ -87,9 +87,8 @@
 
     .logo {
       font-size: 40px; font-weight: 700;
-      background: linear-gradient(135deg, var(--accent) 0%, var(--accent2) 100%);
-      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-      background-clip: text; margin-bottom: 6px; letter-spacing: -2px;
+      color: #0B3041;
+      margin-bottom: 6px; letter-spacing: -2px;
     }
 
     .subtitle { font-size: 13px; color: var(--muted); font-weight: 400; letter-spacing: 0.3px; }
@@ -383,15 +382,15 @@
 <body>
   <div class="container">
     <header>
-      <div class="logo">Fahrtzeit</div>
+      <div class="logo">FAHRCAST</div>
       <div class="subtitle">Reisezeit-Rechner mit Echtzeit-Verkehr</div>
-      <div style="font-size:10px;color:var(--muted);margin-top:4px;" id="version-tag">v18</div>
+      <div style="font-size:10px;color:var(--muted);margin-top:4px;" id="version-tag">v19</div>
     </header>
 
     <div class="form-card">
       <div class="mode-toggle">
-        <button type="button" class="toggle-btn active" data-mode="departure">Ankunftszeit berechnen</button>
-        <button type="button" class="toggle-btn" data-mode="arrival">Abfahrtszeit berechnen</button>
+        <button type="button" class="toggle-btn active" data-mode="departure">Ankunftszeit<br>berechnen</button>
+        <button type="button" class="toggle-btn" data-mode="arrival">Abfahrtszeit<br>berechnen</button>
       </div>
 
       <div class="form-group">
@@ -868,7 +867,7 @@
         mapsReady = true;
         document.getElementById('calculate-btn').textContent = 'Berechnen';
         document.getElementById('btn-error-container').style.display = 'none';
-        console.log('[Fahrtzeit] Google Maps loaded, mapsReady = true');
+        console.log('[Fahrcast] Google Maps loaded, mapsReady = true');
         setupAutocomplete('from', 'from-dropdown');
         setupAutocomplete('to', 'to-dropdown');
       } catch (e) {
@@ -1526,12 +1525,12 @@
     try { initAllPickers(); } catch (e) { console.error('initAllPickers error:', e); }
     try { setupEventListeners(); } catch (e) { console.error('setupEventListeners error:', e); }
     try { selectTodayWeekday(); } catch (e) { console.error('selectTodayWeekday error:', e); }
-    console.log('[Fahrtzeit v18] UI initialized OK');
+    console.log('[Fahrcast v18] UI initialized OK');
 
     // Timeout: if Maps hasn't loaded after 8 seconds, show clear error
     setTimeout(function() {
       if (!mapsReady) {
-        console.error('[Fahrtzeit] Google Maps did not load within 8 seconds');
+        console.error('[Fahrcast] Google Maps did not load within 8 seconds');
         var btn = document.getElementById('calculate-btn');
         btn.textContent = '❌ Maps nicht geladen';
         btn.style.background = 'linear-gradient(135deg, #c53030 0%, #9b2c2c 100%)';
