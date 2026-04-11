@@ -507,9 +507,8 @@
         margin-bottom: 0;
       }
 
-      /* Hero-Card: horizontal */
-      #hero-card[style*="display: block"],
-      #hero-card[style*="display:block"] {
+      /* Hero-Card: horizontal on desktop (when visible) */
+      .hero-card {
         display: flex !important;
         align-items: center;
         justify-content: space-between;
@@ -517,6 +516,10 @@
         padding: 24px 28px;
         border-radius: 16px;
         margin-bottom: 16px;
+      }
+      .hero-card[style*="display: none"],
+      .hero-card[style*="display:none"] {
+        display: none !important;
       }
       .hero-time {
         font-size: 64px;
@@ -533,12 +536,15 @@
         margin-bottom: 6px;
       }
 
-      /* Time-Cards: 3-spaltig (nur wenn sichtbar — nicht display:none überschreiben) */
-      .time-cards[style*="display: flex"],
-      .time-cards[style*="display:flex"] {
+      /* Time-Cards: 3-spaltig on desktop (when visible) */
+      .time-cards {
         display: grid !important;
         grid-template-columns: 1fr 1fr 1fr;
         gap: 10px;
+      }
+      .time-cards[style*="display: none"],
+      .time-cards[style*="display:none"] {
+        display: none !important;
       }
       .time-card {
         flex-direction: column;
@@ -550,12 +556,15 @@
         text-align: left;
       }
 
-      /* Arrival-Cards: 3-spaltig (nur wenn sichtbar) */
-      .arrival-cards[style*="display: flex"],
-      .arrival-cards[style*="display:flex"] {
+      /* Arrival-Cards: 3-spaltig on desktop (when visible) */
+      .arrival-cards {
         display: grid !important;
         grid-template-columns: 1fr 1fr 1fr;
         gap: 10px;
+      }
+      .arrival-cards[style*="display: none"],
+      .arrival-cards[style*="display:none"] {
+        display: none !important;
       }
       .arrival-card {
         flex-direction: column;
@@ -711,7 +720,7 @@
   <div class="desktop-topbar">
     <div class="desktop-topbar-inner">
       <span class="desktop-logo">FAHRCAST</span>
-      <span class="desktop-version">v33</span>
+      <span class="desktop-version">v34</span>
       <span class="desktop-subtitle" id="desktop-subtitle-text"></span>
     </div>
     <div class="lang-toggle desktop-lang">
@@ -727,7 +736,7 @@
       </div>
       <div class="logo">FAHRCAST</div>
       <div class="subtitle" id="subtitle"></div>
-      <div style="font-size:10px;color:var(--muted);margin-top:4px;" id="version-tag">v33</div>
+      <div style="font-size:10px;color:var(--muted);margin-top:4px;" id="version-tag">v34</div>
     </header>
 
     <div class="form-card">
@@ -1749,13 +1758,7 @@
         });
       });
 
-      document.querySelectorAll('.weekday-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-          document.querySelectorAll('.weekday-btn').forEach(b => b.classList.remove('active'));
-          e.target.classList.add('active');
-          selectedWeekday = parseInt(e.target.dataset.day);
-        });
-      });
+      // Weekday buttons are created+wired in applyI18n() — no duplicate listener needed here
 
       document.getElementById('ev-toggle').addEventListener('change', (e) => {
         document.getElementById('ev-section').classList.toggle('visible', e.target.checked);
@@ -1968,6 +1971,7 @@
               return;
             }
 
+            lastChargingStopPositions = []; // Reset before new calculation
             var legs = result.routes[0].legs;
             // Sum distance & duration across all legs (waypoints create multiple legs)
             var totalDistanceM = 0, totalBaseSec = 0, totalTrafficSec = 0;
@@ -2446,7 +2450,7 @@
       });
     });
 
-    console.log('[Fahrcast v33] UI initialized OK, lang=' + currentLang);
+    console.log('[Fahrcast v34] UI initialized OK, lang=' + currentLang);
 
     // Timeout: if Maps hasn't loaded after 8 seconds, show clear error
     setTimeout(function() {
