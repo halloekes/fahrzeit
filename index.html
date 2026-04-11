@@ -721,8 +721,10 @@
   <div class="desktop-topbar">
     <div class="desktop-topbar-inner">
       <span class="desktop-logo">FAHRCAST</span>
-      <span class="desktop-version">v36</span>
+      <span class="desktop-version">v37</span>
       <span class="desktop-subtitle" id="desktop-subtitle-text"></span>
+      <span style="color:var(--muted);margin-left:2px;">|</span>
+      <span style="font-size:12px;color:var(--muted);font-weight:400;">built with <span style="color:var(--accent);">♥</span> and AI</span>
     </div>
     <div class="lang-toggle desktop-lang">
       <button type="button" class="lang-btn active" data-lang="de">DE</button>
@@ -737,7 +739,7 @@
       </div>
       <div class="logo">FAHRCAST</div>
       <div class="subtitle" id="subtitle"></div>
-      <div style="font-size:10px;color:var(--muted);margin-top:4px;" id="version-tag">v36</div>
+      <div style="font-size:10px;color:var(--muted);margin-top:4px;" id="version-tag">v37</div>
     </header>
 
     <div class="form-card">
@@ -1069,6 +1071,8 @@
 
     <footer style="text-align:center;padding:24px 0 16px;font-size:12px;color:var(--muted);">
       <a href="impressum.html" style="color:var(--muted);text-decoration:none;" data-i18n="imprint_link"></a>
+      <span style="margin:0 6px;">|</span>
+      <span>© 2025 Martin Wanitschke</span>
       <span style="margin:0 6px;">|</span>
       <span>built with <span style="color:var(--accent);">♥</span> and AI</span>
     </footer>
@@ -2466,7 +2470,7 @@
       });
     });
 
-    console.log('[Fahrcast v36] UI initialized OK, lang=' + currentLang);
+    console.log('[Fahrcast v37] UI initialized OK, lang=' + currentLang);
 
     // Timeout: if Maps hasn't loaded after 8 seconds, show clear error
     setTimeout(function() {
