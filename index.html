@@ -533,12 +533,12 @@
         margin-bottom: 6px;
       }
 
-      /* Time-Cards: 3-spaltig */
-      .time-cards {
+      /* Time-Cards: 3-spaltig (nur wenn sichtbar — nicht display:none überschreiben) */
+      .time-cards[style*="display: flex"],
+      .time-cards[style*="display:flex"] {
         display: grid !important;
         grid-template-columns: 1fr 1fr 1fr;
         gap: 10px;
-        flex-direction: unset;
       }
       .time-card {
         flex-direction: column;
@@ -550,12 +550,12 @@
         text-align: left;
       }
 
-      /* Arrival-Cards: 3-spaltig */
-      .arrival-cards {
+      /* Arrival-Cards: 3-spaltig (nur wenn sichtbar) */
+      .arrival-cards[style*="display: flex"],
+      .arrival-cards[style*="display:flex"] {
         display: grid !important;
         grid-template-columns: 1fr 1fr 1fr;
         gap: 10px;
-        flex-direction: unset;
       }
       .arrival-card {
         flex-direction: column;
@@ -1804,7 +1804,7 @@
 
             // Show traffic info for this day/time
             var trafficDelayMin = Math.round((trafficSec - baseSec) / 60);
-            var hasTrafficData = !!leg.duration_in_traffic;
+            var hasTrafficData = !!legs[0].duration_in_traffic;
             // In arrival mode, include charging time to match displayed departure times
             var depTime = departureTime || new Date(arrivalTime.getTime() - (trafficSec + chargingTimeMin * 60) * 1000);
             displayDelayInfo(trafficDelayMin, baseSec, trafficSec, hasTrafficData, depTime, distanceKm);
