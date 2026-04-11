@@ -721,7 +721,7 @@
   <div class="desktop-topbar">
     <div class="desktop-topbar-inner">
       <span class="desktop-logo">FAHRCAST</span>
-      <span class="desktop-version">v45</span>
+      <span class="desktop-version">v46</span>
       <span class="desktop-subtitle" id="desktop-subtitle-text"></span>
     </div>
     <div class="lang-toggle desktop-lang">
@@ -737,7 +737,7 @@
       </div>
       <div class="logo">FAHRCAST</div>
       <div class="subtitle" id="subtitle"></div>
-      <div style="font-size:10px;color:var(--muted);margin-top:4px;" id="version-tag">v45</div>
+      <div style="font-size:10px;color:var(--muted);margin-top:4px;" id="version-tag">v46</div>
     </header>
 
     <div class="form-card">
@@ -2096,12 +2096,12 @@
 
       const realRange = evData.wltp * REAL_WORLD_RANGE_FACTOR;
       const kmPerPercent = realRange / 100;
-      const MIN_CHARGE_SOC = 5;
+      const MIN_CHARGE_SOC = 10;
+      const ARRIVAL_TOLERANCE = 5; // accept arriving with as low as 5%
 
       // Can we reach destination without charging?
-      // Check against both endBattery (desired) and MIN_CHARGE_SOC (minimum)
-      if (startBattery - distanceKm / kmPerPercent >= endBattery) return 0;
-      if (startBattery - distanceKm / kmPerPercent >= MIN_CHARGE_SOC) return 0;
+      var arrivalSoC = startBattery - distanceKm / kmPerPercent;
+      if (arrivalSoC >= MIN_CHARGE_SOC - ARRIVAL_TOLERANCE) return 0;
 
       // Simulate journey
       var currentSoC = startBattery;
@@ -2110,14 +2110,8 @@
 
       while (true) {
         var kmRemaining = distanceKm - kmCovered;
-        // Can we physically reach destination? (arrive with >= MIN_CHARGE_SOC)
-        if (currentSoC - kmRemaining / kmPerPercent >= MIN_CHARGE_SOC) break;
-        // Drive until MIN_CHARGE_SOC, then charge to 80%
-        var drivableKm = Math.max(0, (currentSoC - MIN_CHARGE_SOC) * kmPerPercent);
-        if (drivableKm < 5 && stops > 0) {
-          currentSoC = 80;
-          continue;
-        }
+        if (currentSoC - kmRemaining / kmPerPercent >= MIN_CHARGE_SOC - ARRIVAL_TOLERANCE) break;
+        var drivableKm = Math.max(10, (currentSoC - MIN_CHARGE_SOC) * kmPerPercent);
         kmCovered += drivableKm;
         stops++;
         currentSoC = 80;
@@ -2346,10 +2340,10 @@
 
       // Can we reach destination without charging?
       var kmPerPercent = realRange / 100;
-      var MIN_CHARGE_SOC = 5;
-      // Check: can we reach with desired endBattery OR at least physically?
+      var MIN_CHARGE_SOC = 10;
+      var ARRIVAL_TOLERANCE = 5; // accept arriving with as low as 5%
       var arrivalSoC = startBattery - distanceKm / kmPerPercent;
-      if (arrivalSoC >= endBattery || arrivalSoC >= MIN_CHARGE_SOC) {
+      if (arrivalSoC >= MIN_CHARGE_SOC - ARRIVAL_TOLERANCE) {
         document.getElementById('charging-stops-list').style.display = 'none';
         lastChargingStopPositions = [];
         return;
@@ -2362,21 +2356,15 @@
 
       for (var safety = 0; safety < 50; safety++) {
         var kmRemaining = distanceKm - lastChargeKm;
-        // Can we physically reach destination? (arrive with >= MIN_CHARGE_SOC)
-        if (currentSoC - kmRemaining / kmPerPercent >= MIN_CHARGE_SOC) break;
+        // Can we reach destination? (tolerate arriving with as low as 5%)
+        if (currentSoC - kmRemaining / kmPerPercent >= MIN_CHARGE_SOC - ARRIVAL_TOLERANCE) break;
 
-        // Drive until MIN_CHARGE_SOC
-        var drivableKm = Math.max(0, (currentSoC - MIN_CHARGE_SOC) * kmPerPercent);
-
-        // Skip nonsensical stops (< 5 km from last stop)
-        if (drivableKm < 5 && safety > 0) {
-          // Already at a charger, just charge more — treat as same stop
-          currentSoC = 80;
-          continue;
-        }
+        // Drive until MIN_CHARGE_SOC (minimum 10 km for low-start scenarios)
+        var drivableKm = Math.max(10, (currentSoC - MIN_CHARGE_SOC) * kmPerPercent);
 
         var stopKm = lastChargeKm + drivableKm;
-        if (stopKm >= distanceKm - 5) stopKm = distanceKm - 5;
+        // Don't place stops in last 10km — just drive through
+        if (stopKm >= distanceKm - 10) stopKm = Math.max(lastChargeKm + 10, distanceKm * 0.5);
         if (stopKm < 0) stopKm = 0;
 
         var kmDriven = stopKm - lastChargeKm;
@@ -2653,7 +2641,7 @@
       });
     });
 
-    console.log('[Fahrcast v45] UI initialized OK, lang=' + currentLang);
+    console.log('[Fahrcast v46] UI initialized OK, lang=' + currentLang);
 
     // Timeout: if Maps hasn't loaded after 8 seconds, show clear error
     setTimeout(function() {
