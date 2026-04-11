@@ -721,10 +721,8 @@
   <div class="desktop-topbar">
     <div class="desktop-topbar-inner">
       <span class="desktop-logo">FAHRCAST</span>
-      <span class="desktop-version">v39</span>
+      <span class="desktop-version">v40</span>
       <span class="desktop-subtitle" id="desktop-subtitle-text"></span>
-      <span style="color:var(--muted);margin-left:2px;">|</span>
-      <span style="font-size:12px;color:var(--muted);font-weight:400;">built with <span style="color:var(--accent);">♥</span> and AI</span>
     </div>
     <div class="lang-toggle desktop-lang">
       <button type="button" class="lang-btn active" data-lang="de">DE</button>
@@ -739,7 +737,7 @@
       </div>
       <div class="logo">FAHRCAST</div>
       <div class="subtitle" id="subtitle"></div>
-      <div style="font-size:10px;color:var(--muted);margin-top:4px;" id="version-tag">v39</div>
+      <div style="font-size:10px;color:var(--muted);margin-top:4px;" id="version-tag">v40</div>
     </header>
 
     <div class="form-card">
@@ -2098,8 +2096,8 @@
       // Can we reach destination without charging?
       if (startBattery - distanceKm / kmPerPercent >= endBattery) return 0;
 
-      // Simulate journey: intermediate stops drain to MIN_CHARGE_SOC (10%)
-      const MIN_CHARGE_SOC = 10;
+      // Simulate journey: intermediate stops drain to MIN_CHARGE_SOC (5%)
+      const MIN_CHARGE_SOC = 5;
       var currentSoC = startBattery;
       var kmCovered = 0;
       var stops = 0;
@@ -2109,7 +2107,11 @@
         // Can we reach destination with endBattery remaining?
         if (currentSoC - kmRemaining / kmPerPercent >= endBattery) break;
         // Drive until MIN_CHARGE_SOC, then charge
-        var drivableKm = (currentSoC - MIN_CHARGE_SOC) * kmPerPercent;
+        var drivableKm = Math.max(0, (currentSoC - MIN_CHARGE_SOC) * kmPerPercent);
+        if (drivableKm < 5 && stops > 0) {
+          currentSoC = 80;
+          continue;
+        }
         kmCovered += drivableKm;
         stops++;
         currentSoC = 80;
@@ -2344,8 +2346,8 @@
         return;
       }
 
-      // Simulate journey: intermediate stops drain to MIN_CHARGE_SOC (10%)
-      var MIN_CHARGE_SOC = 10;
+      // Simulate journey: stop to charge when battery hits MIN_CHARGE_SOC
+      var MIN_CHARGE_SOC = 5;
       var chargingStops = [];
       var currentSoC = startBattery;
       var lastChargeKm = 0;
@@ -2356,9 +2358,18 @@
         if (currentSoC - kmRemaining / kmPerPercent >= endBattery) break;
 
         // Drive until MIN_CHARGE_SOC
-        var drivableKm = (currentSoC - MIN_CHARGE_SOC) * kmPerPercent;
+        var drivableKm = Math.max(0, (currentSoC - MIN_CHARGE_SOC) * kmPerPercent);
+
+        // Skip nonsensical stops (< 5 km from last stop)
+        if (drivableKm < 5 && safety > 0) {
+          // Already at a charger, just charge more — treat as same stop
+          currentSoC = 80;
+          continue;
+        }
+
         var stopKm = lastChargeKm + drivableKm;
         if (stopKm >= distanceKm - 5) stopKm = distanceKm - 5;
+        if (stopKm < 0) stopKm = 0;
 
         var kmDriven = stopKm - lastChargeKm;
         var socAtArrival = Math.max(0, Math.round(currentSoC - kmDriven / kmPerPercent));
@@ -2432,6 +2443,10 @@
 
     function reverseGeocodeStop(position, idx, tesla) {
       var geocoder = new google.maps.Geocoder();
+      // For non-Tesla: also search for nearby charging stations to get provider name
+      if (!tesla) {
+        findNearbyChargingProvider(position, idx);
+      }
       geocoder.geocode({ location: position }, function(results, status) {
         if (status !== 'OK' || !results || !results.length) return;
         var locality = '';
@@ -2464,9 +2479,62 @@
         var nameEl = document.getElementById('cs-name-' + idx);
         if (!nameEl) return;
         var prefix = tesla ? 'Supercharger' : t('charging_station');
-        var locationLabel = prefix + ' · ' + locality;
+        // Check if provider was already found and stored
+        var provider = nameEl.getAttribute('data-provider');
+        var locationLabel = provider
+          ? provider + ' · ' + locality
+          : prefix + ' · ' + locality;
         nameEl.textContent = t('charging_stop_label', {idx: idx + 1, name: locationLabel});
+        nameEl.setAttribute('data-locality', locality);
       });
+    }
+
+    function findNearbyChargingProvider(position, idx) {
+      if (!currentMap) return;
+      var service = new google.maps.places.PlacesService(currentMap);
+      var request = {
+        location: position,
+        radius: 5000, // 5 km radius
+        type: 'electric_vehicle_charging_station'
+      };
+      service.nearbySearch(request, function(results, status) {
+        if (status !== google.maps.places.PlacesServiceStatus.OK || !results || !results.length) return;
+        // Find the closest result
+        var closest = results[0];
+        var providerName = extractProvider(closest.name);
+        if (!providerName) return;
+        var nameEl = document.getElementById('cs-name-' + idx);
+        if (!nameEl) return;
+        // Store provider, update label if locality already set
+        nameEl.setAttribute('data-provider', providerName);
+        var locality = nameEl.getAttribute('data-locality');
+        if (locality) {
+          var locationLabel = providerName + ' · ' + locality;
+          nameEl.textContent = t('charging_stop_label', {idx: idx + 1, name: locationLabel});
+        }
+      });
+    }
+
+    function extractProvider(placeName) {
+      // Known charging network names
+      var networks = ['IONITY', 'Ionity', 'EnBW', 'E.ON', 'EON', 'Allego', 'Fastned', 'Aral', 'Shell Recharge', 'Shell', 'Tesla', 'ENBW', 'Mer', 'EWE', 'Vattenfall', 'Lidl', 'ALDI', 'Kaufland', 'REWE'];
+      for (var i = 0; i < networks.length; i++) {
+        if (placeName.toLowerCase().indexOf(networks[i].toLowerCase()) !== -1) {
+          // Return canonical casing
+          var canonical = {
+            'ionity': 'IONITY', 'enbw': 'EnBW', 'e.on': 'E.ON', 'eon': 'E.ON',
+            'allego': 'Allego', 'fastned': 'Fastned', 'aral': 'Aral pulse',
+            'shell recharge': 'Shell Recharge', 'shell': 'Shell Recharge',
+            'tesla': 'Tesla', 'mer': 'Mer', 'ewe': 'EWE Go',
+            'vattenfall': 'Vattenfall', 'lidl': 'Lidl', 'aldi': 'ALDI',
+            'kaufland': 'Kaufland', 'rewe': 'REWE'
+          };
+          return canonical[networks[i].toLowerCase()] || networks[i];
+        }
+      }
+      // If no known network, return the full place name (often contains provider)
+      // Clean up common suffixes
+      return placeName.replace(/\s*(Ladestation|Ladesäule|Charging Station|EV Charging)\s*/gi, '').trim() || null;
     }
 
     function formatTime(date) {
@@ -2524,7 +2592,7 @@
       });
     });
 
-    console.log('[Fahrcast v39] UI initialized OK, lang=' + currentLang);
+    console.log('[Fahrcast v40] UI initialized OK, lang=' + currentLang);
 
     // Timeout: if Maps hasn't loaded after 8 seconds, show clear error
     setTimeout(function() {
