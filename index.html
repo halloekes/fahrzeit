@@ -721,7 +721,7 @@
   <div class="desktop-topbar">
     <div class="desktop-topbar-inner">
       <span class="desktop-logo">FAHRCAST</span>
-      <span class="desktop-version">v38</span>
+      <span class="desktop-version">v39</span>
       <span class="desktop-subtitle" id="desktop-subtitle-text"></span>
       <span style="color:var(--muted);margin-left:2px;">|</span>
       <span style="font-size:12px;color:var(--muted);font-weight:400;">built with <span style="color:var(--accent);">♥</span> and AI</span>
@@ -739,7 +739,7 @@
       </div>
       <div class="logo">FAHRCAST</div>
       <div class="subtitle" id="subtitle"></div>
-      <div style="font-size:10px;color:var(--muted);margin-top:4px;" id="version-tag">v38</div>
+      <div style="font-size:10px;color:var(--muted);margin-top:4px;" id="version-tag">v39</div>
     </header>
 
     <div class="form-card">
@@ -1916,7 +1916,7 @@
     function handleCalculate() {
       const from = document.getElementById('from').value.trim();
       const to = document.getElementById('to').value.trim();
-      document.getElementById('error-container').innerHTML = '';
+      document.getElementById('error-container').textContent = '';
 
       if (!from || !to) { showError(t('err_no_address')); return; }
 
@@ -2411,7 +2411,7 @@
         html += '<div class="charging-stop-card">'
           + '<div class="charging-stop-icon">⚡</div>'
           + '<div class="charging-stop-info">'
-          + '<div class="charging-stop-name">' + t('charging_stop_label', {idx: idx + 1, name: label}) + '</div>'
+          + '<div class="charging-stop-name" id="cs-name-' + idx + '">' + t('charging_stop_label', {idx: idx + 1, name: label}) + '</div>'
           + '<div class="charging-stop-detail">'
           + t('charging_stop_detail', {km: stop.stopKm, soc: stop.socAtArrival})
           + '</div>'
@@ -2422,6 +2422,51 @@
       html += '</div>';
       listEl.innerHTML = html;
       listEl.style.display = 'block';
+
+      // Reverse-geocode each stop to show location name
+      stopsData.forEach(function(stop, idx) {
+        if (!stop.position) return;
+        reverseGeocodeStop(stop.position, idx, tesla);
+      });
+    }
+
+    function reverseGeocodeStop(position, idx, tesla) {
+      var geocoder = new google.maps.Geocoder();
+      geocoder.geocode({ location: position }, function(results, status) {
+        if (status !== 'OK' || !results || !results.length) return;
+        var locality = '';
+        // Try to find locality (city) from address components
+        for (var r = 0; r < results.length; r++) {
+          var comps = results[r].address_components || [];
+          for (var c = 0; c < comps.length; c++) {
+            if (comps[c].types.indexOf('locality') !== -1) {
+              locality = comps[c].long_name;
+              break;
+            }
+          }
+          if (locality) break;
+        }
+        // Fallback: try sublocality or administrative_area_level_3
+        if (!locality) {
+          for (var r2 = 0; r2 < results.length; r2++) {
+            var comps2 = results[r2].address_components || [];
+            for (var c2 = 0; c2 < comps2.length; c2++) {
+              var types = comps2[c2].types;
+              if (types.indexOf('sublocality') !== -1 || types.indexOf('administrative_area_level_3') !== -1) {
+                locality = comps2[c2].long_name;
+                break;
+              }
+            }
+            if (locality) break;
+          }
+        }
+        if (!locality) return;
+        var nameEl = document.getElementById('cs-name-' + idx);
+        if (!nameEl) return;
+        var prefix = tesla ? 'Supercharger' : t('charging_station');
+        var locationLabel = prefix + ' · ' + locality;
+        nameEl.textContent = t('charging_stop_label', {idx: idx + 1, name: locationLabel});
+      });
     }
 
     function formatTime(date) {
@@ -2435,7 +2480,12 @@
     }
 
     function showError(message) {
-      document.getElementById('error-container').innerHTML = '<div class="error-message">' + message + '</div>';
+      var container = document.getElementById('error-container');
+      container.textContent = '';
+      var div = document.createElement('div');
+      div.className = 'error-message';
+      div.textContent = message;
+      container.appendChild(div);
       document.getElementById('results').classList.add('visible');
     }
 
@@ -2447,11 +2497,15 @@
       document.getElementById('calculate-btn').disabled = false;
     }
 
-    // Global error handler — show ALL JS errors on page
+    // Global error handler — show JS errors on page
     window.onerror = function(msg, url, line) {
-      var el = document.getElementById('error-container');
-      if (el) {
-        el.innerHTML = '<div class="error-message">' + t('err_js', {msg: msg, line: line}) + '</div>';
+      var container = document.getElementById('error-container');
+      if (container) {
+        container.textContent = '';
+        var div = document.createElement('div');
+        div.className = 'error-message';
+        div.textContent = t('err_js', {msg: 'Ein Fehler ist aufgetreten', line: ''});
+        container.appendChild(div);
         document.getElementById('results').classList.add('visible');
       }
     };
@@ -2470,7 +2524,7 @@
       });
     });
 
-    console.log('[Fahrcast v38] UI initialized OK, lang=' + currentLang);
+    console.log('[Fahrcast v39] UI initialized OK, lang=' + currentLang);
 
     // Timeout: if Maps hasn't loaded after 8 seconds, show clear error
     setTimeout(function() {
