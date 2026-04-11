@@ -396,7 +396,7 @@
       </div>
       <div class="logo">FAHRCAST</div>
       <div class="subtitle" id="subtitle"></div>
-      <div style="font-size:10px;color:var(--muted);margin-top:4px;" id="version-tag">v25</div>
+      <div style="font-size:10px;color:var(--muted);margin-top:4px;" id="version-tag">v26</div>
     </header>
 
     <div class="form-card">
@@ -1046,6 +1046,20 @@
       return 0;
     }
 
+    function setWheelValue(scrollId, value) {
+      var scroll = document.getElementById(scrollId);
+      var items = scroll.querySelectorAll('.wheel-picker-item[data-index]');
+      var targetIdx = 0;
+      items.forEach(function(item, i) {
+        if (parseInt(item.dataset.value) === value) targetIdx = i;
+      });
+      scroll.scrollTop = targetIdx * 42;
+      // Update selected class
+      items.forEach(function(item, i) {
+        item.classList.toggle('selected', i === targetIdx);
+      });
+    }
+
     function initAllPickers() {
       const hours = [];
       for (let h = 0; h < 24; h++) {
@@ -1223,6 +1237,20 @@
     function hideDropdown(d) { d.classList.remove('active'); }
 
     function toggleModeUI() {
+      // Sync time from the old picker to the new one
+      if (currentMode === 'departure') {
+        // Switching TO departure — copy arrival picker values to departure picker
+        var h = getWheelValue('arr-hour-scroll');
+        var m = getWheelValue('arr-min-scroll');
+        setWheelValue('dep-hour-scroll', h);
+        setWheelValue('dep-min-scroll', m);
+      } else {
+        // Switching TO arrival — copy departure picker values to arrival picker
+        var h = getWheelValue('dep-hour-scroll');
+        var m = getWheelValue('dep-min-scroll');
+        setWheelValue('arr-hour-scroll', h);
+        setWheelValue('arr-min-scroll', m);
+      }
       document.getElementById('departure-mode').style.display = currentMode === 'departure' ? 'block' : 'none';
       document.getElementById('arrival-mode').style.display = currentMode === 'arrival' ? 'block' : 'none';
     }
@@ -1773,7 +1801,7 @@
       });
     });
 
-    console.log('[Fahrcast v25] UI initialized OK, lang=' + currentLang);
+    console.log('[Fahrcast v26] UI initialized OK, lang=' + currentLang);
 
     // Timeout: if Maps hasn't loaded after 8 seconds, show clear error
     setTimeout(function() {
