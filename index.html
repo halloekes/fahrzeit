@@ -721,7 +721,7 @@
   <div class="desktop-topbar">
     <div class="desktop-topbar-inner">
       <span class="desktop-logo">FAHRCAST</span>
-      <span class="desktop-version">v40</span>
+      <span class="desktop-version">v41</span>
       <span class="desktop-subtitle" id="desktop-subtitle-text"></span>
     </div>
     <div class="lang-toggle desktop-lang">
@@ -737,7 +737,7 @@
       </div>
       <div class="logo">FAHRCAST</div>
       <div class="subtitle" id="subtitle"></div>
-      <div style="font-size:10px;color:var(--muted);margin-top:4px;" id="version-tag">v40</div>
+      <div style="font-size:10px;color:var(--muted);margin-top:4px;" id="version-tag">v41</div>
     </header>
 
     <div class="form-card">
@@ -2592,7 +2592,7 @@
       });
     });
 
-    console.log('[Fahrcast v40] UI initialized OK, lang=' + currentLang);
+    console.log('[Fahrcast v41] UI initialized OK, lang=' + currentLang);
 
     // Timeout: if Maps hasn't loaded after 8 seconds, show clear error
     setTimeout(function() {
@@ -2605,16 +2605,8 @@
       }
     }, 8000);
 
-    // SW management: register new SW, auto-reload when it takes over
+    // SW management: register new SW, notify user instead of auto-reloading
     if ('serviceWorker' in navigator) {
-      // Auto-reload when a new SW activates and claims this page
-      var refreshing = false;
-      navigator.serviceWorker.addEventListener('controllerchange', function() {
-        if (!refreshing) {
-          refreshing = true;
-          location.reload();
-        }
-      });
       navigator.serviceWorker.register('./sw.js').catch(function() {});
     }
 
