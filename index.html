@@ -396,7 +396,7 @@
       </div>
       <div class="logo">FAHRCAST</div>
       <div class="subtitle" id="subtitle"></div>
-      <div style="font-size:10px;color:var(--muted);margin-top:4px;" id="version-tag">v23</div>
+      <div style="font-size:10px;color:var(--muted);margin-top:4px;" id="version-tag">v24</div>
     </header>
 
     <div class="form-card">
@@ -1627,132 +1627,133 @@
 
       const tesla = isTesla(modelId);
 
-      // Search for charging stations SEQUENTIALLY to avoid Places API rate limiting
+      // Search for charging stations SEQUENTIALLY with robust error handling
       const stopsData = [];
+      const DELAY_BETWEEN = 1500; // 1.5s between Places API requests
+
+      function makeFallback(stop) {
+        return {
+          name: t('charging_searched'),
+          address: t('charging_not_found'),
+          isSupercharger: false,
+          cumulativeKm: stop.cumulativeKm,
+          socAtArrival: stop.socAtArrival,
+          position: stop.position,
+        };
+      }
 
       function searchNextStop(idx) {
         if (idx >= chargingNeededAt.length) {
+          console.log('[Fahrcast] All ' + stopsData.length + ' charging stops resolved, rendering');
           renderChargingStops(stopsData);
           return;
         }
-        const stop = chargingNeededAt[idx];
-        findChargingStation(stop.position, tesla, stop.cumulativeKm, stop.socAtArrival, idx, (result) => {
-          stopsData.push(result);
-          // Small delay between requests to avoid OVER_QUERY_LIMIT
-          setTimeout(() => searchNextStop(idx + 1), 300);
-        });
+        var stop = chargingNeededAt[idx];
+        console.log('[Fahrcast] Searching charging stop ' + (idx + 1) + '/' + chargingNeededAt.length);
+
+        try {
+          findChargingStation(stop.position, tesla, stop, idx, function(result) {
+            stopsData.push(result || makeFallback(stop));
+            setTimeout(function() { searchNextStop(idx + 1); }, DELAY_BETWEEN);
+          });
+        } catch (e) {
+          console.warn('[Fahrcast] findChargingStation threw for stop ' + idx + ':', e);
+          stopsData.push(makeFallback(stop));
+          setTimeout(function() { searchNextStop(idx + 1); }, DELAY_BETWEEN);
+        }
       }
       searchNextStop(0);
     }
 
-    function findChargingStation(position, tesla, cumulativeKm, socAtArrival, idx, callback) {
-      const ps = getPlacesService();
+    function findChargingStation(position, tesla, stopInfo, idx, callback) {
+      var cumulativeKm = stopInfo.cumulativeKm;
+      var socAtArrival = stopInfo.socAtArrival;
+      var fallback = {
+        name: t('charging_searched'),
+        address: t('charging_not_found'),
+        isSupercharger: false,
+        cumulativeKm: cumulativeKm,
+        socAtArrival: socAtArrival,
+        position: position,
+      };
+
+      var ps;
+      try { ps = getPlacesService(); } catch (e) { ps = null; }
       if (!ps) {
-        // PlacesService not available — return a fallback entry instead of null
-        callback({
-          name: t('charging_searched'),
-          address: t('charging_not_found'),
-          isSupercharger: false,
-          cumulativeKm: cumulativeKm,
-          socAtArrival: socAtArrival,
-          position: position,
-        });
+        console.warn('[Fahrcast] No PlacesService for stop ' + idx);
+        callback(fallback);
         return;
       }
 
-      // Safety timeout — if Places API doesn't respond within 5s, return fallback
-      var callbackFired = false;
-      var safetyTimeout = setTimeout(function() {
-        if (!callbackFired) {
-          callbackFired = true;
-          callback({
-            name: t('charging_searched'),
-            address: t('charging_not_found'),
-            isSupercharger: false,
-            cumulativeKm: cumulativeKm,
-            socAtArrival: socAtArrival,
-            position: position,
-          });
-        }
-      }, 5000);
+      // Safety timeout — always fire callback even if API is silent
+      var done = false;
+      function finish(result) {
+        if (done) return;
+        done = true;
+        clearTimeout(timer);
+        callback(result);
+      }
+      var timer = setTimeout(function() {
+        console.warn('[Fahrcast] Timeout for charging stop ' + idx);
+        finish(fallback);
+      }, 6000);
 
-      // Search for EV charging stations nearby
-      const keyword = tesla ? 'Tesla Supercharger' : 'Schnellladestation Elektroauto';
+      var keyword = tesla ? 'Tesla Supercharger' : 'Schnellladestation Elektroauto';
 
-      ps.nearbySearch({
-        location: position,
-        radius: 10000, // 10km radius
-        keyword: keyword,
-        type: 'point_of_interest',
-      }, (results, status) => {
-        if (callbackFired) return;
-        callbackFired = true;
-        clearTimeout(safetyTimeout);
-        if (status === google.maps.places.PlacesServiceStatus.OK && results && results.length > 0) {
-          // Pick the closest result
-          // Sort by distance, pick closest (simple lat/lng diff)
-          let best = results[0];
-          let bestDist = Infinity;
-          const pLat = position.lat(), pLng = position.lng();
-          results.forEach(r => {
-            const dLat = r.geometry.location.lat() - pLat;
-            const dLng = r.geometry.location.lng() - pLng;
-            const d = dLat * dLat + dLng * dLng;
-            if (d < bestDist) { bestDist = d; best = r; }
-          });
+      try {
+        ps.nearbySearch({
+          location: position,
+          radius: 10000,
+          keyword: keyword,
+          type: 'point_of_interest',
+        }, function(results, status) {
+          try {
+            console.log('[Fahrcast] nearbySearch stop ' + idx + ' status: ' + status + ', results: ' + (results ? results.length : 0));
+            if (status === 'OK' && results && results.length > 0) {
+              var best = results[0];
+              var bestDist = Infinity;
+              var pLat = position.lat(), pLng = position.lng();
+              results.forEach(function(r) {
+                var dLat = r.geometry.location.lat() - pLat;
+                var dLng = r.geometry.location.lng() - pLng;
+                var d = dLat * dLat + dLng * dLng;
+                if (d < bestDist) { bestDist = d; best = r; }
+              });
 
-          // Add marker
-          const marker = new google.maps.Marker({
-            position: best.geometry.location,
-            map: currentMap,
-            title: best.name,
-            icon: {
-              url: tesla
-                ? 'https://maps.google.com/mapfiles/ms/icons/red-dot.png'
-                : 'https://maps.google.com/mapfiles/ms/icons/blue-dot.png',
-              scaledSize: new google.maps.Size(36, 36),
-            },
-          });
-          chargingMarkers.push(marker);
+              try {
+                var marker = new google.maps.Marker({
+                  position: best.geometry.location, map: currentMap, title: best.name,
+                  icon: { url: tesla ? 'https://maps.google.com/mapfiles/ms/icons/red-dot.png' : 'https://maps.google.com/mapfiles/ms/icons/blue-dot.png', scaledSize: new google.maps.Size(36, 36) },
+                });
+                chargingMarkers.push(marker);
+                var infoWindow = new google.maps.InfoWindow({
+                  content: '<div style="font-family:sans-serif;font-size:13px;max-width:200px"><strong>' + best.name + '</strong><br>' + (best.vicinity || '') + '<br><span style="color:#666">' + t('charging_stop_label', {idx: idx + 1, name: ''}) + ' ~' + Math.round(cumulativeKm) + ' km</span></div>',
+                });
+                marker.addListener('click', function() { infoWindow.open(currentMap, marker); });
+              } catch (markerErr) { console.warn('[Fahrcast] Marker error stop ' + idx + ':', markerErr); }
 
-          // Info window
-          const infoWindow = new google.maps.InfoWindow({
-            content: '<div style="font-family:sans-serif;font-size:13px;max-width:200px">'
-              + '<strong>' + best.name + '</strong><br>'
-              + (best.vicinity || '') + '<br>'
-              + '<span style="color:#666">Stopp ' + (idx + 1) + ' · ~' + Math.round(cumulativeKm) + ' km</span>'
-              + '</div>',
-          });
-          marker.addListener('click', () => infoWindow.open(currentMap, marker));
-
-          callback({
-            name: best.name,
-            address: best.vicinity || '',
-            rating: best.rating || null,
-            isSupercharger: tesla || (best.name && best.name.toLowerCase().includes('supercharger')),
-            cumulativeKm: cumulativeKm,
-            socAtArrival: socAtArrival,
-            position: best.geometry.location,
-          });
-        } else {
-          // Fallback: no station found, just mark approximate position
-          const marker = new google.maps.Marker({
-            position: position, map: currentMap,
-            title: t('charging_stop_label', {idx: idx + 1, name: '~'}),
-            icon: 'https://maps.google.com/mapfiles/ms/icons/blue-dot.png',
-          });
-          chargingMarkers.push(marker);
-
-          callback({
-            name: t('charging_searched'),
-            address: t('charging_not_found'),
-            isSupercharger: false,
-            cumulativeKm: cumulativeKm,
-            socAtArrival: socAtArrival,
-            position: position,
-          });
-        }
-      });
+              finish({
+                name: best.name, address: best.vicinity || '', rating: best.rating || null,
+                isSupercharger: tesla || (best.name && best.name.toLowerCase().includes('supercharger')),
+                cumulativeKm: cumulativeKm, socAtArrival: socAtArrival, position: best.geometry.location,
+              });
+            } else {
+              console.log('[Fahrcast] No results for stop ' + idx + ', using fallback');
+              try {
+                var marker2 = new google.maps.Marker({ position: position, map: currentMap, title: 'Stop ' + (idx+1), icon: 'https://maps.google.com/mapfiles/ms/icons/blue-dot.png' });
+                chargingMarkers.push(marker2);
+              } catch (e2) {}
+              finish(fallback);
+            }
+          } catch (cbErr) {
+            console.error('[Fahrcast] nearbySearch callback error stop ' + idx + ':', cbErr);
+            finish(fallback);
+          }
+        });
+      } catch (searchErr) {
+        console.error('[Fahrcast] nearbySearch call error stop ' + idx + ':', searchErr);
+        finish(fallback);
+      }
     }
 
     function renderChargingStops(stopsData) {
@@ -1828,7 +1829,7 @@
       });
     });
 
-    console.log('[Fahrcast v23] UI initialized OK, lang=' + currentLang);
+    console.log('[Fahrcast v24] UI initialized OK, lang=' + currentLang);
 
     // Timeout: if Maps hasn't loaded after 8 seconds, show clear error
     setTimeout(function() {
