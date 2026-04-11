@@ -396,7 +396,7 @@
       </div>
       <div class="logo">FAHRCAST</div>
       <div class="subtitle" id="subtitle"></div>
-      <div style="font-size:10px;color:var(--muted);margin-top:4px;" id="version-tag">v27</div>
+      <div style="font-size:10px;color:var(--muted);margin-top:4px;" id="version-tag">v28</div>
     </header>
 
     <div class="form-card">
@@ -486,11 +486,15 @@
               <option value="" data-i18n="ev_model_placeholder"></option>
               <optgroup label="Tesla">
                 <option value="tesla-model-3-lr">Model 3 LR (629 km)</option>
+                <option value="tesla-model-3-perf">Model 3 Performance (571 km)</option>
                 <option value="tesla-model-3-sr">Model 3 SR (513 km)</option>
                 <option value="tesla-model-y-lr">Model Y LR (533 km)</option>
+                <option value="tesla-model-y-perf">Model Y Performance (580 km)</option>
                 <option value="tesla-model-y-sr">Model Y SR (430 km)</option>
                 <option value="tesla-model-s">Model S (634 km)</option>
+                <option value="tesla-model-s-plaid">Model S Plaid (611 km)</option>
                 <option value="tesla-model-x">Model X (576 km)</option>
+                <option value="tesla-model-x-plaid">Model X Plaid (543 km)</option>
               </optgroup>
               <optgroup label="VW">
                 <option value="vw-id3-pro-s">ID.3 Pro S (551 km)</option>
@@ -931,9 +935,10 @@
     let chargingMarkers = [];
 
     const EV_DATABASE = {
-      'tesla-model-3-lr': { wltp: 629 }, 'tesla-model-3-sr': { wltp: 513 },
-      'tesla-model-y-lr': { wltp: 533 }, 'tesla-model-y-sr': { wltp: 430 },
-      'tesla-model-s': { wltp: 634 }, 'tesla-model-x': { wltp: 576 },
+      'tesla-model-3-lr': { wltp: 629 }, 'tesla-model-3-perf': { wltp: 571 }, 'tesla-model-3-sr': { wltp: 513 },
+      'tesla-model-y-lr': { wltp: 533 }, 'tesla-model-y-perf': { wltp: 580 }, 'tesla-model-y-sr': { wltp: 430 },
+      'tesla-model-s': { wltp: 634 }, 'tesla-model-s-plaid': { wltp: 611 },
+      'tesla-model-x': { wltp: 576 }, 'tesla-model-x-plaid': { wltp: 543 },
       'vw-id3-pro-s': { wltp: 551 }, 'vw-id3-pro': { wltp: 426 },
       'vw-id4-pro': { wltp: 520 }, 'vw-id4-gtx': { wltp: 480 },
       'vw-id5-gtx': { wltp: 490 }, 'vw-id7-pro-s': { wltp: 615 },
@@ -1236,22 +1241,23 @@
     function hideDropdown(d) { d.classList.remove('active'); }
 
     function toggleModeUI() {
-      // Sync time from the old picker to the new one
-      if (currentMode === 'departure') {
-        // Switching TO departure — copy arrival picker values to departure picker
-        var h = getWheelValue('arr-hour-scroll');
-        var m = getWheelValue('arr-min-scroll');
-        setWheelValue('dep-hour-scroll', h);
-        setWheelValue('dep-min-scroll', m);
-      } else {
-        // Switching TO arrival — copy departure picker values to arrival picker
-        var h = getWheelValue('dep-hour-scroll');
-        var m = getWheelValue('dep-min-scroll');
-        setWheelValue('arr-hour-scroll', h);
-        setWheelValue('arr-min-scroll', m);
-      }
+      // Read values from the CURRENT (still visible) picker BEFORE hiding it
+      var srcHour = currentMode === 'departure' ? 'arr-hour-scroll' : 'dep-hour-scroll';
+      var srcMin = currentMode === 'departure' ? 'arr-min-scroll' : 'dep-min-scroll';
+      var dstHour = currentMode === 'departure' ? 'dep-hour-scroll' : 'arr-hour-scroll';
+      var dstMin = currentMode === 'departure' ? 'dep-min-scroll' : 'arr-min-scroll';
+
+      // Read from source (still visible)
+      var h = getWheelValue(srcHour);
+      var m = getWheelValue(srcMin);
+
+      // Switch visibility FIRST — target must be visible before setting scrollTop
       document.getElementById('departure-mode').style.display = currentMode === 'departure' ? 'block' : 'none';
       document.getElementById('arrival-mode').style.display = currentMode === 'arrival' ? 'block' : 'none';
+
+      // NOW set values on the newly visible picker
+      setWheelValue(dstHour, h);
+      setWheelValue(dstMin, m);
     }
 
     /* ── Build target date from weekday + time picker ── */
@@ -1759,7 +1765,7 @@
       });
     });
 
-    console.log('[Fahrcast v27] UI initialized OK, lang=' + currentLang);
+    console.log('[Fahrcast v28] UI initialized OK, lang=' + currentLang);
 
     // Timeout: if Maps hasn't loaded after 8 seconds, show clear error
     setTimeout(function() {
