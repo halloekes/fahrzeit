@@ -721,7 +721,7 @@
   <div class="desktop-topbar">
     <div class="desktop-topbar-inner">
       <span class="desktop-logo">FAHRCAST</span>
-      <span class="desktop-version">v43</span>
+      <span class="desktop-version">v44</span>
       <span class="desktop-subtitle" id="desktop-subtitle-text"></span>
     </div>
     <div class="lang-toggle desktop-lang">
@@ -737,7 +737,7 @@
       </div>
       <div class="logo">FAHRCAST</div>
       <div class="subtitle" id="subtitle"></div>
-      <div style="font-size:10px;color:var(--muted);margin-top:4px;" id="version-tag">v43</div>
+      <div style="font-size:10px;color:var(--muted);margin-top:4px;" id="version-tag">v44</div>
     </header>
 
     <div class="form-card">
@@ -2096,9 +2096,11 @@
 
       const realRange = evData.wltp * REAL_WORLD_RANGE_FACTOR;
       const kmPerPercent = realRange / 100;
+      // Cap endBattery at 80 for stop calculation — we only charge to 80%
+      const effectiveEndBattery = Math.min(endBattery, 80);
 
       // Can we reach destination without charging?
-      if (startBattery - distanceKm / kmPerPercent >= endBattery) return 0;
+      if (startBattery - distanceKm / kmPerPercent >= effectiveEndBattery) return 0;
 
       // Simulate journey: intermediate stops drain to MIN_CHARGE_SOC (5%)
       const MIN_CHARGE_SOC = 5;
@@ -2108,8 +2110,8 @@
 
       while (true) {
         var kmRemaining = distanceKm - kmCovered;
-        // Can we reach destination with endBattery remaining?
-        if (currentSoC - kmRemaining / kmPerPercent >= endBattery) break;
+        // Can we reach destination with effectiveEndBattery remaining?
+        if (currentSoC - kmRemaining / kmPerPercent >= effectiveEndBattery) break;
         // Drive until MIN_CHARGE_SOC, then charge
         var drivableKm = Math.max(0, (currentSoC - MIN_CHARGE_SOC) * kmPerPercent);
         if (drivableKm < 5 && stops > 0) {
@@ -2344,7 +2346,9 @@
 
       // Can we reach destination without charging?
       var kmPerPercent = realRange / 100;
-      if (startBattery - distanceKm / kmPerPercent >= endBattery) {
+      // Cap endBattery at 80 for stop calculation — we only charge to 80%
+      var effectiveEndBattery = Math.min(endBattery, 80);
+      if (startBattery - distanceKm / kmPerPercent >= effectiveEndBattery) {
         document.getElementById('charging-stops-list').style.display = 'none';
         lastChargingStopPositions = [];
         return;
@@ -2358,8 +2362,8 @@
 
       for (var safety = 0; safety < 50; safety++) {
         var kmRemaining = distanceKm - lastChargeKm;
-        // Can we reach destination with endBattery remaining?
-        if (currentSoC - kmRemaining / kmPerPercent >= endBattery) break;
+        // Can we reach destination with effectiveEndBattery remaining?
+        if (currentSoC - kmRemaining / kmPerPercent >= effectiveEndBattery) break;
 
         // Drive until MIN_CHARGE_SOC
         var drivableKm = Math.max(0, (currentSoC - MIN_CHARGE_SOC) * kmPerPercent);
@@ -2494,39 +2498,60 @@
     }
 
     function findNearbyChargingProvider(position, idx) {
-      if (!currentMap) return;
+      if (!currentMap) {
+        console.log('[Fahrcast] No map for provider lookup at stop ' + (idx + 1));
+        return;
+      }
       var service = new google.maps.places.PlacesService(currentMap);
-      // Use textSearch — more reliable than nearbySearch for EV chargers
-      var request = {
-        query: 'Ladestation Elektroauto',
-        location: position,
-        radius: 10000
-      };
-      service.textSearch(request, function(results, status) {
-        if (status !== google.maps.places.PlacesServiceStatus.OK || !results || !results.length) {
-          console.log('[Fahrcast] No charging stations found near stop ' + (idx + 1), status);
-          return;
-        }
-        // Try all results to find a known provider
-        var providerName = null;
-        for (var i = 0; i < Math.min(results.length, 5); i++) {
-          providerName = extractProvider(results[i].name);
-          if (providerName) break;
-        }
-        if (!providerName) {
-          console.log('[Fahrcast] No known provider in results for stop ' + (idx + 1), results.slice(0, 3).map(function(r) { return r.name; }));
-          return;
-        }
-        var nameEl = document.getElementById('cs-name-' + idx);
-        if (!nameEl) return;
-        // Store provider, update label if locality already set
-        nameEl.setAttribute('data-provider', providerName);
-        var locality = nameEl.getAttribute('data-locality');
-        if (locality) {
-          var locationLabel = providerName + ' · ' + locality;
-          nameEl.textContent = t('charging_stop_label', {idx: idx + 1, name: locationLabel});
-        }
-      });
+
+      // Try nearbySearch first (simpler, less quota), fallback to textSearch
+      try {
+        service.nearbySearch({
+          location: position,
+          rankBy: google.maps.places.RankBy.DISTANCE,
+          keyword: 'Ladestation'
+        }, function(results, status) {
+          console.log('[Fahrcast] nearbySearch stop ' + (idx + 1) + ': status=' + status + ', results=' + (results ? results.length : 0));
+          if (status === google.maps.places.PlacesServiceStatus.OK && results && results.length) {
+            var names = results.slice(0, 5).map(function(r) { return r.name; });
+            console.log('[Fahrcast] Stop ' + (idx + 1) + ' nearby names:', names);
+            applyProviderToStop(results, idx);
+          } else {
+            // Fallback: textSearch
+            service.textSearch({
+              query: 'Elektroauto Ladestation',
+              location: position,
+              radius: 15000
+            }, function(results2, status2) {
+              console.log('[Fahrcast] textSearch stop ' + (idx + 1) + ': status=' + status2 + ', results=' + (results2 ? results2.length : 0));
+              if (status2 === google.maps.places.PlacesServiceStatus.OK && results2 && results2.length) {
+                var names2 = results2.slice(0, 5).map(function(r) { return r.name; });
+                console.log('[Fahrcast] Stop ' + (idx + 1) + ' text names:', names2);
+                applyProviderToStop(results2, idx);
+              }
+            });
+          }
+        });
+      } catch(e) {
+        console.error('[Fahrcast] Provider lookup error for stop ' + (idx + 1), e);
+      }
+    }
+
+    function applyProviderToStop(results, idx) {
+      var providerName = null;
+      for (var i = 0; i < Math.min(results.length, 8); i++) {
+        providerName = extractProvider(results[i].name);
+        if (providerName) break;
+      }
+      if (!providerName) return;
+      var nameEl = document.getElementById('cs-name-' + idx);
+      if (!nameEl) return;
+      nameEl.setAttribute('data-provider', providerName);
+      var locality = nameEl.getAttribute('data-locality');
+      if (locality) {
+        var locationLabel = providerName + ' · ' + locality;
+        nameEl.textContent = t('charging_stop_label', {idx: idx + 1, name: locationLabel});
+      }
     }
 
     function extractProvider(placeName) {
@@ -2614,7 +2639,7 @@
       });
     });
 
-    console.log('[Fahrcast v43] UI initialized OK, lang=' + currentLang);
+    console.log('[Fahrcast v44] UI initialized OK, lang=' + currentLang);
 
     // Timeout: if Maps hasn't loaded after 8 seconds, show clear error
     setTimeout(function() {
