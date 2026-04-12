@@ -738,7 +738,7 @@
   <div class="desktop-topbar">
     <div class="desktop-topbar-inner">
       <span class="desktop-logo">FAHRCAST</span>
-      <span class="desktop-version">v49</span>
+      <span class="desktop-version">v50</span>
       <span class="desktop-subtitle" id="desktop-subtitle-text"></span>
     </div>
     <div class="lang-toggle desktop-lang">
@@ -754,7 +754,7 @@
       </div>
       <div class="logo">FAHRCAST</div>
       <div class="subtitle" id="subtitle"></div>
-      <div style="font-size:10px;color:var(--muted);margin-top:4px;" id="version-tag">v49</div>
+      <div style="font-size:10px;color:var(--muted);margin-top:4px;" id="version-tag">v50</div>
     </header>
 
     <div class="form-card">
@@ -1168,6 +1168,7 @@
         imprint_link: 'Impressum & Datenschutz',
         release_notes_link: 'Release Notes',
         ev_stops_info: '⚡ {stops} Ladestopp(s) empfohlen, ca. {min} Min. Ladezeit (in Zeiten eingerechnet)',
+        ev_no_stop: '⚡ Kein Ladestopp nötig — Reichweite reicht aus',
         ev_no_model_hint: '⚡ Bitte wähle ein Fahrzeugmodell aus, damit genaue Ladestopps in der Route angezeigt werden.',
         err_no_address: 'Bitte Start- und Zielort eingeben.',
         err_maps_not_loaded: 'Google Maps konnte nicht geladen werden. Mögliche Ursachen: API-Key ungültig, keine Abrechnung aktiviert, oder Referrer-Einschränkung falsch.',
@@ -1261,6 +1262,7 @@
         imprint_link: 'Legal & Privacy',
         release_notes_link: 'Release Notes',
         ev_stops_info: '⚡ {stops} charging stop(s) recommended, ~{min} min charging time (included in times)',
+        ev_no_stop: '⚡ No charging stop needed — range is sufficient',
         ev_no_model_hint: '⚡ Please select a vehicle model so charging stops can be shown on your route.',
         err_no_address: 'Please enter origin and destination.',
         err_maps_not_loaded: 'Google Maps could not be loaded. Possible causes: invalid API key, billing not enabled, or referrer restriction.',
@@ -1383,6 +1385,7 @@
     let lastResults = null;
     let lastMapsUrl = null;
     let lastChargingStopPositions = [];
+    let lastDirectionsRoute = null; // cached for auto-recalc
 
     /* ── Search History (localStorage) ── */
     const HISTORY_KEY = 'fahrcast_search_history';
@@ -1605,49 +1608,70 @@
     let selectedWeekday = new Date().getDay(); // 0=So, 1=Mo, ...
     let chargingMarkers = [];
 
+    // EV database: wltp = WLTP range (km), kWh = usable battery capacity
     const EV_DATABASE = {
-      'tesla-model-3-lr': { wltp: 629 }, 'tesla-model-3-perf': { wltp: 571 }, 'tesla-model-3-sr': { wltp: 513 },
-      'tesla-model-y-lr': { wltp: 533 }, 'tesla-model-y-perf': { wltp: 580 }, 'tesla-model-y-sr': { wltp: 430 },
-      'tesla-model-s': { wltp: 634 }, 'tesla-model-s-plaid': { wltp: 611 },
-      'tesla-model-x': { wltp: 576 }, 'tesla-model-x-plaid': { wltp: 543 },
-      'vw-id3-pro-s': { wltp: 551 }, 'vw-id3-pro': { wltp: 426 },
-      'vw-id4-pro': { wltp: 520 }, 'vw-id4-gtx': { wltp: 480 },
-      'vw-id5-gtx': { wltp: 490 }, 'vw-id7-pro-s': { wltp: 615 },
-      'bmw-i4-edrive40': { wltp: 590 }, 'bmw-ix1-xdrive30': { wltp: 440 },
-      'bmw-ix3': { wltp: 461 }, 'bmw-ix-xdrive50': { wltp: 630 },
-      'bmw-i5-edrive40': { wltp: 582 },
-      'mercedes-eqa-250': { wltp: 528 }, 'mercedes-eqb-250': { wltp: 474 },
-      'mercedes-eqe-300': { wltp: 639 }, 'mercedes-eqs-450': { wltp: 770 },
-      'audi-q4-etron-45': { wltp: 520 }, 'audi-q6-etron': { wltp: 625 },
-      'audi-q8-etron-55': { wltp: 582 }, 'audi-etron-gt': { wltp: 488 },
-      'hyundai-ioniq5-lr': { wltp: 507 }, 'hyundai-ioniq6-lr': { wltp: 614 },
-      'kia-ev6-lr': { wltp: 528 }, 'kia-ev9-lr': { wltp: 541 },
-      'porsche-taycan': { wltp: 484 }, 'porsche-taycan-4s': { wltp: 464 },
-      'skoda-enyaq-85': { wltp: 557 }, 'skoda-enyaq-coupe-85': { wltp: 560 },
-      'cupra-born-77': { wltp: 548 },
-      'opel-mokka-e': { wltp: 338 }, 'opel-corsa-e': { wltp: 357 },
-      'renault-megane-ev60': { wltp: 450 }, 'renault-scenic-etech': { wltp: 620 },
-      'peugeot-e3008': { wltp: 527 }, 'peugeot-e208': { wltp: 400 },
-      'fiat-500e': { wltp: 321 }, 'mini-cooper-se': { wltp: 305 },
-      'volvo-ex30-lr': { wltp: 476 }, 'volvo-ex40': { wltp: 573 }, 'volvo-c40': { wltp: 550 },
-      'polestar-2-lr': { wltp: 592 },
-      'byd-atto-3': { wltp: 420 }, 'byd-seal': { wltp: 570 },
-      'smart-1-pro': { wltp: 440 }, 'smart-3-pro': { wltp: 455 },
+      'tesla-model-3-lr': { wltp: 629, kWh: 75 }, 'tesla-model-3-perf': { wltp: 571, kWh: 75 }, 'tesla-model-3-sr': { wltp: 513, kWh: 57.5 },
+      'tesla-model-y-lr': { wltp: 533, kWh: 75 }, 'tesla-model-y-perf': { wltp: 580, kWh: 75 }, 'tesla-model-y-sr': { wltp: 430, kWh: 57.5 },
+      'tesla-model-s': { wltp: 634, kWh: 95 }, 'tesla-model-s-plaid': { wltp: 611, kWh: 95 },
+      'tesla-model-x': { wltp: 576, kWh: 95 }, 'tesla-model-x-plaid': { wltp: 543, kWh: 95 },
+      'vw-id3-pro-s': { wltp: 551, kWh: 77 }, 'vw-id3-pro': { wltp: 426, kWh: 58 },
+      'vw-id4-pro': { wltp: 520, kWh: 77 }, 'vw-id4-gtx': { wltp: 480, kWh: 77 },
+      'vw-id5-gtx': { wltp: 490, kWh: 77 }, 'vw-id7-pro-s': { wltp: 615, kWh: 77 },
+      'bmw-i4-edrive40': { wltp: 590, kWh: 80.7 }, 'bmw-ix1-xdrive30': { wltp: 440, kWh: 64.7 },
+      'bmw-ix3': { wltp: 461, kWh: 74 }, 'bmw-ix-xdrive50': { wltp: 630, kWh: 105.2 },
+      'bmw-i5-edrive40': { wltp: 582, kWh: 81.2 },
+      'mercedes-eqa-250': { wltp: 528, kWh: 66.5 }, 'mercedes-eqb-250': { wltp: 474, kWh: 66.5 },
+      'mercedes-eqe-300': { wltp: 639, kWh: 89 }, 'mercedes-eqs-450': { wltp: 770, kWh: 107.8 },
+      'audi-q4-etron-45': { wltp: 520, kWh: 76.6 }, 'audi-q6-etron': { wltp: 625, kWh: 94.9 },
+      'audi-q8-etron-55': { wltp: 582, kWh: 106 }, 'audi-etron-gt': { wltp: 488, kWh: 84 },
+      'hyundai-ioniq5-lr': { wltp: 507, kWh: 77.4 }, 'hyundai-ioniq6-lr': { wltp: 614, kWh: 77.4 },
+      'kia-ev6-lr': { wltp: 528, kWh: 77.4 }, 'kia-ev9-lr': { wltp: 541, kWh: 99.8 },
+      'porsche-taycan': { wltp: 484, kWh: 79.2 }, 'porsche-taycan-4s': { wltp: 464, kWh: 79.2 },
+      'skoda-enyaq-85': { wltp: 557, kWh: 77 }, 'skoda-enyaq-coupe-85': { wltp: 560, kWh: 77 },
+      'cupra-born-77': { wltp: 548, kWh: 77 },
+      'opel-mokka-e': { wltp: 338, kWh: 50 }, 'opel-corsa-e': { wltp: 357, kWh: 50 },
+      'renault-megane-ev60': { wltp: 450, kWh: 60 }, 'renault-scenic-etech': { wltp: 620, kWh: 87 },
+      'peugeot-e3008': { wltp: 527, kWh: 73 }, 'peugeot-e208': { wltp: 400, kWh: 50 },
+      'fiat-500e': { wltp: 321, kWh: 37.3 }, 'mini-cooper-se': { wltp: 305, kWh: 49.2 },
+      'volvo-ex30-lr': { wltp: 476, kWh: 64 }, 'volvo-ex40': { wltp: 573, kWh: 78 }, 'volvo-c40': { wltp: 550, kWh: 78 },
+      'polestar-2-lr': { wltp: 592, kWh: 78 },
+      'byd-atto-3': { wltp: 420, kWh: 60.5 }, 'byd-seal': { wltp: 570, kWh: 82.6 },
+      'smart-1-pro': { wltp: 440, kWh: 62 }, 'smart-3-pro': { wltp: 455, kWh: 62 },
     };
 
-    const REAL_WORLD_RANGE_FACTOR = 0.78;
+    // ── Speed-dependent energy consumption model ──
+    // WLTP test cycle has ~46.5 km/h average speed.
+    // At higher speeds aerodynamic drag (proportional to v²) dominates.
+    // speedFactor(v) returns a multiplier on WLTP consumption:
+    //   50 km/h → 1.0,  80 → ~1.10,  100 → ~1.29,  120 → ~1.56,  130 → ~1.74
+    // Below 50 km/h (city), EVs benefit from regen braking → factor stays ~1.0
+    function getSpeedConsumptionFactor(avgSpeedKmh) {
+      if (!avgSpeedKmh || avgSpeedKmh <= 50) return 1.0;
+      var delta = avgSpeedKmh - 50;
+      return 1.0 + 0.000115 * delta * delta;
+    }
 
-    // Driving style multipliers applied on top of REAL_WORLD_RANGE_FACTOR
-    const DRIVING_STYLE_FACTORS = { 1: 1.08, 2: 1.0, 3: 0.85 };
-    // 1=Sparsam (8% more range), 2=Normal, 3=Zügig (15% less range)
+    // Driving style multipliers: affects consumption directly
+    const DRIVING_STYLE_FACTORS = { 1: 0.92, 2: 1.0, 3: 1.18 };
+    // 1=Sparsam (8% less consumption), 2=Normal, 3=Zügig (18% more consumption)
 
     function getDrivingStyleFactor() {
       var slider = document.getElementById('ev-driving-style');
       return slider ? DRIVING_STYLE_FACTORS[parseInt(slider.value)] || 1.0 : 1.0;
     }
 
-    function getEffectiveRange(evData) {
-      return evData.wltp * REAL_WORLD_RANGE_FACTOR * getDrivingStyleFactor();
+    // Last calculated route data for recalculation
+    var lastRouteAvgSpeed = null;
+    var lastRouteDurationSec = null;
+
+    // Calculate effective range based on battery, speed, and driving style
+    // avgSpeedKmh: average route speed from Google Directions (distance/duration)
+    function getEffectiveRange(evData, avgSpeedKmh) {
+      var wltpConsumption = evData.kWh / evData.wltp; // kWh/km at WLTP
+      var speedFactor = getSpeedConsumptionFactor(avgSpeedKmh || lastRouteAvgSpeed || 80);
+      var styleFactor = getDrivingStyleFactor();
+      var realConsumption = wltpConsumption * speedFactor * styleFactor; // kWh/km
+      return evData.kWh / realConsumption; // effective range in km
     }
 
     // Known charging providers for filter chips
@@ -1670,9 +1694,30 @@
         chip.addEventListener('click', function() {
           chip.classList.toggle('active');
           updateSelectedProviders();
+          recalcIfRouteExists();
         });
         container.appendChild(chip);
       });
+      // Auto-select Tesla chip if a Tesla model is selected
+      applyTeslaDefault();
+    }
+
+    // When Tesla model selected: pre-select "Tesla" chip (Supercharger)
+    function applyTeslaDefault() {
+      var modelId = document.getElementById('ev-model').value;
+      var isTesla = modelId && modelId.startsWith('tesla-');
+      var chips = document.querySelectorAll('.provider-chip');
+      chips.forEach(function(chip) {
+        if (chip.textContent === 'Tesla') {
+          if (isTesla && !chip.classList.contains('active')) {
+            chip.classList.add('active');
+          } else if (!isTesla && selectedProviders.length === 0) {
+            // Only remove Tesla default if no other providers selected
+            // (user may have manually selected Tesla for non-Tesla car)
+          }
+        }
+      });
+      updateSelectedProviders();
     }
 
     function updateSelectedProviders() {
@@ -1688,6 +1733,33 @@
       return selectedProviders.some(function(p) {
         return lower.indexOf(p.toLowerCase()) !== -1;
       });
+    }
+
+    /* ── Auto-recalculate when EV settings change (no new API call) ── */
+    function recalcIfRouteExists() {
+      if (!lastResults || !lastResults.distanceKm) return;
+      if (!document.getElementById('ev-toggle').checked) return;
+      var distanceKm = lastResults.distanceKm;
+      // Recalculate charging time
+      var chargingTimeMin = getChargingTime(distanceKm);
+      lastResults.chargingTimeMin = chargingTimeMin;
+      // Update displayed times
+      if (currentMode === 'departure' && lastResults.departureTime) {
+        displayDepartureResults(lastResults.scenarios, lastResults.departureTime, chargingTimeMin);
+      } else if (currentMode === 'arrival' && lastResults.arrivalTime) {
+        displayArrivalResults(lastResults.scenarios, lastResults.arrivalTime, chargingTimeMin);
+      }
+      // Update EV info box
+      if (chargingTimeMin > 0) {
+        displayEVInfo(distanceKm, chargingTimeMin);
+      } else {
+        var box = document.getElementById('ev-info-box');
+        if (box) { box.innerHTML = '<div id="ev-info-text">' + t('ev_no_stop') + '</div>'; box.style.display = 'block'; }
+      }
+      // Update charging stop markers on map
+      if (lastDirectionsRoute) {
+        addChargingMarkers(lastDirectionsRoute);
+      }
     }
 
     /* ── Wheel Picker ── */
@@ -1887,6 +1959,21 @@
 
       // Init provider chips and driving style slider
       initProviderChips();
+
+      // Auto-recalculate when EV settings change (model, battery, driving style)
+      document.getElementById('ev-model').addEventListener('change', function() {
+        applyTeslaDefault();
+        recalcIfRouteExists();
+      });
+      document.getElementById('ev-start-battery').addEventListener('input', function() {
+        recalcIfRouteExists();
+      });
+      document.getElementById('ev-end-battery').addEventListener('input', function() {
+        recalcIfRouteExists();
+      });
+      document.getElementById('ev-driving-style').addEventListener('input', function() {
+        recalcIfRouteExists();
+      });
 
       document.getElementById('calculate-btn').addEventListener('click', function() {
         try {
@@ -2106,6 +2193,11 @@
             }
             var distanceKm = totalDistanceM / 1000;
 
+            // Store average speed for consumption model (use base duration, not traffic)
+            var avgRouteSpeed = totalBaseSec > 0 ? (distanceKm / (totalBaseSec / 3600)) : 80;
+            lastRouteAvgSpeed = avgRouteSpeed;
+            lastRouteDurationSec = totalBaseSec;
+
             var baseSec = totalBaseSec;
             var trafficSec = totalTrafficSec;
 
@@ -2139,8 +2231,9 @@
               document.getElementById('route-speed').textContent = speedAvg + ' km/h';
               document.getElementById('map-container').classList.add('visible');
 
+              lastDirectionsRoute = result.routes[0];
               if (document.getElementById('ev-toggle').checked && lastResults) {
-                addChargingMarkers(result.routes[0]);
+                addChargingMarkers(lastDirectionsRoute);
               }
             } catch (mapErr) {
               console.warn('Map display error:', mapErr);
@@ -2186,6 +2279,34 @@
       }
     }
 
+    /* ── Estimate DC charging time from startSoC to targetSoC (minutes) ── */
+    // Simplified charging curve model:
+    //   0-10%: ~0.5 min/% (preconditioning, ramp-up)
+    //   10-50%: ~0.4 min/% (peak DC charging)
+    //   50-80%: ~0.6 min/% (tapering)
+    //   80-90%: ~1.5 min/% (significant taper)
+    //   90-100%: ~2.5 min/% (very slow)
+    function estimateChargingMinutes(fromSoC, toSoC) {
+      if (toSoC <= fromSoC) return 0;
+      var mins = 0;
+      var brackets = [
+        { up: 10, rate: 0.5 },
+        { up: 50, rate: 0.4 },
+        { up: 80, rate: 0.6 },
+        { up: 90, rate: 1.5 },
+        { up: 100, rate: 2.5 }
+      ];
+      var soc = fromSoC;
+      for (var b = 0; b < brackets.length && soc < toSoC; b++) {
+        var top = Math.min(brackets[b].up, toSoC);
+        if (soc < top) {
+          mins += (top - soc) * brackets[b].rate;
+          soc = top;
+        }
+      }
+      return Math.round(mins);
+    }
+
     /* ── Calculate EV charging time (returns minutes) ── */
     function getChargingTime(distanceKm) {
       const modelId = document.getElementById('ev-model').value;
@@ -2199,7 +2320,7 @@
       const realRange = getEffectiveRange(evData);
       const kmPerPercent = realRange / 100;
       const MIN_CHARGE_SOC = 10;
-      const ARRIVAL_TOLERANCE = 5; // accept arriving with as low as 5%
+      const ARRIVAL_TOLERANCE = 5;
 
       // Can we reach destination without charging?
       var arrivalSoC = startBattery - distanceKm / kmPerPercent;
@@ -2208,28 +2329,24 @@
       // Simulate journey
       var currentSoC = startBattery;
       var kmCovered = 0;
-      var stops = 0;
+      var totalMin = 0;
 
-      while (true) {
+      for (var safety = 0; safety < 50; safety++) {
         var kmRemaining = distanceKm - kmCovered;
         if (currentSoC - kmRemaining / kmPerPercent >= MIN_CHARGE_SOC - ARRIVAL_TOLERANCE) break;
         var drivableKm = Math.max(10, (currentSoC - MIN_CHARGE_SOC) * kmPerPercent);
         kmCovered += drivableKm;
-        stops++;
+        var socAtStop = Math.max(0, Math.round(currentSoC - drivableKm / kmPerPercent));
+        totalMin += estimateChargingMinutes(socAtStop, 80);
         currentSoC = 80;
-        if (stops > 50) break;
       }
 
-      // Base: 25 min per stop (10%→80%)
-      var totalMin = stops * 25;
-      // If last stop needs to charge above 80% for endBattery target, add extra time
-      if (stops > 0) {
+      // If last stop needs to charge above 80% for endBattery target
+      if (totalMin > 0) {
         var kmAfterLastStop = distanceKm - kmCovered;
         var neededSoC = Math.ceil(endBattery + kmAfterLastStop / kmPerPercent);
-        if (neededSoC > 80) {
-          // Charging above 80% is much slower: ~1.5 min per extra %
-          var extraPercent = Math.min(neededSoC, 100) - 80;
-          totalMin += Math.round(extraPercent * 1.5);
+        if (neededSoC > 80 && neededSoC <= 100) {
+          totalMin += estimateChargingMinutes(80, neededSoC);
         }
       }
       return totalMin;
@@ -2426,9 +2543,10 @@
 
       // Combine all legs into one virtual leg for multi-waypoint routes
       var allLegs = route.legs;
-      var combinedLeg = { steps: [], distance: { value: 0 } };
+      var combinedLeg = { steps: [], distance: { value: 0 }, duration: { value: 0 } };
       for (var li = 0; li < allLegs.length; li++) {
         combinedLeg.distance.value += allLegs[li].distance.value;
+        combinedLeg.duration.value += allLegs[li].duration.value;
         var legSteps = allLegs[li].steps || [];
         for (var si = 0; si < legSteps.length; si++) {
           combinedLeg.steps.push(legSteps[si]);
@@ -2444,8 +2562,15 @@
       var evData = EV_DATABASE[modelId];
       if (!evData) return;
 
-      var realRange = getEffectiveRange(evData);
+      // Calculate average speed from route for consumption model
       var distanceKm = leg.distance.value / 1000;
+      var durationHours = leg.duration.value / 3600;
+      var avgSpeedKmh = durationHours > 0 ? distanceKm / durationHours : 80;
+      lastRouteAvgSpeed = avgSpeedKmh;
+      lastRouteDurationSec = leg.duration.value;
+      console.log('[Fahrcast] Route: ' + distanceKm.toFixed(0) + 'km, avg ' + avgSpeedKmh.toFixed(0) + 'km/h, speedFactor=' + getSpeedConsumptionFactor(avgSpeedKmh).toFixed(2));
+
+      var realRange = getEffectiveRange(evData, avgSpeedKmh);
       // Can we reach destination without charging?
       var kmPerPercent = realRange / 100;
       var MIN_CHARGE_SOC = 10;
@@ -2776,7 +2901,7 @@
       });
     });
 
-    console.log('[Fahrcast v49] UI initialized OK, lang=' + currentLang);
+    console.log('[Fahrcast v50] UI initialized OK, lang=' + currentLang);
 
     // Timeout: if Maps hasn't loaded after 8 seconds, show clear error
     setTimeout(function() {
