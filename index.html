@@ -1888,15 +1888,6 @@
       // Init provider chips and driving style slider
       initProviderChips();
 
-      // Show Tesla provider note when Tesla model selected
-      document.getElementById('ev-model').addEventListener('change', function() {
-        var isTeslaModel = this.value && this.value.startsWith('tesla-');
-        var providerGroup = document.getElementById('ev-provider-group');
-        if (providerGroup) {
-          providerGroup.style.display = isTeslaModel ? 'none' : 'block';
-        }
-      });
-
       document.getElementById('calculate-btn').addEventListener('click', function() {
         try {
           var btn = document.getElementById('calculate-btn');
@@ -2406,10 +2397,6 @@
 
     // displayMap removed — map display now integrated into calculateRoute
 
-    function isTesla(modelId) {
-      return modelId && modelId.startsWith('tesla-');
-    }
-
     /* ── Interpolate position along route at a given km distance ── */
     function getPositionAtKm(leg, targetKm) {
       var steps = leg.steps || [];
@@ -2459,8 +2446,6 @@
 
       var realRange = getEffectiveRange(evData);
       var distanceKm = leg.distance.value / 1000;
-      var tesla = isTesla(modelId);
-
       // Can we reach destination without charging?
       var kmPerPercent = realRange / 100;
       var MIN_CHARGE_SOC = 10;
@@ -2499,7 +2484,6 @@
           socAtArrival: socAtArrival,
           chargeTo: 80,
           position: pos,
-          tesla: tesla,
         });
 
         // After charging: SoC resets to 80%, next segment starts here
@@ -2527,7 +2511,7 @@
       lastChargingStopPositions = chargingStops.filter(function(s) { return s.position; }).map(function(s) { return s.position; });
 
       // Render all stops immediately
-      renderChargingStops(chargingStops, tesla);
+      renderChargingStops(chargingStops);
 
       // Add map markers
       chargingStops.forEach(function(stop, idx) {
@@ -2537,7 +2521,7 @@
             position: stop.position, map: currentMap,
             title: t('charging_stop_label', {idx: idx + 1, name: '⚡'}),
             icon: {
-              url: tesla ? 'https://maps.google.com/mapfiles/ms/icons/red-dot.png' : 'https://maps.google.com/mapfiles/ms/icons/blue-dot.png',
+              url: 'https://maps.google.com/mapfiles/ms/icons/blue-dot.png',
               scaledSize: new google.maps.Size(36, 36),
             },
           });
@@ -2546,12 +2530,12 @@
       });
     }
 
-    function renderChargingStops(stopsData, tesla) {
+    function renderChargingStops(stopsData) {
       var listEl = document.getElementById('charging-stops-list');
       var html = '<div class="charging-stops-list">';
 
       stopsData.forEach(function(stop, idx) {
-        var label = tesla ? 'Supercharger' : t('charging_station');
+        var label = t('charging_station');
         html += '<div class="charging-stop-card">'
           + '<div class="charging-stop-icon">⚡</div>'
           + '<div class="charging-stop-info">'
@@ -2570,16 +2554,14 @@
       // Reverse-geocode each stop to show location name
       stopsData.forEach(function(stop, idx) {
         if (!stop.position) return;
-        reverseGeocodeStop(stop.position, idx, tesla);
+        reverseGeocodeStop(stop.position, idx);
       });
     }
 
-    function reverseGeocodeStop(position, idx, tesla) {
+    function reverseGeocodeStop(position, idx) {
       var geocoder = new google.maps.Geocoder();
-      // For non-Tesla: also search for nearby charging stations to get provider name
-      if (!tesla) {
-        findNearbyChargingProvider(position, idx);
-      }
+      // Search for nearby charging stations to get provider name
+      findNearbyChargingProvider(position, idx);
       geocoder.geocode({ location: position }, function(results, status) {
         if (status !== 'OK' || !results || !results.length) return;
         var locality = '';
@@ -2611,7 +2593,7 @@
         if (!locality) return;
         var nameEl = document.getElementById('cs-name-' + idx);
         if (!nameEl) return;
-        var prefix = tesla ? 'Supercharger' : t('charging_station');
+        var prefix = t('charging_station');
         // Check if provider was already found and stored
         var provider = nameEl.getAttribute('data-provider');
         var locationLabel = provider
