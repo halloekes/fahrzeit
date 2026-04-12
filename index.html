@@ -1693,6 +1693,8 @@
         chip.textContent = name;
         chip.addEventListener('click', function() {
           chip.classList.toggle('active');
+          // If user manually toggles Tesla chip, clear auto-select tracking
+          if (chip.textContent === 'Tesla') teslaChipAutoSelected = false;
           updateSelectedProviders();
           recalcIfRouteExists();
         });
@@ -1702,7 +1704,11 @@
       applyTeslaDefault();
     }
 
+    // Track whether Tesla chip was auto-selected (vs. manually by user)
+    var teslaChipAutoSelected = false;
+
     // When Tesla model selected: pre-select "Tesla" chip (Supercharger)
+    // When switching away from Tesla: remove auto-selection
     function applyTeslaDefault() {
       var modelId = document.getElementById('ev-model').value;
       var isTesla = modelId && modelId.startsWith('tesla-');
@@ -1711,9 +1717,10 @@
         if (chip.textContent === 'Tesla') {
           if (isTesla && !chip.classList.contains('active')) {
             chip.classList.add('active');
-          } else if (!isTesla && selectedProviders.length === 0) {
-            // Only remove Tesla default if no other providers selected
-            // (user may have manually selected Tesla for non-Tesla car)
+            teslaChipAutoSelected = true;
+          } else if (!isTesla && teslaChipAutoSelected) {
+            chip.classList.remove('active');
+            teslaChipAutoSelected = false;
           }
         }
       });
