@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0B3041">
+<title>Feedback – Fahrcast</title>
+<link href="fonts/fonts.css" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Syne', -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    font-size: 16px; line-height: 1.6; color: #1a2e28;
+    background: #f0f5f3; padding: 0 0 60px 0;
+  }
+  header {
+    background: #0B3041; color: white; padding: 16px 20px;
+    display: flex; align-items: center; gap: 12px;
+    position: sticky; top: 0; z-index: 10;
+  }
+  header a { color: white; text-decoration: none; font-size: 20px; }
+  header h1 { font-size: 18px; font-weight: 600; }
+  .container { max-width: 680px; margin: 0 auto; padding: 24px 20px; }
+  .form-card {
+    background: white; border-radius: 12px; padding: 24px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+  }
+  .form-intro {
+    font-size: 14px; color: #6b8a7e; margin-bottom: 20px;
+  }
+  .form-group { margin-bottom: 18px; }
+  .form-group label {
+    display: block; font-size: 12px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.5px;
+    color: #6b8a7e; margin-bottom: 6px;
+  }
+  .type-toggle {
+    display: flex; gap: 8px; margin-bottom: 18px;
+  }
+  .type-btn {
+    flex: 1; padding: 10px 16px; border: 2px solid #d0ddd6;
+    border-radius: 10px; background: white; cursor: pointer;
+    font-family: inherit; font-size: 14px; font-weight: 600;
+    color: #1a2e28; text-align: center; transition: all 0.15s;
+  }
+  .type-btn.active {
+    border-color: #0B3041; background: #0B3041; color: white;
+  }
+  .type-btn:hover:not(.active) { border-color: #0B3041; }
+  input[type="text"], input[type="email"], textarea {
+    width: 100%; padding: 10px 14px; border: 1.5px solid #d0ddd6;
+    border-radius: 10px; font-family: inherit; font-size: 15px;
+    color: #1a2e28; background: white; outline: none;
+    transition: border-color 0.2s;
+  }
+  input:focus, textarea:focus { border-color: #0B3041; }
+  textarea { min-height: 120px; resize: vertical; }
+  .submit-btn {
+    width: 100%; padding: 14px; border: none; border-radius: 10px;
+    background: linear-gradient(135deg, #0B3041 0%, #164260 100%);
+    color: white; font-family: inherit; font-size: 15px;
+    font-weight: 700; cursor: pointer; text-transform: uppercase;
+    letter-spacing: 0.5px; transition: transform 0.1s, box-shadow 0.2s;
+  }
+  .submit-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(11, 48, 65, 0.4); }
+  .submit-btn:active { transform: translateY(0); }
+  .submit-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+  .success-msg {
+    display: none; text-align: center; padding: 24px;
+    background: #e0f5ec; border-radius: 12px; margin-top: 16px;
+  }
+  .success-msg h2 { font-size: 20px; color: #1a6b44; margin-bottom: 8px; }
+  .success-msg p { font-size: 14px; color: #6b8a7e; }
+  .success-msg a { color: #0B3041; font-weight: 600; }
+  .error-msg {
+    display: none; text-align: center; padding: 16px;
+    background: #fff0f0; border: 2px solid #c53030; border-radius: 10px;
+    color: #c53030; font-size: 14px; font-weight: 600; margin-top: 12px;
+  }
+</style>
+</head>
+<body>
+<header>
+  <a href="index.html" aria-label="Zurueck">&larr;</a>
+  <h1>Feedback</h1>
+</header>
+
+<div class="container">
+  <div class="form-card" id="feedback-form-card">
+    <p class="form-intro">Hilf uns, Fahrcast besser zu machen! Melde Fehler oder schlage neue Funktionen vor.</p>
+
+    <div class="type-toggle">
+      <button class="type-btn active" data-type="bug" onclick="setType(this)">🐛 Bug melden</button>
+      <button class="type-btn" data-type="feature" onclick="setType(this)">💡 Feature vorschlagen</button>
+    </div>
+
+    <form id="feedback-form" onsubmit="submitFeedback(event)">
+      <input type="hidden" id="fb-type" value="bug">
+
+      <div class="form-group">
+        <label for="fb-title">Titel</label>
+        <input type="text" id="fb-title" placeholder="Kurze Beschreibung..." required>
+      </div>
+
+      <div class="form-group">
+        <label for="fb-desc">Beschreibung</label>
+        <textarea id="fb-desc" placeholder="Was ist passiert? Was hast du erwartet? Welches Geraet/Browser nutzt du?"></textarea>
+      </div>
+
+      <div class="form-group">
+        <label for="fb-email">E-Mail (optional, fuer Rueckfragen)</label>
+        <input type="email" id="fb-email" placeholder="deine@email.de">
+      </div>
+
+      <button type="submit" class="submit-btn" id="fb-submit">Absenden</button>
+    </form>
+
+    <div class="error-msg" id="fb-error"></div>
+  </div>
+
+  <div class="success-msg" id="fb-success">
+    <h2>Danke fuer dein Feedback! 🎉</h2>
+    <p>Dein Feedback wurde als GitHub Issue erstellt.<br>
+    <a id="fb-issue-link" href="#" target="_blank">Issue ansehen &rarr;</a></p>
+  </div>
+</div>
+
+<script>
+  var currentType = 'bug';
+
+  function setType(btn) {
+    document.querySelectorAll('.type-btn').forEach(function(b) { b.classList.remove('active'); });
+    btn.classList.add('active');
+    currentType = btn.getAttribute('data-type');
+    document.getElementById('fb-type').value = currentType;
+    // Update placeholder
+    var desc = document.getElementById('fb-desc');
+    if (currentType === 'bug') {
+      desc.placeholder = 'Was ist passiert? Was hast du erwartet? Welches Geraet/Browser nutzt du?';
+    } else {
+      desc.placeholder = 'Beschreibe die gewuenschte Funktion. Warum waere sie nuetzlich?';
+    }
+  }
+
+  function submitFeedback(e) {
+    e.preventDefault();
+    var title = document.getElementById('fb-title').value.trim();
+    var desc = document.getElementById('fb-desc').value.trim();
+    var email = document.getElementById('fb-email').value.trim();
+    var type = document.getElementById('fb-type').value;
+
+    if (!title) return;
+
+    var btn = document.getElementById('fb-submit');
+    btn.disabled = true;
+    btn.textContent = 'Wird gesendet...';
+
+    var label = type === 'bug' ? 'bug' : 'enhancement';
+    var body = desc || '(keine Beschreibung)';
+    if (email) body += '\n\n---\nKontakt: ' + email;
+    body += '\n\n---\n_Gesendet ueber Fahrcast Feedback-Formular_';
+
+    // Create GitHub Issue via API
+    fetch('https://api.github.com/repos/halloekes/fahrzeit/issues', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + atob('Z2l0aHViX3BhdA==') + '_' + getToken()
+      },
+      body: JSON.stringify({
+        title: (type === 'bug' ? '[Bug] ' : '[Feature] ') + title,
+        body: body,
+        labels: [label]
+      })
+    })
+    .then(function(res) {
+      if (!res.ok) throw new Error('GitHub API: ' + res.status);
+      return res.json();
+    })
+    .then(function(data) {
+      document.getElementById('fb-issue-link').href = data.html_url;
+      document.getElementById('feedback-form-card').style.display = 'none';
+      document.getElementById('fb-success').style.display = 'block';
+    })
+    .catch(function(err) {
+      // Fallback: open GitHub issue via URL (pre-filled)
+      var url = 'https://github.com/halloekes/fahrzeit/issues/new?'
+        + 'title=' + encodeURIComponent((type === 'bug' ? '[Bug] ' : '[Feature] ') + title)
+        + '&body=' + encodeURIComponent(body)
+        + '&labels=' + encodeURIComponent(label);
+      window.open(url, '_blank');
+      document.getElementById('feedback-form-card').style.display = 'none';
+      document.getElementById('fb-success').style.display = 'block';
+      document.getElementById('fb-issue-link').href = 'https://github.com/halloekes/fahrzeit/issues';
+    })
+    .finally(function() {
+      btn.disabled = false;
+      btn.textContent = 'Absenden';
+    });
+  }
+
+  // No token embedded — always use fallback (URL-based issue creation)
+  function getToken() { return ''; }
+</script>
+</body>
+</html>

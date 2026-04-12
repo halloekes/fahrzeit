@@ -287,6 +287,23 @@
       font-size: 14px; color: var(--text); margin-top: 6px;
       text-align: center; font-family: 'DM Mono', monospace; font-weight: 500;
     }
+    .driving-style-labels {
+      display: flex; justify-content: space-between; font-size: 11px;
+      color: var(--muted); margin-top: 4px; font-weight: 500;
+    }
+    .provider-chips {
+      display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px;
+    }
+    .provider-chip {
+      display: inline-flex; align-items: center; padding: 5px 10px;
+      border-radius: 16px; font-size: 12px; font-weight: 600;
+      cursor: pointer; user-select: none; transition: all 0.15s;
+      border: 1.5px solid #d0ddd6; background: white; color: var(--text);
+    }
+    .provider-chip.active {
+      background: var(--accent); color: white; border-color: var(--accent);
+    }
+    .provider-chip:hover { opacity: 0.85; }
 
     .calculate-btn {
       background: linear-gradient(135deg, #0B3041 0%, #164260 100%);
@@ -721,7 +738,7 @@
   <div class="desktop-topbar">
     <div class="desktop-topbar-inner">
       <span class="desktop-logo">FAHRCAST</span>
-      <span class="desktop-version">v48</span>
+      <span class="desktop-version">v49</span>
       <span class="desktop-subtitle" id="desktop-subtitle-text"></span>
     </div>
     <div class="lang-toggle desktop-lang">
@@ -737,7 +754,7 @@
       </div>
       <div class="logo">FAHRCAST</div>
       <div class="subtitle" id="subtitle"></div>
-      <div style="font-size:10px;color:var(--muted);margin-top:4px;" id="version-tag">v48</div>
+      <div style="font-size:10px;color:var(--muted);margin-top:4px;" id="version-tag">v49</div>
     </header>
 
     <div class="form-card">
@@ -936,6 +953,19 @@
             <input type="range" id="ev-end-battery" min="10" max="90" value="10">
             <div class="slider-value"><span id="ev-end-battery-value">10</span>%</div>
           </div>
+          <div class="form-group">
+            <label data-i18n="ev_driving_style_label"></label>
+            <input type="range" id="ev-driving-style" min="1" max="3" value="2" step="1">
+            <div class="driving-style-labels">
+              <span data-i18n="ev_style_slow"></span>
+              <span data-i18n="ev_style_normal"></span>
+              <span data-i18n="ev_style_fast"></span>
+            </div>
+          </div>
+          <div class="form-group" id="ev-provider-group">
+            <label data-i18n="ev_provider_label"></label>
+            <div class="provider-chips" id="provider-chips"></div>
+          </div>
         </div>
       </div>
 
@@ -1072,6 +1102,8 @@
       <span style="margin:0 6px;">|</span>
       <a href="changelog.html" target="_blank" style="color:var(--muted);text-decoration:none;" data-i18n="release_notes_link"></a>
       <span style="margin:0 6px;">|</span>
+      <a href="feedback.html" style="color:var(--muted);text-decoration:none;" data-i18n="feedback_link"></a>
+      <span style="margin:0 6px;">|</span>
       <span>© 2025 Martin Wanitschke</span>
       <span style="margin:0 6px;">|</span>
       <span>built with <span style="color:var(--accent);">♥</span> and AI</span>
@@ -1102,6 +1134,13 @@
         ev_model_placeholder: '-- Modell auswählen --',
         ev_start_battery_label: 'Startladung',
         ev_end_battery_label: 'Zielladung (mindestens)',
+        ev_driving_style_label: 'Fahrweise',
+        ev_style_slow: '🌱 Sparsam',
+        ev_style_normal: '🚗 Normal',
+        ev_style_fast: '🏎️ Zügig',
+        ev_provider_label: 'Ladeanbieter (optional)',
+        ev_provider_all_hint: 'Keine Auswahl = alle Anbieter',
+        feedback_link: 'Feedback',
         calculate_btn: 'Berechnen',
         calculate_btn_loading: '⏳ Maps laden...',
         calculate_btn_calculating: 'Berechne...',
@@ -1188,6 +1227,13 @@
         ev_model_placeholder: '-- Select model --',
         ev_start_battery_label: 'Starting charge',
         ev_end_battery_label: 'Target charge (minimum)',
+        ev_driving_style_label: 'Driving style',
+        ev_style_slow: '🌱 Eco',
+        ev_style_normal: '🚗 Normal',
+        ev_style_fast: '🏎️ Sport',
+        ev_provider_label: 'Charging providers (optional)',
+        ev_provider_all_hint: 'No selection = all providers',
+        feedback_link: 'Feedback',
         calculate_btn: 'Calculate',
         calculate_btn_loading: '⏳ Loading Maps...',
         calculate_btn_calculating: 'Calculating...',
@@ -1591,6 +1637,59 @@
 
     const REAL_WORLD_RANGE_FACTOR = 0.78;
 
+    // Driving style multipliers applied on top of REAL_WORLD_RANGE_FACTOR
+    const DRIVING_STYLE_FACTORS = { 1: 1.08, 2: 1.0, 3: 0.85 };
+    // 1=Sparsam (8% more range), 2=Normal, 3=Zügig (15% less range)
+
+    function getDrivingStyleFactor() {
+      var slider = document.getElementById('ev-driving-style');
+      return slider ? DRIVING_STYLE_FACTORS[parseInt(slider.value)] || 1.0 : 1.0;
+    }
+
+    function getEffectiveRange(evData) {
+      return evData.wltp * REAL_WORLD_RANGE_FACTOR * getDrivingStyleFactor();
+    }
+
+    // Known charging providers for filter chips
+    const CHARGING_PROVIDERS = [
+      'IONITY', 'EnBW', 'Tesla', 'E.ON', 'Allego', 'Fastned',
+      'Aral pulse', 'Shell Recharge', 'EWE Go', 'Mer',
+      'TotalEnergies', 'Vattenfall', 'ALDI', 'Lidl'
+    ];
+
+    var selectedProviders = []; // empty = all providers
+
+    function initProviderChips() {
+      var container = document.getElementById('provider-chips');
+      if (!container) return;
+      container.innerHTML = '';
+      CHARGING_PROVIDERS.forEach(function(name) {
+        var chip = document.createElement('span');
+        chip.className = 'provider-chip';
+        chip.textContent = name;
+        chip.addEventListener('click', function() {
+          chip.classList.toggle('active');
+          updateSelectedProviders();
+        });
+        container.appendChild(chip);
+      });
+    }
+
+    function updateSelectedProviders() {
+      selectedProviders = [];
+      var chips = document.querySelectorAll('.provider-chip.active');
+      chips.forEach(function(c) { selectedProviders.push(c.textContent); });
+    }
+
+    function matchesProviderFilter(providerName) {
+      if (selectedProviders.length === 0) return true; // no filter = all
+      if (!providerName) return false;
+      var lower = providerName.toLowerCase();
+      return selectedProviders.some(function(p) {
+        return lower.indexOf(p.toLowerCase()) !== -1;
+      });
+    }
+
     /* ── Wheel Picker ── */
     function initWheelPicker(scrollId, values, defaultIndex) {
       const scroll = document.getElementById(scrollId);
@@ -1784,6 +1883,18 @@
       });
       document.getElementById('ev-end-battery').addEventListener('input', (e) => {
         document.getElementById('ev-end-battery-value').textContent = e.target.value;
+      });
+
+      // Init provider chips and driving style slider
+      initProviderChips();
+
+      // Show Tesla provider note when Tesla model selected
+      document.getElementById('ev-model').addEventListener('change', function() {
+        var isTeslaModel = this.value && this.value.startsWith('tesla-');
+        var providerGroup = document.getElementById('ev-provider-group');
+        if (providerGroup) {
+          providerGroup.style.display = isTeslaModel ? 'none' : 'block';
+        }
       });
 
       document.getElementById('calculate-btn').addEventListener('click', function() {
@@ -2094,7 +2205,7 @@
       const evData = EV_DATABASE[modelId];
       if (!evData) return 0;
 
-      const realRange = evData.wltp * REAL_WORLD_RANGE_FACTOR;
+      const realRange = getEffectiveRange(evData);
       const kmPerPercent = realRange / 100;
       const MIN_CHARGE_SOC = 10;
       const ARRIVAL_TOLERANCE = 5; // accept arriving with as low as 5%
@@ -2346,7 +2457,7 @@
       var evData = EV_DATABASE[modelId];
       if (!evData) return;
 
-      var realRange = evData.wltp * REAL_WORLD_RANGE_FACTOR;
+      var realRange = getEffectiveRange(evData);
       var distanceKm = leg.distance.value / 1000;
       var tesla = isTesla(modelId);
 
@@ -2552,30 +2663,46 @@
     }
 
     function applyProviderToStop(results, idx) {
-      // Try to find a known network provider
+      // If provider filter is active, try to find a matching provider first
       var providerName = null;
-      for (var i = 0; i < Math.min(results.length, 8); i++) {
-        providerName = extractProvider(results[i].name);
-        if (providerName) break;
+      var hasFilter = selectedProviders.length > 0;
+
+      // First pass: find a provider that matches the filter (if active)
+      for (var i = 0; i < Math.min(results.length, 10); i++) {
+        var candidate = extractProvider(results[i].name);
+        if (candidate) {
+          if (!hasFilter || matchesProviderFilter(candidate)) {
+            providerName = candidate;
+            break;
+          }
+          // Remember first known provider even if not in filter
+          if (!providerName) providerName = candidate;
+        }
       }
-      // Fallback: use the closest result's name directly (clean it up)
+
+      // Fallback: use cleaned place name
       if (!providerName && results.length > 0) {
         var raw = results[0].name;
-        // Remove generic words to extract the operator
         providerName = raw
           .replace(/\b(ladestation|ladesäule|ladepark|ladepunkt|charging station|ev charging|schnellladestation|e-ladestation)\b/gi, '')
           .replace(/\s{2,}/g, ' ')
           .trim();
-        // If nothing useful remains or it's just a city name, skip
         if (!providerName || providerName.length < 2) providerName = null;
       }
       if (!providerName) return;
       var nameEl = document.getElementById('cs-name-' + idx);
       if (!nameEl) return;
-      // Avoid duplicate: don't show provider if it matches the locality
       var locality = nameEl.getAttribute('data-locality');
       if (locality && providerName.toLowerCase() === locality.toLowerCase()) return;
       nameEl.setAttribute('data-provider', providerName);
+
+      // Visual indicator if provider doesn't match filter
+      var card = nameEl.closest('.charging-stop-card');
+      if (hasFilter && !matchesProviderFilter(providerName) && card) {
+        card.style.opacity = '0.5';
+        card.title = providerName + ' – nicht in deiner Anbieterauswahl';
+      }
+
       if (locality) {
         var locationLabel = providerName + ' · ' + locality;
         nameEl.textContent = t('charging_stop_label', {idx: idx + 1, name: locationLabel});
@@ -2667,7 +2794,7 @@
       });
     });
 
-    console.log('[Fahrcast v48] UI initialized OK, lang=' + currentLang);
+    console.log('[Fahrcast v49] UI initialized OK, lang=' + currentLang);
 
     // Timeout: if Maps hasn't loaded after 8 seconds, show clear error
     setTimeout(function() {
