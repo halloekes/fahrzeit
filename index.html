@@ -738,7 +738,7 @@
   <div class="desktop-topbar">
     <div class="desktop-topbar-inner">
       <span class="desktop-logo">FAHRCAST</span>
-      <span class="desktop-version">v50</span>
+      <span class="desktop-version">v51</span>
       <span class="desktop-subtitle" id="desktop-subtitle-text"></span>
     </div>
     <div class="lang-toggle desktop-lang">
@@ -754,7 +754,7 @@
       </div>
       <div class="logo">FAHRCAST</div>
       <div class="subtitle" id="subtitle"></div>
-      <div style="font-size:10px;color:var(--muted);margin-top:4px;" id="version-tag">v50</div>
+      <div style="font-size:10px;color:var(--muted);margin-top:4px;" id="version-tag">v51</div>
     </header>
 
     <div class="form-card">
@@ -1747,8 +1747,9 @@
       if (!lastResults || !lastResults.distanceKm) return;
       if (!document.getElementById('ev-toggle').checked) return;
       var distanceKm = lastResults.distanceKm;
-      // Recalculate charging time
-      var chargingTimeMin = getChargingTime(distanceKm);
+      // Recalculate charging info
+      var info = getChargingInfo(distanceKm);
+      var chargingTimeMin = info.minutes;
       lastResults.chargingTimeMin = chargingTimeMin;
       // Update displayed times
       if (currentMode === 'departure' && lastResults.departureTime) {
@@ -1757,8 +1758,8 @@
         displayArrivalResults(lastResults.scenarios, lastResults.arrivalTime, chargingTimeMin);
       }
       // Update EV info box
-      if (chargingTimeMin > 0) {
-        displayEVInfo(distanceKm, chargingTimeMin);
+      if (info.stops > 0) {
+        displayEVInfo(distanceKm, chargingTimeMin, info.stops);
       } else {
         var box = document.getElementById('ev-info-box');
         if (box) { box.innerHTML = '<div id="ev-info-text">' + t('ev_no_stop') + '</div>'; box.style.display = 'block'; }
@@ -2214,10 +2215,13 @@
               pessimistic:{ durationSeconds: Math.ceil(trafficSec * 1.25) }
             };
 
-            // Calculate EV charging time
+            // Calculate EV charging info
             var chargingTimeMin = 0;
+            var chargingStopCount = 0;
             if (document.getElementById('ev-toggle').checked) {
-              chargingTimeMin = getChargingTime(distanceKm);
+              var chargingInfo = getChargingInfo(distanceKm);
+              chargingTimeMin = chargingInfo.minutes;
+              chargingStopCount = chargingInfo.stops;
             }
 
             lastResults = { from: from, to: to, distanceKm: distanceKm, scenarios: scenarios, departureTime: departureTime, arrivalTime: arrivalTime, chargingTimeMin: chargingTimeMin };
@@ -2247,8 +2251,8 @@
             }
 
             if (document.getElementById('ev-toggle').checked) {
-              if (chargingTimeMin > 0) {
-                displayEVInfo(distanceKm, chargingTimeMin);
+              if (chargingStopCount > 0) {
+                displayEVInfo(distanceKm, chargingTimeMin, chargingStopCount);
               } else if (!document.getElementById('ev-model').value) {
                 // EV-Toggle an, aber kein Modell gewählt
                 var box = document.getElementById('ev-info-box');
@@ -2314,53 +2318,74 @@
       return Math.round(mins);
     }
 
-    /* ── Calculate EV charging time (returns minutes) ── */
-    function getChargingTime(distanceKm) {
+    /* ── Calculate EV charging time and stop count (returns {stops, minutes}) ── */
+    function getChargingInfo(distanceKm) {
       const modelId = document.getElementById('ev-model').value;
-      if (!modelId) return 0;
+      if (!modelId) return { stops: 0, minutes: 0 };
 
       const startBattery = parseInt(document.getElementById('ev-start-battery').value);
       const endBattery = parseInt(document.getElementById('ev-end-battery').value);
       const evData = EV_DATABASE[modelId];
-      if (!evData) return 0;
+      if (!evData) return { stops: 0, minutes: 0 };
 
       const realRange = getEffectiveRange(evData);
       const kmPerPercent = realRange / 100;
       const MIN_CHARGE_SOC = 10;
-      const ARRIVAL_TOLERANCE = 5;
 
-      // Can we reach destination without charging?
+      // Can we reach destination with endBattery without charging?
       var arrivalSoC = startBattery - distanceKm / kmPerPercent;
-      if (arrivalSoC >= MIN_CHARGE_SOC - ARRIVAL_TOLERANCE) return 0;
+      if (arrivalSoC >= endBattery) return { stops: 0, minutes: 0 };
 
-      // Simulate journey
+      // Simulate journey with same 3-case logic as addChargingMarkers
       var currentSoC = startBattery;
       var kmCovered = 0;
       var totalMin = 0;
+      var stops = 0;
 
       for (var safety = 0; safety < 50; safety++) {
         var kmRemaining = distanceKm - kmCovered;
-        if (currentSoC - kmRemaining / kmPerPercent >= MIN_CHARGE_SOC - ARRIVAL_TOLERANCE) break;
+
+        // Case A: current SoC reaches endBattery
+        if (currentSoC - kmRemaining / kmPerPercent >= endBattery) break;
+
+        // Case B: can physically reach destination but endBattery too low
+        if (currentSoC - kmRemaining / kmPerPercent >= MIN_CHARGE_SOC - 5) {
+          var maxDistFromEnd = (100 - endBattery) * kmPerPercent;
+          var optimalStopKm = distanceKm - maxDistFromEnd;
+          if (optimalStopKm <= kmCovered + 5) optimalStopKm = kmCovered + 10;
+          var kmDriven = optimalStopKm - kmCovered;
+          var socAtStop = Math.max(0, Math.round(currentSoC - kmDriven / kmPerPercent));
+          var remainAfter = distanceKm - optimalStopKm;
+          var neededCharge = Math.min(100, Math.ceil(endBattery + remainAfter / kmPerPercent));
+          totalMin += estimateChargingMinutes(socAtStop, neededCharge);
+          stops++;
+          break;
+        }
+
+        // Case C: can't reach destination — full charge stop
         var drivableKm = Math.max(10, (currentSoC - MIN_CHARGE_SOC) * kmPerPercent);
         kmCovered += drivableKm;
-        var socAtStop = Math.max(0, Math.round(currentSoC - drivableKm / kmPerPercent));
-        totalMin += estimateChargingMinutes(socAtStop, 80);
-        currentSoC = 80;
+        var socAtStop2 = Math.max(0, Math.round(currentSoC - drivableKm / kmPerPercent));
+
+        kmRemaining = distanceKm - kmCovered;
+        var neededSoC = Math.ceil(endBattery + kmRemaining / kmPerPercent);
+        var chargeTo = neededSoC <= 80 ? 80 : (neededSoC <= 100 ? neededSoC : 80);
+
+        totalMin += estimateChargingMinutes(socAtStop2, chargeTo);
+        currentSoC = chargeTo;
+        stops++;
       }
 
-      // If last stop needs to charge above 80% for endBattery target
-      if (totalMin > 0) {
-        var kmAfterLastStop = distanceKm - kmCovered;
-        var neededSoC = Math.ceil(endBattery + kmAfterLastStop / kmPerPercent);
-        if (neededSoC > 80 && neededSoC <= 100) {
-          totalMin += estimateChargingMinutes(80, neededSoC);
-        }
-      }
-      return totalMin;
+      return { stops: stops, minutes: totalMin };
     }
 
-    function displayEVInfo(distanceKm, chargingTimeMin) {
-      const stops = Math.ceil(chargingTimeMin / 25);
+    // Legacy wrapper for compatibility
+    function getChargingTime(distanceKm) {
+      return getChargingInfo(distanceKm).minutes;
+    }
+
+    function displayEVInfo(distanceKm, chargingTimeMin, stopCount) {
+      const stops = stopCount || Math.ceil(chargingTimeMin / 25);
       const box = document.getElementById('ev-info-box');
       box.innerHTML = '<div id="ev-info-text">' + t('ev_stops_info', {stops: stops, min: chargingTimeMin}) + '</div>';
       box.style.display = 'block';
@@ -2578,62 +2603,91 @@
       console.log('[Fahrcast] Route: ' + distanceKm.toFixed(0) + 'km, avg ' + avgSpeedKmh.toFixed(0) + 'km/h, speedFactor=' + getSpeedConsumptionFactor(avgSpeedKmh).toFixed(2));
 
       var realRange = getEffectiveRange(evData, avgSpeedKmh);
-      // Can we reach destination without charging?
       var kmPerPercent = realRange / 100;
       var MIN_CHARGE_SOC = 10;
-      var ARRIVAL_TOLERANCE = 5; // accept arriving with as low as 5%
+
+      // Can we reach destination with endBattery without charging?
       var arrivalSoC = startBattery - distanceKm / kmPerPercent;
-      if (arrivalSoC >= MIN_CHARGE_SOC - ARRIVAL_TOLERANCE) {
+      if (arrivalSoC >= endBattery) {
         document.getElementById('charging-stops-list').style.display = 'none';
         lastChargingStopPositions = [];
         return;
       }
 
-      // Simulate journey: stop to charge when battery hits MIN_CHARGE_SOC
+      // Simulate journey with smart stop placement
+      // Three cases per iteration:
+      //   A) Current SoC reaches endBattery at destination → done
+      //   B) Car can physically reach destination but endBattery too low →
+      //      place ONE more stop optimally (as late as possible to charge ≤100%)
+      //   C) Car can't physically reach destination → stop at MIN_CHARGE_SOC, charge 80%
       var chargingStops = [];
       var currentSoC = startBattery;
       var lastChargeKm = 0;
 
       for (var safety = 0; safety < 50; safety++) {
         var kmRemaining = distanceKm - lastChargeKm;
-        // Can we reach destination? (tolerate arriving with as low as 5%)
-        if (currentSoC - kmRemaining / kmPerPercent >= MIN_CHARGE_SOC - ARRIVAL_TOLERANCE) break;
 
-        // Drive until MIN_CHARGE_SOC (minimum 10 km for low-start scenarios)
+        // Case A: current SoC is enough to arrive at endBattery
+        var projectedArrival = currentSoC - kmRemaining / kmPerPercent;
+        if (projectedArrival >= endBattery) break;
+
+        // Case B: can physically reach destination but not at endBattery
+        var physicalArrival = currentSoC - kmRemaining / kmPerPercent;
+        if (physicalArrival >= MIN_CHARGE_SOC - 5) {
+          // Place stop as late as possible: last stop must be at most
+          // (100 - endBattery) * kmPerPercent from destination
+          var maxDistFromEnd = (100 - endBattery) * kmPerPercent;
+          var optimalStopKm = distanceKm - maxDistFromEnd;
+          // Ensure it's after the last stop
+          if (optimalStopKm <= lastChargeKm + 5) optimalStopKm = lastChargeKm + 10;
+          // Ensure it's not past the destination
+          if (optimalStopKm >= distanceKm - 5) optimalStopKm = distanceKm - 10;
+
+          var kmDriven = optimalStopKm - lastChargeKm;
+          var socAtStop = Math.max(0, Math.round(currentSoC - kmDriven / kmPerPercent));
+          var remainAfterStop = distanceKm - optimalStopKm;
+          var neededCharge = Math.min(100, Math.ceil(endBattery + remainAfterStop / kmPerPercent));
+
+          var pos = getPositionAtKm(leg, optimalStopKm);
+          chargingStops.push({
+            stopKm: Math.round(optimalStopKm),
+            socAtArrival: socAtStop,
+            chargeTo: neededCharge,
+            position: pos,
+          });
+          break; // this is the last stop
+        }
+
+        // Case C: can't reach destination — full charge stop needed
         var drivableKm = Math.max(10, (currentSoC - MIN_CHARGE_SOC) * kmPerPercent);
-
         var stopKm = lastChargeKm + drivableKm;
-        // Don't place stops in last 10km — just drive through
-        if (stopKm >= distanceKm - 10) stopKm = Math.max(lastChargeKm + 10, distanceKm * 0.5);
         if (stopKm < 0) stopKm = 0;
 
-        var kmDriven = stopKm - lastChargeKm;
-        var socAtArrival = Math.max(0, Math.round(currentSoC - kmDriven / kmPerPercent));
+        var kmDriven2 = stopKm - lastChargeKm;
+        var socAtArrival = Math.max(0, Math.round(currentSoC - kmDriven2 / kmPerPercent));
 
-        var pos = getPositionAtKm(leg, stopKm);
+        // Determine charge target: can we charge enough to reach destination + endBattery?
+        var remainFromStop = distanceKm - stopKm;
+        var neededSoC = Math.ceil(endBattery + remainFromStop / kmPerPercent);
+        var chargeTo;
+        if (neededSoC <= 80) {
+          chargeTo = 80;
+        } else if (neededSoC <= 100) {
+          chargeTo = neededSoC;
+        } else {
+          chargeTo = 80; // need another stop after this one
+        }
+
+        var pos2 = getPositionAtKm(leg, stopKm);
         chargingStops.push({
           stopKm: Math.round(stopKm),
           socAtArrival: socAtArrival,
-          chargeTo: 80,
-          position: pos,
+          chargeTo: chargeTo,
+          position: pos2,
         });
 
-        // After charging: SoC resets to 80%, next segment starts here
-        currentSoC = 80;
+        currentSoC = chargeTo;
         lastChargeKm = stopKm;
-      }
-
-      // Adjust last stop: charge higher if needed to arrive with endBattery
-      if (chargingStops.length > 0) {
-        var lastStop = chargingStops[chargingStops.length - 1];
-        var kmAfterLastStop = distanceKm - lastStop.stopKm;
-        var neededSoC = Math.ceil(endBattery + kmAfterLastStop / kmPerPercent);
-        if (neededSoC > 80 && neededSoC <= 100) {
-          lastStop.chargeTo = neededSoC;
-        } else if (neededSoC > 100) {
-          // Can't fully meet target even at 100% — charge to max
-          lastStop.chargeTo = 100;
-        }
       }
 
       var stopsNeeded = chargingStops.length;
@@ -2908,7 +2962,7 @@
       });
     });
 
-    console.log('[Fahrcast v50] UI initialized OK, lang=' + currentLang);
+    console.log('[Fahrcast v51] UI initialized OK, lang=' + currentLang);
 
     // Timeout: if Maps hasn't loaded after 8 seconds, show clear error
     setTimeout(function() {
